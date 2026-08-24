@@ -1,6 +1,7 @@
 import streamlit as st
 import random
 import json
+import urllib.request
 
 # Sätt sidkonfiguration
 st.set_page_config(
@@ -9,135 +10,142 @@ st.set_page_config(
     layout="centered"
 )
 
-# Pedagogiska förbyggda ordbanker baserade på högfrekventa ord (General Service List & kognatforskning)
-PREBUILT_BANKS = {
-    "Engelska (Topp 50 vanligaste)": [
-        {"svenska": "tid", "utlandska": "time"},
-        {"svenska": "år", "utlandska": "year"},
-        {"svenska": "folk", "utlandska": "people"},
-        {"svenska": "sätt", "utlandska": "way"},
-        {"svenska": "dag", "utlandska": "day"},
-        {"svenska": "sak", "utlandska": "thing"},
-        {"svenska": "man", "utlandska": "man"},
-        {"svenska": "värld", "utlandska": "world"},
-        {"svenska": "liv", "utlandska": "life"},
-        {"svenska": "skola", "utlandska": "school"},
-        {"svenska": "familj", "utlandska": "family"},
-        {"svenska": "student", "utlandska": "student"},
-        {"svenska": "land", "utlandska": "country"},
-        {"svenska": "problem", "utlandska": "problem"},
-        {"svenska": "hand", "utlandska": "hand"},
-        {"svenska": "del", "utlandska": "part"},
-        {"svenska": "plats", "utlandska": "place"},
-        {"svenska": "vecka", "utlandska": "week"},
-        {"svenska": "arbete", "utlandska": "work"},
-        {"svenska": "system", "utlandska": "system"},
-        {"svenska": "grupp", "utlandska": "group"},
-        {"svenska": "nummer", "utlandska": "number"},
-        {"svenska": "kvinna", "utlandska": "woman"},
-        {"svenska": "barn", "utlandska": "child"},
-        {"svenska": "sida", "utlandska": "side"},
-        {"svenska": "skriva", "utlandska": "write"},
-        {"svenska": "läsa", "utlandska": "read"},
-        {"svenska": "göra", "utlandska": "do"},
-        {"svenska": "se", "utlandska": "see"},
-        {"svenska": "gå", "utlandska": "go"},
-        {"svenska": "komma", "utlandska": "come"},
-        {"svenska": "ha", "utlandska": "have"},
-        {"svenska": "ge", "utlandska": "give"},
-        {"svenska": "veta", "utlandska": "know"},
-        {"svenska": "säga", "utlandska": "say"},
-        {"svenska": "ny", "utlandska": "new"},
-        {"svenska": "stor", "utlandska": "big"},
-        {"svenska": "bra", "utlandska": "good"},
-        {"svenska": "först", "utlandska": "first"},
-        {"svenska": "vatten", "utlandska": "water"},
-        {"svenska": "hus", "utlandska": "house"},
-        {"svenska": "vän", "utlandska": "friend"},
-        {"svenska": "stad", "utlandska": "city"},
-        {"svenska": "bok", "utlandska": "book"},
-        {"svenska": "mat", "utlandska": "food"},
-        {"svenska": "äpple", "utlandska": "apple"},
-        {"svenska": "katt", "utlandska": "cat"},
-        {"svenska": "hund", "utlandska": "dog"},
-        {"svenska": "liten", "utlandska": "small"},
-        {"svenska": "person", "utlandska": "person"}
-    ],
-    "Spanska (Topp 50 vanligaste)": [
-        {"svenska": "tid", "utlandska": "tiempo"},
-        {"svenska": "år", "utlandska": "año"},
-        {"svenska": "folk", "utlandska": "gente"},
-        {"svenska": "sätt", "utlandska": "camino"},
-        {"svenska": "dag", "utlandska": "día"},
-        {"svenska": "sak", "utlandska": "cosa"},
-        {"svenska": "man", "utlandska": "hombre"},
-        {"svenska": "värld", "utlandska": "mundo"},
-        {"svenska": "liv", "utlandska": "vida"},
-        {"svenska": "skola", "utlandska": "escuela"},
-        {"svenska": "familj", "utlandska": "familia"},
-        {"svenska": "student", "utlandska": "estudiante"},
-        {"svenska": "land", "utlandska": "país"},
-        {"svenska": "problem", "utlandska": "problema"},
-        {"svenska": "hand", "utlandska": "mano"},
-        {"svenska": "del", "utlandska": "parte"},
-        {"svenska": "plats", "utlandska": "lugar"},
-        {"svenska": "vecka", "utlandska": "semana"},
-        {"svenska": "arbete", "utlandska": "trabajo"},
-        {"svenska": "system", "utlandska": "sistema"},
-        {"svenska": "grupp", "utlandska": "grupo"},
-        {"svenska": "nummer", "utlandska": "número"},
-        {"svenska": "kvinna", "utlandska": "mujer"},
-        {"svenska": "barn", "utlandska": "niño"},
-        {"svenska": "sida", "utlandska": "lado"},
-        {"svenska": "skriva", "utlandska": "escribir"},
-        {"svenska": "läsa", "utlandska": "leer"},
-        {"svenska": "göra", "utlandska": "hacer"},
-        {"svenska": "se", "utlandska": "ver"},
-        {"svenska": "gå", "utlandska": "ir"},
-        {"svenska": "komma", "utlandska": "venir"},
-        {"svenska": "ha", "utlandska": "tener"},
-        {"svenska": "ge", "utlandska": "dar"},
-        {"svenska": "veta", "utlandska": "saber"},
-        {"svenska": "säga", "utlandska": "decir"},
-        {"svenska": "ny", "utlandska": "nuevo"},
-        {"svenska": "stor", "utlandska": "grande"},
-        {"svenska": "bra", "utlandska": "bueno"},
-        {"svenska": "först", "utlandska": "primero"},
-        {"svenska": "vatten", "utlandska": "agua"},
-        {"svenska": "hus", "utlandska": "casa"},
-        {"svenska": "vän", "utlandska": "amigo"},
-        {"svenska": "stad", "utlandska": "ciudad"},
-        {"svenska": "bok", "utlandska": "libro"},
-        {"svenska": "mat", "utlandska": "comida"},
-        {"svenska": "äpple", "utlandska": "manzana"},
-        {"svenska": "katt", "utlandska": "gato"},
-        {"svenska": "hund", "utlandska": "perro"},
-        {"svenska": "liten", "utlandska": "pequeño"},
-        {"svenska": "person", "utlandska": "persona"}
-    ]
+# --- LÄRARKONFIGURATION (VALFRITT) ---
+ADMIN_PASSWORD = "skola123"
+
+# Du kan förbereda permanenta listor i biblioteket direkt i koden här!
+# Detta gör att de alltid ligger laddade för eleverna när hemsidan startas.
+PERMANENT_LIBRARY = {
+    "Engelska (Topp 50 vanligaste)": {
+        "language": "Engelska",
+        "words": [
+            {"svenska": "tid", "utlandska": "time"},
+            {"svenska": "år", "utlandska": "year"},
+            {"svenska": "folk", "utlandska": "people"},
+            {"svenska": "sätt", "utlandska": "way"},
+            {"svenska": "dag", "utlandska": "day"},
+            {"svenska": "sak", "utlandska": "thing"},
+            {"svenska": "man", "utlandska": "man"},
+            {"svenska": "värld", "utlandska": "world"},
+            {"svenska": "liv", "utlandska": "life"},
+            {"svenska": "skola", "utlandska": "school"},
+            {"svenska": "familj", "utlandska": "family"},
+            {"svenska": "student", "utlandska": "student"},
+            {"svenska": "land", "utlandska": "country"},
+            {"svenska": "problem", "utlandska": "problem"},
+            {"svenska": "hand", "utlandska": "hand"},
+            {"svenska": "del", "utlandska": "part"},
+            {"svenska": "plats", "utlandska": "place"},
+            {"svenska": "vecka", "utlandska": "week"},
+            {"svenska": "arbete", "utlandska": "work"},
+            {"svenska": "system", "utlandska": "system"},
+            {"svenska": "grupp", "utlandska": "group"},
+            {"svenska": "nummer", "utlandska": "number"},
+            {"svenska": "kvinna", "utlandska": "woman"},
+            {"svenska": "barn", "utlandska": "child"},
+            {"svenska": "sida", "utlandska": "side"},
+            {"svenska": "skriva", "utlandska": "write"},
+            {"svenska": "läsa", "utlandska": "read"},
+            {"svenska": "göra", "utlandska": "do"},
+            {"svenska": "se", "utlandska": "see"},
+            {"svenska": "gå", "utlandska": "go"},
+            {"svenska": "komma", "utlandska": "come"},
+            {"svenska": "ha", "utlandska": "have"},
+            {"svenska": "ge", "utlandska": "give"},
+            {"svenska": "veta", "utlandska": "know"},
+            {"svenska": "säga", "utlandska": "say"},
+            {"svenska": "ny", "utlandska": "new"},
+            {"svenska": "stor", "utlandska": "big"},
+            {"svenska": "bra", "utlandska": "good"},
+            {"svenska": "först", "utlandska": "first"},
+            {"svenska": "vatten", "utlandska": "water"},
+            {"svenska": "hus", "utlandska": "house"},
+            {"svenska": "vän", "utlandska": "friend"},
+            {"svenska": "stad", "utlandska": "city"},
+            {"svenska": "bok", "utlandska": "book"},
+            {"svenska": "mat", "utlandska": "food"},
+            {"svenska": "äpple", "utlandska": "apple"},
+            {"svenska": "katt", "utlandska": "cat"},
+            {"svenska": "hund", "utlandska": "dog"},
+            {"svenska": "liten", "utlandska": "small"},
+            {"svenska": "person", "utlandska": "person"}
+        ]
+    },
+    "Spanska (Topp 50 vanligaste)": {
+        "language": "Spanska",
+        "words": [
+            {"svenska": "tid", "utlandska": "tiempo"},
+            {"svenska": "år", "utlandska": "año"},
+            {"svenska": "folk", "utlandska": "gente"},
+            {"svenska": "sätt", "utlandska": "camino"},
+            {"svenska": "dag", "utlandska": "día"},
+            {"svenska": "sak", "utlandska": "cosa"},
+            {"svenska": "man", "utlandska": "hombre"},
+            {"svenska": "värld", "utlandska": "mundo"},
+            {"svenska": "liv", "utlandska": "vida"},
+            {"svenska": "skola", "utlandska": "escuela"},
+            {"svenska": "familj", "utlandska": "familia"},
+            {"svenska": "student", "utlandska": "estudiante"},
+            {"svenska": "land", "utlandska": "país"},
+            {"svenska": "problem", "utlandska": "problema"},
+            {"svenska": "hand", "utlandska": "mano"},
+            {"svenska": "del", "utlandska": "parte"},
+            {"svenska": "plats", "utlandska": "lugar"},
+            {"svenska": "vecka", "utlandska": "semana"},
+            {"svenska": "arbete", "utlandska": "trabajo"},
+            {"svenska": "system", "utlandska": "sistema"},
+            {"svenska": "grupp", "utlandska": "grupo"},
+            {"svenska": "nummer", "utlandska": "número"},
+            {"svenska": "kvinna", "utlandska": "mujer"},
+            {"svenska": "barn", "utlandska": "niño"},
+            {"svenska": "sida", "utlandska": "lado"},
+            {"svenska": "skriva", "utlandska": "escribir"},
+            {"svenska": "läsa", "utlandska": "leer"},
+            {"svenska": "göra", "utlandska": "hacer"},
+            {"svenska": "se", "utlandska": "ver"},
+            {"svenska": "gå", "utlandska": "ir"},
+            {"svenska": "komma", "utlandska": "venir"},
+            {"svenska": "ha", "utlandska": "tener"},
+            {"svenska": "ge", "utlandska": "dar"},
+            {"svenska": "veta", "utlandska": "saber"},
+            {"svenska": "säga", "utlandska": "decir"},
+            {"svenska": "ny", "utlandska": "nuevo"},
+            {"svenska": "stor", "utlandska": "grande"},
+            {"svenska": "bra", "utlandska": "bueno"},
+            {"svenska": "först", "utlandska": "primero"},
+            {"svenska": "vatten", "utlandska": "agua"},
+            {"svenska": "hus", "utlandska": "casa"},
+            {"svenska": "vän", "utlandska": "amigo"},
+            {"svenska": "stad", "utlandska": "ciudad"},
+            {"svenska": "bok", "utlandska": "libro"},
+            {"svenska": "mat", "utlandska": "comida"},
+            {"svenska": "äpple", "utlandska": "manzana"},
+            {"svenska": "katt", "utlandska": "gato"},
+            {"svenska": "hund", "utlandska": "perro"},
+            {"svenska": "liten", "utlandska": "pequeño"},
+            {"svenska": "person", "utlandska": "persona"}
+        ]
+    }
 }
+# -------------------------------------
 
-DEFAULT_WORDS = [
-    {"svenska": "hund", "utlandska": "dog"},
-    {"svenska": "katt", "utlandska": "cat"},
-    {"svenska": "äpple", "utlandska": "apple"},
-    {"svenska": "bok", "utlandska": "book"},
-    {"svenska": "skola", "utlandska": "school"}
-]
+# Initiera biblioteket i session state
+if "library" not in st.session_state:
+    st.session_state.library = PERMANENT_LIBRARY.copy()
 
-# Initiera session state för målspråk
+# Initiera aktiv ordlista och målspråk
+if "words" not in st.session_state:
+    st.session_state.words = st.session_state.library["Engelska (Topp 50 vanligaste)"]["words"].copy()
+    st.session_state.target_language = "Engelska"
+    st.session_state.current_list_name = "Engelska (Topp 50 vanligaste)"
+
+if "current_list_name" not in st.session_state:
+    st.session_state.current_list_name = "Engelska (Topp 50 vanligaste)"
+
 if "target_language" not in st.session_state:
     st.session_state.target_language = "Engelska"
 
-# Initiera session state för ordlista
-if "words" not in st.session_state:
-    st.session_state.words = DEFAULT_WORDS.copy()
-
-# Spårning av vald ordbank för att upptäcka ändringar
-if "current_bank" not in st.session_state:
-    st.session_state.current_bank = "(Ingen - Använd egen lista)"
-
-# Initiera session state för spelmekanik
+# Initiera spelmekanik
 if "shuffled_order" not in st.session_state or len(st.session_state.shuffled_order) != len(st.session_state.words):
     st.session_state.shuffled_order = list(range(len(st.session_state.words)))
     random.shuffle(st.session_state.shuffled_order)
@@ -163,7 +171,7 @@ if "quiz_options" not in st.session_state:
 if "quiz_correct_index" not in st.session_state:
     st.session_state.quiz_correct_index = -1
 
-# Funktion för att återställa spelet och blanda om ordningen
+# Funktion för att nollställa framsteg och blanda om ordningen
 def reset_progress():
     st.session_state.shuffled_order = list(range(len(st.session_state.words)))
     random.shuffle(st.session_state.shuffled_order)
@@ -174,7 +182,7 @@ def reset_progress():
     st.session_state.hint_count = 0
     st.session_state.quiz_options = []
 
-# Funktion för jag hämta nuvarande ord baserat på den blandade listan
+# Funktion för att hämta nuvarande ord baserat på den blandade listan
 def get_current_word():
     if not st.session_state.words:
         return None
@@ -193,34 +201,32 @@ def next_word():
 
 # --- APP DESIGN & GRÄNSSNITT ---
 st.title("🎓 Digitala Glostränaren")
-st.markdown("Välkommen till elevernas digitala glostränare! Öva i din egen takt med vetenskapligt beprövade metoder för språkinlärning.")
+st.markdown("Välkommen till klassens digitala glostränare! Välj en lista i biblioteket och börja träna utifrån vetenskapliga metoder.")
 
-# Sidomeny för inställningar
-st.sidebar.header("⚙️ Inställningar")
+# --- SIDOMENY: GLOSBIBLIOTEK ---
+st.sidebar.header("📚 Glosbibliotek")
 
-# NY FUNKTION: Välj en förbyggd ordbank direkt i sidomenyn
-st.sidebar.subheader("📦 Förbyggda ordbanker")
-selected_bank = st.sidebar.selectbox(
-    "Välj en färdig ordlista:",
-    ["(Ingen - Använd egen lista)", "Engelska (Topp 50 vanligaste)", "Spanska (Topp 50 vanligaste)"],
-    index=0 if st.session_state.current_bank == "(Ingen - Använd egen lista)" else 
-          (1 if st.session_state.current_bank == "Engelska (Topp 50 vanligaste)" else 2)
+# Låt eleverna välja gloslista från biblioteket
+library_options = list(st.session_state.library.keys())
+selected_list = st.sidebar.selectbox(
+    "Välj gloslista att öva på:",
+    library_options,
+    index=library_options.index(st.session_state.current_list_name) if st.session_state.current_list_name in library_options else 0
 )
 
-# Hantera laddning av ordbank vid val
-if selected_bank != st.session_state.current_bank:
-    st.session_state.current_bank = selected_bank
-    if selected_bank == "Engelska (Topp 50 vanligaste)":
-        st.session_state.words = PREBUILT_BANKS["Engelska (Topp 50 vanligaste)"].copy()
-        st.session_state.target_language = "Engelska"
-    elif selected_bank == "Spanska (Topp 50 vanligaste)":
-        st.session_state.words = PREBUILT_BANKS["Spanska (Topp 50 vanligaste)"].copy()
-        st.session_state.target_language = "Spanska"
+# Om användaren byter lista i biblioteket, ladda in den direkt
+if selected_list != st.session_state.current_list_name:
+    st.session_state.current_list_name = selected_list
+    st.session_state.words = st.session_state.library[selected_list]["words"].copy()
+    st.session_state.target_language = st.session_state.library[selected_list]["language"]
     reset_progress()
     st.rerun()
 
 # Hämta namnet på målspråket från session state
 target_lang_name = st.session_state.target_language
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("⚙️ Träningsinställningar")
 
 # Välj träningsriktning i dropdown (selectbox) med dynamiskt språknamn
 direction_label_1 = f"Svenska ➔ {target_lang_name}"
@@ -250,7 +256,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "🎴 Flashcards (Se & Öva)", 
     "🎯 Flervalsquiz (Välj rätt)", 
     "✍️ Skrivträning (Stava rätt)", 
-    "👩‍🏫 Lärarpanel (Hantera glosor)"
+    "👩‍🏫 Lärarpanel (Skapa & Ladda upp)"
 ])
 
 # Kontrollera om listan är tom
@@ -259,7 +265,7 @@ if not st.session_state.words:
 else:
     current_word = get_current_word()
     
-    # Bestäm källtext och målsvar baserat på vald riktning och dynamiskt språknamn
+    # Bestäm källtext och målsvar baserat på vald riktning och språknamn
     if direction == direction_label_1:
         prompt_lang = "svenska"
         target_lang = "utlandska"
@@ -276,7 +282,6 @@ else:
         st.subheader("Träna med digitala ordkort")
         st.markdown("Se det markerade ordet, tänk efter vad det betyder, och klicka på kortet för att vända det.")
         
-        # Flashcard-design med behållare
         card_container = st.container(border=True)
         with card_container:
             st.markdown("<br>", unsafe_allow_html=True)
@@ -311,7 +316,6 @@ else:
             if len(other_words) >= 3:
                 distractors = random.sample(other_words, 3)
             else:
-                # Fyll upp om ordlistan är för kort
                 distractors = other_words + ["time", "year", "people", "way"][:3 - len(other_words)]
             
             options = distractors + [correct_ans]
@@ -348,14 +352,17 @@ else:
 
         st.markdown(f"Översätt ordet: <h3 style='display:inline;'>{current_word[prompt_lang].upper()}</h3>", unsafe_allow_html=True)
         
-        user_input = st.text_input("Skriv din översättning här:", key="write_input", placeholder="Stava noggrant...")
+        # Form för enter-stöd vid rättning
+        with st.form("write_form"):
+            user_input = st.text_input("Skriv din översättning här:", key="write_input", placeholder="Stava noggrant...")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                check_write = st.form_submit_button("Rätta mitt svar", use_container_width=True)
+            with col2:
+                hint_btn = st.form_submit_button("💡 Få en ledtråd", use_container_width=True)
 
-        col1, col2 = st.columns(2)
-        with col1:
-            check_write = st.button("Rätta mitt svar", use_container_width=True, type="primary")
-        with col2:
-            hint_btn = st.button("💡 Få en ledtråd", use_container_width=True)
-
+        # Hantera ledtråd
         target_word = current_word[target_lang]
         if hint_btn:
             if st.session_state.hint_count < len(target_word):
@@ -366,6 +373,7 @@ else:
             hint_text = target_word[:st.session_state.hint_count] + "_" * (len(target_word) - st.session_state.hint_count)
             st.info(f"Ledtråd: `{hint_text}` (visar {st.session_state.hint_count} av {len(target_word)} bokstäver)")
 
+        # Rätta skrivet svar
         if check_write:
             if not user_input.strip():
                 st.warning("Skriv in ett svar först!")
@@ -384,51 +392,84 @@ else:
             next_word()
             st.rerun()
 
-# ================= TAB 4: LÄRARPANEL & HANDLEDNING =================
+# ================= TAB 4: LÄRARPANEL & LÖSENORDSSKYDD =================
 with tab4:
-    st.subheader("👩‍🏫 Hantera veckans glosor")
-    st.markdown("Här kan du ställa in målspråket, klistra in veckans glosor direkt från ditt klassmaterial eller hantera de befintliga orden.")
-
-    st.markdown("### 🌐 Språkinställning")
-    new_lang_name = st.text_input(
-        "Vilket språk tränar eleverna på just nu?", 
-        value=st.session_state.target_language,
-        help="Skriv t.ex. Engelska, Spanska, Tyska eller Franska. Appens menyer och knappar uppdateras direkt!"
-    )
-    if new_lang_name != st.session_state.target_language:
-        st.session_state.target_language = new_lang_name
-        reset_progress()
-        st.toast(f"Målspråk ändrat till: {new_lang_name}!")
-        st.rerun()
-
-    st.markdown("---")
-
-    # Sektion för filuppladdning och fritext-import
-    st.markdown("### 📥 Ladda upp eller klistra in en ny ordlista")
-    st.markdown(f"Välj ett av sätten nedan för att läsa in en ny lista för {target_lang_name}:")
-
-    # Lärare kan ladda upp en TXT- eller JSON-fil
-    uploaded_file = st.file_uploader("Ladda upp en ordlista (.txt eller .json)", type=["txt", "json"])
+    st.subheader("👩‍🏫 Lärarpanel (Hantera Glosbiblioteket)")
     
-    if uploaded_file is not None:
-        try:
-            if uploaded_file.name.endswith(".json"):
-                parsed_words = json.load(uploaded_file)
-                # Validering av JSON-format
-                if isinstance(parsed_words, list) and all("svenska" in w and "utlandska" in w for w in parsed_words):
-                    if st.button("Spara uppladdad JSON-lista", type="primary", use_container_width=True):
-                        st.session_state.words = parsed_words
-                        st.session_state.current_bank = "(Ingen - Använd egen lista)"
-                        reset_progress()
-                        st.success(f"🎉 Lyckades! Importerade {len(parsed_words)} ord från JSON-filen.")
-                        st.rerun()
-                else:
-                    st.error("Felaktigt JSON-format! Filen måste vara en lista med objekt som innehåller fälten 'svenska' och 'utlandska'.")
+    # Initiera lösenordsstatus i session state
+    if "admin_authenticated" not in st.session_state:
+        st.session_state.admin_authenticated = False
+        
+    if not st.session_state.admin_authenticated:
+        st.markdown("Denna flik är till för lärare för att lägga till nya veckor eller gloslistor. Skriv in lösenordet för att fortsätta:")
+        entered_password = st.text_input("Lösenord:", type="password")
+        if st.button("Lås upp lärarpanelen", type="primary"):
+            if entered_password == ADMIN_PASSWORD:
+                st.session_state.admin_authenticated = True
+                st.success("🔓 Lärarpanelen har låsts upp!")
+                st.rerun()
+            else:
+                st.error("❌ Felaktigt lösenord! Försök igen.")
+    else:
+        st.info("🔓 Du är inloggad som lärare.")
+        if st.button("🔒 Logga ut (Lås panelen)"):
+            st.session_state.admin_authenticated = False
+            st.rerun()
             
-            elif uploaded_file.name.endswith(".txt"):
-                string_data = uploaded_file.read().decode("utf-8")
-                parsed_words = []
-                lines = string_data.strip().split("\n")
+        st.markdown("---")
+        st.markdown("### ➕ Lägg till en ny gloslista i biblioteket")
+        st.markdown("Här kan du bygga upp ett bibliotek av listor för dina elever (t.ex. 'Kapitel 1', 'Vecka 38', 'Engelska - Djur'). De dyker genast upp i elevernas rullgardinsmeny!")
+
+        # Unika inställningar för den nya listan
+        new_list_title = st.text_input("Vad ska denna gloslista heta i biblioteket?", placeholder="t.ex. Spanska - Kapitel 1")
+        new_list_lang = st.text_input("Vilket språk övar eleverna på i denna lista?", placeholder="t.ex. Spanska")
+
+        st.markdown("**Hur vill du läsa in glosorna?**")
+        uploaded_file = st.file_uploader("Metod A: Ladda upp en fil (.txt eller .json)", type=["txt", "json"])
+        import_text = st.text_area("Metod B: Klistra in fritext direkt", height=120, placeholder="svenska - översättning\nhund - perro\nkatt - gato")
+
+        if st.button("📥 Lägg till listan i biblioteket", type="primary", use_container_width=True):
+            if not new_list_title.strip():
+                st.error("Du måste ange ett namn för gloslistan!")
+                st.stop()
+            if not new_list_lang.strip():
+                st.error("Du måste ange vilket språk listan gäller!")
+                st.stop()
+
+            parsed_words = []
+
+            # Alternativ 1: Läs in från uppladdad fil
+            if uploaded_file is not None:
+                try:
+                    if uploaded_file.name.endswith(".json"):
+                        file_data = json.load(uploaded_file)
+                        if isinstance(file_data, list) and all("svenska" in w and "utlandska" in w for w in file_data):
+                            parsed_words = file_data
+                        else:
+                            st.error("Felaktigt format i JSON-filen!")
+                    elif uploaded_file.name.endswith(".txt"):
+                        string_data = uploaded_file.read().decode("utf-8")
+                        lines = string_data.strip().split("\n")
+                        for line_no, line in enumerate(lines, 1):
+                            if not line.strip():
+                                continue
+                            parts = None
+                            for sep in ["-", ":", "="]:
+                                if sep in line:
+                                    parts = line.split(sep, 1)
+                                    break
+                            if parts and len(parts) == 2:
+                                parsed_words.append({"svenska": parts[0].strip(), "utlandska": parts[1].strip()})
+                            else:
+                                st.error(f"Kunde inte tolka rad {line_no} i filen.")
+                                st.stop()
+                except Exception as e:
+                    st.error(f"Kunde inte läsa uppladdad fil: {str(e)}")
+                    st.stop()
+
+            # Alternativ 2: Läs in från fritext (om ingen fil laddats upp)
+            elif import_text.strip():
+                lines = import_text.strip().split("\n")
                 for line_no, line in enumerate(lines, 1):
                     if not line.strip():
                         continue
@@ -440,79 +481,47 @@ with tab4:
                     if parts and len(parts) == 2:
                         parsed_words.append({"svenska": parts[0].strip(), "utlandska": parts[1].strip()})
                     else:
-                        st.error(f"Kunde inte tolka rad {line_no} i TXT-filen: '{line}'. Kontrollera att orden är delade med bindestreck.")
+                        st.error(f"Kunde inte tolka rad {line_no} i textrutan.")
                         st.stop()
-                
-                if parsed_words:
-                    if st.button("Spara uppladdad TXT-lista", type="primary", use_container_width=True):
-                        st.session_state.words = parsed_words
-                        st.session_state.current_bank = "(Ingen - Använd egen lista)"
-                        reset_progress()
-                        st.success(f"🎉 Lyckades! Importerade {len(parsed_words)} ord från TXT-filen.")
-                        st.rerun()
-        except Exception as e:
-            st.error(f"Ett fel uppstod vid inläsning av filen: {str(e)}")
 
-    st.markdown("**Eller klistra in råtext här:**")
-    import_text = st.text_area(
-        "Klistra in glosor här:", 
-        height=120, 
-        placeholder=f"svenska - översättning\nord1 - översättning1\nord2 - översättning2"
-    )
-
-    if st.button("📥 Importera & Ersätt nuvarande ord (Fritext)", use_container_width=True):
-        if not import_text.strip():
-            st.warning("Textrutan är tom. Klistra in text innan du importerar.")
-        else:
-            new_words = []
-            lines = import_text.strip().split("\n")
-            for line_no, line in enumerate(lines, 1):
-                if not line.strip():
-                    continue
-                parts = None
-                for sep in ["-", ":", "="]:
-                    if sep in line:
-                        parts = line.split(sep, 1)
-                        break
-                
-                if parts and len(parts) == 2:
-                    sv = parts[0].strip()
-                    ut = parts[1].strip()
-                    if sv and ut:
-                        new_words.append({"svenska": sv, "utlandska": ut})
-                else:
-                    st.error(f"Kunde inte tolka rad {line_no}: '{line}'. Kontrollera formatet.")
-                    st.stop()
-
-            if new_words:
-                st.session_state.words = new_words
-                st.session_state.current_bank = "(Ingen - Använd egen lista)"
+            # Spara listan i biblioteket
+            if parsed_words:
+                st.session_state.library[new_list_title] = {
+                    "language": new_list_lang,
+                    "words": parsed_words
+                }
+                # Gör den nyligen skapade listan till den aktiva listan
+                st.session_state.current_list_name = new_list_title
+                st.session_state.words = parsed_words
+                st.session_state.target_language = new_list_lang
                 reset_progress()
-                st.success(f"🎉 Lyckades! Importerade **{len(new_words)}** nya ord. Appen är nu uppdaterad!")
+                st.success(f"🎉 Lyckades! Listan '{new_list_title}' med {len(parsed_words)} glosor har lagts till i biblioteket och valts automatiskt!")
                 st.rerun()
+            else:
+                st.warning("Hittade inga giltiga glosor att läsa in. Ladda upp en fil eller klistra in fritext.")
 
-    st.markdown("---")
-    st.markdown("### Aktuell ordlista i appen")
-    
-    if st.session_state.words:
-        for idx, item in enumerate(st.session_state.words):
-            col1, col2, col3 = st.columns([4, 4, 1])
+        st.markdown("---")
+        st.markdown("### 🗑️ Ta bort gloslistor från biblioteket")
+        
+        # Visa listor och låt läraren rensa
+        all_lists = list(st.session_state.library.keys())
+        for list_name in all_lists:
+            col1, col2 = st.columns([5, 1])
             with col1:
-                st.write(f"Svenska: **{item['svenska']}**")
+                st.write(f"📁 {list_name} ({st.session_state.library[list_name]['language']}) — **{len(st.session_state.library[list_name]['words'])}** ord")
             with col2:
-                st.write(f"{target_lang_name}: **{item['utlandska']}**")
-            with col3:
-                if st.button("🗑️", key=f"del_{idx}"):
-                    st.session_state.words.pop(idx)
-                    reset_progress()
-                    st.toast("Ordet raderades!")
-                    st.rerun()
-    else:
-        st.info("Inga glosor i listan just nu.")
-
-    if st.button(f"⚠️ Återställ till standardordlistan (Svenska-{target_lang_name})", use_container_width=True):
-        st.session_state.words = DEFAULT_WORDS.copy()
-        st.session_state.current_bank = "(Ingen - Använd egen lista)"
-        reset_progress()
-        st.success("Återställde till standardordlistan!")
-        st.rerun()
+                # Hindra radering om det bara finns en lista kvar
+                if len(all_lists) > 1:
+                    if st.button("Radera", key=f"del_list_{list_name}"):
+                        st.session_state.library.pop(list_name)
+                        # Om den raderade listan var den aktiva, ladda en annan
+                        if st.session_state.current_list_name == list_name:
+                            new_active = list(st.session_state.library.keys())[0]
+                            st.session_state.current_list_name = new_active
+                            st.session_state.words = st.session_state.library[new_active]["words"].copy()
+                            st.session_state.target_language = st.session_state.library[new_active]["language"]
+                            reset_progress()
+                        st.toast(f"Listan '{list_name}' togs bort från biblioteket!")
+                        st.rerun()
+                else:
+                    st.caption("Kan ej raderas")
