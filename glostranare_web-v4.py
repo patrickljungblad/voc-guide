@@ -125,6 +125,27 @@ PERMANENT_LIBRARY = {
             {"svenska": "liten", "utlandska": "pequeño"},
             {"svenska": "person", "utlandska": "persona"}
         ]
+    },
+    "Spanska nybörjare - v. 36": {
+        "language": "Spanska",
+        "words": [
+            {"svenska": "bok", "utlandska": "libro"},
+            {"svenska": "blyertspenna", "utlandska": "lápiz"},
+            {"svenska": "bläckpenna", "utlandska": "bolígrafo"},
+            {"svenska": "skrivhäfte", "utlandska": "cuaderno"},
+            {"svenska": "ett papper (pappersark)", "utlandska": "hoja de papel"},
+            {"svenska": "ryggsäck", "utlandska": "mochila"},
+            {"svenska": "skåp", "utlandska": "casilla"},
+            {"svenska": "dator", "utlandska": "computadora, ordenador"},
+            {"svenska": "laddare", "utlandska": "cargador"},
+            {"svenska": "sudd", "utlandska": "goma"},
+            {"svenska": "surfplatta", "utlandska": "tableta"},
+            {"svenska": "tavla", "utlandska": "pizarra"},
+            {"svenska": "god morgon/god dag", "utlandska": "buenos días"},
+            {"svenska": "hej då, farväl", "utlandska": "adios"},
+            {"svenska": "jag är här", "utlandska": "estoy aquí"},
+            {"svenska": "elever", "utlandska": "alumnos"}
+        ]
     }
 }
 # -------------------------------------
@@ -200,18 +221,22 @@ def next_word():
     st.session_state.quiz_options = []
 
 # --- APP DESIGN & GRÄNSSNITT ---
-st.title("🎓 Digitala Glostränaren")
-st.markdown("Välkommen till klassens digitala glostränare! Välj en lista i biblioteket och börja träna utifrån vetenskapliga metoder.")
+st.title("🎓 Glostränaren")
+st.markdown("Välkommen till **Glostränaren**! Öva i din egen takt med vetenskapligt beprövade metoder för språkinlärning. Börja med att **välja en gloslista i vänstermenyn** för att starta din träning!")
 
 # --- SIDOMENY: GLOSBIBLIOTEK ---
 st.sidebar.header("📚 Glosbibliotek")
 
+# Tydlig instruktion för eleverna
+st.sidebar.info("👉 **Börja här!** Välj först den gloslista du vill träna på i menyn nedan:")
+
 # Låt eleverna välja gloslista från biblioteket
 library_options = list(st.session_state.library.keys())
 selected_list = st.sidebar.selectbox(
-    "Välj gloslista att öva på:",
+    "Välj gloslista:",
     library_options,
-    index=library_options.index(st.session_state.current_list_name) if st.session_state.current_list_name in library_options else 0
+    index=library_options.index(st.session_state.current_list_name) if st.session_state.current_list_name in library_options else 0,
+    help="Här väljer du vilket kapitel eller vilken ordlista du vill träna på just nu."
 )
 
 # Om användaren byter lista i biblioteket, ladda in den direkt
@@ -226,6 +251,19 @@ if selected_list != st.session_state.current_list_name:
 target_lang_name = st.session_state.target_language
 
 st.sidebar.markdown("---")
+
+# Visa statistik (Dina framsteg) ovanför träningsinställningarna
+st.sidebar.subheader("📊 Dina framsteg")
+st.sidebar.write(f"Ord i listan: **{len(st.session_state.words)}**")
+if st.session_state.total_answered > 0:
+    pct = int((st.session_state.score / st.session_state.total_answered) * 100)
+    st.sidebar.write(f"Rätt svar: **{st.session_state.score}** av **{st.session_state.total_answered}** ({pct}%)")
+else:
+    st.sidebar.write("Rätt svar: **0**")
+
+st.sidebar.markdown("---")
+
+# Träningsinställningar (träningsriktning) placerade nedanför framsteg
 st.sidebar.subheader("⚙️ Träningsinställningar")
 
 # Välj träningsriktning i dropdown (selectbox) med dynamiskt språknamn
@@ -235,17 +273,9 @@ direction_label_2 = f"{target_lang_name} ➔ Svenska"
 direction = st.sidebar.selectbox(
     "Välj träningsriktning:",
     (direction_label_1, direction_label_2),
-    on_change=reset_progress
+    on_change=reset_progress,
+    help="Välj om du vill öva från svenska till målspråket, eller tvärtom."
 )
-
-# Visa statistik
-st.sidebar.subheader("📊 Dina framsteg")
-st.sidebar.write(f"Ord i listan: **{len(st.session_state.words)}**")
-if st.session_state.total_answered > 0:
-    pct = int((st.session_state.score / st.session_state.total_answered) * 100)
-    st.sidebar.write(f"Rätt svar: **{st.session_state.score}** av **{st.session_state.total_answered}** ({pct}%)")
-else:
-    st.sidebar.write("Rätt svar: **0**")
 
 if st.sidebar.button("🔄 Nollställ framsteg", use_container_width=True):
     reset_progress()
