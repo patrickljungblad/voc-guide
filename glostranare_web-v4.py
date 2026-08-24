@@ -347,7 +347,7 @@ else:
 
     # ================= TAB 3: SKRIVTRÄNING =================
     with tab3:
-        st.subheader("✍️ Skriv och stanna rätt")
+        st.subheader("✍️ Skriv och stava rätt")
         st.markdown("Aktiv återkallning är den mest effektiva metoden för att lära sig glosor utantill.")
 
         st.markdown(f"Översätt ordet: <h3 style='display:inline;'>{current_word[prompt_lang].upper()}</h3>", unsafe_allow_html=True)
@@ -386,7 +386,7 @@ else:
                     st.session_state.score += 1
                     st.success(f"🎉 Strålande! **{current_word[prompt_lang].upper()}** stavas mycket riktigt **{target_word.upper()}**.")
                 else:
-                    st.error(f"❌ Tyvärr fel ställt eller fel ord. Det korrekta svaret är **{target_word.upper()}**.")
+                    st.error(f"❌ Tyvärr felstavat eller fel ord. Det korrekta svaret är **{target_word.upper()}**.")
 
         if st.button("Nästa ord ➔", key="next_write", use_container_width=True):
             next_word()
@@ -414,9 +414,210 @@ with tab4:
         st.info("🔓 Du är inloggad som lärare.")
         if st.button("🔒 Logga ut (Lås panelen)"):
             st.session_state.admin_authenticated = False
+            if "printable_test" in st.session_state:
+                del st.session_state.printable_test
             st.rerun()
             
         st.markdown("---")
+
+        # ================= SEKTION: UTSKRIFTSBART GLOSFÖRHÖR =================
+        st.markdown("### 🖨️ Skapa utskriftsbart glosförhör")
+        st.markdown("Här kan du generera ett professionellt provblad redo att skrivas ut på papper till dina elever. När du klickar på skriv ut-knappen döljs alla webbmenyer automatiskt på utskriften!")
+        
+        col_p1, col_p2 = st.columns(2)
+        with col_p1:
+            quiz_title = st.text_input("Provrubrik på provbladet:", value=f"Glosförhör - {target_lang_name}")
+            quiz_direction = st.selectbox(
+                "Provriktning:",
+                [f"Svenska ➔ {target_lang_name}", f"{target_lang_name} ➔ Svenska", "Blandat (slumpat)"]
+            )
+        with col_p2:
+            max_words = len(st.session_state.words)
+            quiz_count = st.selectbox(
+                "Antal glosor i förhöret:",
+                ["Alla"] + [i for i in [5, 10, 15, 20, 25, 30, 40, 50] if i <= max_words],
+                index=0
+            )
+            include_answers = st.checkbox("Skapa facit-sida också (separat sida)", value=True)
+            
+        if st.button("📄 Generera utskriftsklart förhör", type="primary", use_container_width=True):
+            if not st.session_state.words:
+                st.error("Det finns inga glosor i din lista att generera prov av!")
+            else:
+                # Blanda glosorna och begränsa antal
+                test_words = st.session_state.words.copy()
+                random.shuffle(test_words)
+                
+                if quiz_count != "Alla":
+                    test_words = test_words[:int(quiz_count)]
+                
+                test_html = ""
+                facit_html = ""
+                
+                # CSS för provbladsutskrift
+                style_block = """
+                <style>
+                @media print {
+                    /* Dölj helt alla Streamlit-element, knappar och tabbar */
+                    header, [data-testid="stSidebar"], [data-testid="stHeader"], 
+                    .stAppDeployButton, [data-testid="stDecoration"], button, 
+                    .print-hide, .stTabs, hr, iframe {
+                        display: none !important;
+                    }
+                    /* Återställ provbladsstilen för utskrift på papper */
+                    .print-container {
+                        border: none !important;
+                        box-shadow: none !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        background: white !important;
+                        color: black !important;
+                    }
+                    .page-break {
+                        page-break-before: always !important;
+                    }
+                }
+                .print-container {
+                    background-color: white;
+                    color: black;
+                    padding: 40px;
+                    border: 1px solid #ddd;
+                    border-radius: 5px;
+                    font-family: 'Courier New', Courier, monospace, Arial, sans-serif;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+                    margin-top: 20px;
+                    margin-bottom: 20px;
+                }
+                .print-title {
+                    font-size: 26px;
+                    font-weight: bold;
+                    text-align: center;
+                    margin-bottom: 30px;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                }
+                .print-student-info {
+                    margin-bottom: 35px;
+                    font-size: 15px;
+                    line-height: 1.8;
+                }
+                .info-line {
+                    border-bottom: 1px solid black;
+                    display: inline-block;
+                    width: 180px;
+                    margin-right: 20px;
+                }
+                .quiz-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                }
+                .quiz-row {
+                    border-bottom: 1px dashed #bbb;
+                    height: 50px;
+                }
+                .quiz-num {
+                    width: 50px;
+                    font-weight: bold;
+                    font-size: 18px;
+                }
+                .quiz-prompt {
+                    width: 250px;
+                    font-size: 18px;
+                }
+                .quiz-answer-line {
+                    border-bottom: 1px solid #000;
+                    display: inline-block;
+                    width: 300px;
+                    height: 25px;
+                }
+                .quiz-answer-text {
+                    font-size: 18px;
+                    font-weight: bold;
+                    color: #d32f2f;
+                }
+                </style>
+                """
+                
+                # Generera Elevprov
+                test_html += style_block
+                test_html += "<div class='print-container'>"
+                test_html += f"<div class='print-title'>{quiz_title}</div>"
+                test_html += f"""
+                <div class='print-student-info'>
+                    Elevens namn: <span class='info-line'></span>
+                    Klass/Grupp:  <span class='info-line'></span>
+                    Datum:        <span class='info-line'></span>
+                    <br>
+                    <b>Poäng: ________ av {len(test_words)} rätt</b>
+                </div>
+                """
+                test_html += "<table class='quiz-table'>"
+                
+                for idx, w in enumerate(test_words, 1):
+                    # Prompt-hantering baserat på vald riktning
+                    if quiz_direction == f"Svenska ➔ {target_lang_name}":
+                        p_word = w["svenska"]
+                    elif quiz_direction == f"{target_lang_name} ➔ Svenska":
+                        p_word = w["utlandska"]
+                    else:
+                        # Slumpa riktning per ord i provet
+                        if random.choice([True, False]):
+                            p_word = w["svenska"] + f" (➔ {target_lang_name})"
+                        else:
+                            p_word = w["utlandska"] + " (➔ Svenska)"
+                    
+                    test_html += f"""
+                    <tr class='quiz-row'>
+                        <td class='quiz-num'>{idx}.</td>
+                        <td class='quiz-prompt'>{p_word}</td>
+                        <td><span class='quiz-answer-line'></span></td>
+                    </tr>
+                    """
+                test_html += "</table>"
+                test_html += "</div>"
+                
+                # Generera Lärarfacit
+                if include_answers:
+                    facit_html += "<div class='print-container page-break'>"
+                    facit_html += f"<div class='print-title'>FACIT: {quiz_title}</div>"
+                    facit_html += "<table class='quiz-table'>"
+                    
+                    for idx, w in enumerate(test_words, 1):
+                        facit_html += f"""
+                        <tr class='quiz-row'>
+                            <td class='quiz-num'>{idx}.</td>
+                            <td class='quiz-prompt' style='color:#555;'>Svenska: <b>{w["svenska"]}</b></td>
+                            <td>{target_lang_name}: <span class='quiz-answer-text'>{w["utlandska"]}</span></td>
+                        </tr>
+                        """
+                    facit_html += "</table>"
+                    facit_html += "</div>"
+                
+                st.session_state.printable_test = test_html + facit_html
+                st.toast("Glosförhör har genererats!")
+                st.rerun()
+                
+        # Visa förhandsgranskning om det finns skapat
+        if "printable_test" in st.session_state:
+            st.success("📝 Utskriftsklart förhör finns redo nedan!")
+            
+            col_b1, col_b2 = st.columns(2)
+            with col_b1:
+                # Lägg in en knapp som anropar window.print()
+                st.markdown(
+                    '<button onclick="window.print()" class="print-hide" style="width:100%; height:42px; border-radius:5px; background-color:#10B981; color:white; border:none; font-weight:bold; cursor:pointer;">🖨️ Öppna utskriftsdialogen</button>',
+                    unsafe_allow_html=True
+                )
+            with col_b2:
+                if st.button("❌ Radera genererat förhör", use_container_width=True):
+                    del st.session_state.printable_test
+                    st.rerun()
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            # Förhandsgranskning av provet
+            st.markdown(st.session_state.printable_test, unsafe_allow_html=True)
+            st.markdown("---")
         st.markdown("### ➕ Lägg till en ny gloslista i biblioteket")
         st.markdown("Här kan du bygga upp ett bibliotek av listor för dina elever (t.ex. 'Kapitel 1', 'Vecka 38', 'Engelska - Djur'). De dyker genast upp i elevernas rullgardinsmeny!")
 
