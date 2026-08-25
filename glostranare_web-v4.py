@@ -241,6 +241,30 @@ if "target_language" not in st.session_state:
     st.session_state.target_language = "Engelska"
 
 # Initiera spelmekanik
+if "leitner_boxes" not in st.session_state:
+    st.session_state.leitner_boxes = {}
+
+# Helper-funktioner för Leitner-lådssystemet
+def get_word_box(word_sv):
+    if "leitner_boxes" not in st.session_state:
+        st.session_state.leitner_boxes = {}
+    key = f"{st.session_state.current_list_name}_{word_sv}"
+    return st.session_state.leitner_boxes.get(key, 1)
+
+def update_word_box(word_sv, is_correct):
+    if "leitner_boxes" not in st.session_state:
+        st.session_state.leitner_boxes = {}
+    key = f"{st.session_state.current_list_name}_{word_sv}"
+    current_box = st.session_state.leitner_boxes.get(key, 1)
+    if is_correct:
+        if current_box == 1:
+            st.session_state.leitner_boxes[key] = 2
+        elif current_box == 2:
+            st.session_state.leitner_boxes[key] = 3
+    else:
+        # Vid fel faller ordet tillbaka till Låda 1 för mer intensiv träning (klassiskt Leitner-system)
+        st.session_state.leitner_boxes[key] = 1
+
 if "shuffled_order" not in st.session_state or len(st.session_state.shuffled_order) != len(st.session_state.words):
     st.session_state.shuffled_order = list(range(len(st.session_state.words)))
     random.shuffle(st.session_state.shuffled_order)
@@ -281,6 +305,12 @@ def reset_progress():
     st.session_state.hint_count = 0
     st.session_state.quiz_options = []
     st.session_state.failed_attempts = {}
+    
+    # Återställ Leitner-lådor för den aktiva listan till Låda 1
+    if "leitner_boxes" in st.session_state:
+        keys_to_remove = [k for k in st.session_state.leitner_boxes if k.startswith(f"{st.session_state.current_list_name}_")]
+        for k in keys_to_remove:
+            st.session_state.leitner_boxes[k] = 1
 
 # Funktion för att hämta nuvarande ord baserat på den blandade listan
 def get_current_word():
@@ -359,6 +389,34 @@ if st.session_state.total_answered > 0:
 else:
     st.sidebar.write("Rätt svar: **0**")
 
+# Beräkna fördelning i Leitner-lådorna
+box1_count = sum(1 for w in st.session_state.words if get_word_box(w["svenska"]) == 1)
+box2_count = sum(1 for w in st.session_state.words if get_word_box(w["svenska"]) == 2)
+box3_count = sum(1 for w in st.session_state.words if get_word_box(w["svenska"]) == 3)
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("📦 Gloslådor (Leitner)")
+st.sidebar.markdown(f"""
+<div style='display: flex; gap: 4px; margin-bottom: 5px;'>
+    <div style='flex: 1; background-color: #FEE2E2; border: 1px solid #FCA5A5; border-radius: 6px; padding: 6px 4px; text-align: center;'>
+        <span style='font-size: 1.1rem;'>🔴</span><br>
+        <b style='color: #991B1B; font-size: 0.75rem; display:block; margin: 2px 0;'>Låda 1</b>
+        <span style='color: #991B1B; font-size: 1rem; font-weight: bold;'>{box1_count}</span>
+    </div>
+    <div style='flex: 1; background-color: #FEF3C7; border: 1px solid #FCD34D; border-radius: 6px; padding: 6px 4px; text-align: center;'>
+        <span style='font-size: 1.1rem;'>🟡</span><br>
+        <b style='color: #92400E; font-size: 0.75rem; display:block; margin: 2px 0;'>Låda 2</b>
+        <span style='color: #92400E; font-size: 1rem; font-weight: bold;'>{box2_count}</span>
+    </div>
+    <div style='flex: 1; background-color: #D1FAE5; border: 1px solid #6EE7B7; border-radius: 6px; padding: 6px 4px; text-align: center;'>
+        <span style='font-size: 1.1rem;'>🟢</span><br>
+        <b style='color: #065F46; font-size: 0.75rem; display:block; margin: 2px 0;'>Låda 3</b>
+        <span style='color: #065F46; font-size: 1rem; font-weight: bold;'>{box3_count}</span>
+    </div>
+</div>
+<p style='font-size: 0.75rem; color: gray; margin-top: 5px; text-align: center;'>Svara rätt i rad för att flytta upp ord till gröna lådan!</p>
+""", unsafe_allow_html=True)
+
 st.sidebar.markdown("---")
 
 # Träningsinställningar (träningsriktning) placerade nedanför framsteg
@@ -383,6 +441,76 @@ direction = st.sidebar.selectbox(
 if st.sidebar.button("🔄 Nollställ framsteg", use_container_width=True):
     reset_progress()
     st.toast("Framsteg nollställda!")
+
+# CSS för att styla orden i Leitner-boxarna anpassat för mörkt/ljust läge
+st.markdown("""
+<style>
+.leitner-card {
+    background-color: #FFFFFF;
+    color: #1E293B;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    font-size: 0.85rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    text-align: center;
+    border-left: 4px solid #E2E8F0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+    .leitner-card {
+        background-color: #1E293B;
+        color: #F8FAFC;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+
+# Beräkna fördelningen för expandern
+main_box1 = [w for w in st.session_state.words if get_word_box(w["svenska"]) == 1]
+main_box2 = [w for w in st.session_state.words if get_word_box(w["svenska"]) == 2]
+main_box3 = [w for w in st.session_state.words if get_word_box(w["svenska"]) == 3]
+
+with st.expander("📦 Se dina gloslådor (Leitner-systemet)"):
+    st.markdown("""
+    Här ser du hur dina ord är fördelade i dina personliga gloslådor. 
+    Svara rätt flera gånger i följd för att flytta upp ordet till **Låda 3 (Grön)**. 
+    Om du svarar fel faller ordet direkt tillbaka till **Låda 1 (Röd)** så att du får öva mer på det!
+    """)
+    
+    col_l1, col_l2, col_l3 = st.columns(3)
+    
+    with col_l1:
+        st.markdown("<div style='background-color: #FEE2E2; border: 2px solid #FCA5A5; border-radius: 12px; padding: 12px; min-height: 200px;'>", unsafe_allow_html=True)
+        st.markdown("<h4 style='color: #991B1B; margin: 0 0 10px 0; text-align:center;'>🔴 Låda 1<br><small style='font-weight:normal; font-size:0.75rem; color:#B91C1C;'>Behöver öva mer</small></h4>", unsafe_allow_html=True)
+        if main_box1:
+            for w in main_box1:
+                st.markdown(f"<div class='leitner-card' style='border-left-color: #EF4444;'><b>{w['svenska']}</b><br><span style='color:gray; font-size:0.75rem;'>{w['utlandska']}</span></div>", unsafe_allow_html=True)
+        else:
+            st.markdown("<p style='text-align:center; color: #991B1B; font-size:0.8rem; font-style:italic; margin-top:20px;'>Tomt! Snyggt jobbat!</p>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+    with col_l2:
+        st.markdown("<div style='background-color: #FEF3C7; border: 2px solid #FCD34D; border-radius: 12px; padding: 12px; min-height: 200px;'>", unsafe_allow_html=True)
+        st.markdown("<h4 style='color: #92400E; margin: 0 0 10px 0; text-align:center;'>🟡 Låda 2<br><small style='font-weight:normal; font-size:0.75rem; color:#D97706;'>Kan sisådär</small></h4>", unsafe_allow_html=True)
+        if main_box2:
+            for w in main_box2:
+                st.markdown(f"<div class='leitner-card' style='border-left-color: #F59E0B;'><b>{w['svenska']}</b><br><span style='color:gray; font-size:0.75rem;'>{w['utlandska']}</span></div>", unsafe_allow_html=True)
+        else:
+            st.markdown("<p style='text-align:center; color: #92400E; font-size:0.8rem; font-style:italic; margin-top:20px;'>Inga ord här än.</p>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+    with col_l3:
+        st.markdown("<div style='background-color: #D1FAE5; border: 2px solid #6EE7B7; border-radius: 12px; padding: 12px; min-height: 200px;'>", unsafe_allow_html=True)
+        st.markdown("<h4 style='color: #065F46; margin: 0 0 10px 0; text-align:center;'>🟢 Låda 3<br><small style='font-weight:normal; font-size:0.75rem; color:#059669;'>Behärskas väl</small></h4>", unsafe_allow_html=True)
+        if main_box3:
+            for w in main_box3:
+                st.markdown(f"<div class='leitner-card' style='border-left-color: #10B981;'><b>{w['svenska']}</b><br><span style='color:gray; font-size:0.75rem;'>{w['utlandska']}</span></div>", unsafe_allow_html=True)
+        else:
+            st.markdown("<p style='text-align:center; color: #065F46; font-size:0.8rem; font-style:italic; margin-top:20px;'>Inga ord avklarade än.</p>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
 
 # Skapa tab-paneler för de olika träningslägena
 tab1, tab2, tab3, tab4 = st.tabs([
@@ -578,7 +706,7 @@ else:
         
         with st.form("quiz_form"):
             selected_option = st.radio("Välj ett alternativ:", st.session_state.quiz_options, index=None)
-            submit_quiz = st.form_submit_button("Skicka svar", use_container_width=True)
+            submit_quiz = st.form_submit_button("Rätta mitt svar", use_container_width=True)
 
             if submit_quiz:
                 if selected_option is None:
@@ -589,9 +717,11 @@ else:
                     if selected_option == correct_answer:
                         st.session_state.score += 1
                         st.session_state.failed_attempts[current_word["svenska"]] = 0 # Nollställ försök vid rätt svar
+                        update_word_box(current_word["svenska"], True) # Uppdatera Leitner-boxen
                         st.success(f"🎉 Rätt! **{current_word[prompt_lang]}** betyder **{correct_answer}**.")
                     else:
                         st.session_state.failed_attempts[current_word["svenska"]] = st.session_state.failed_attempts.get(current_word["svenska"], 0) + 1
+                        update_word_box(current_word["svenska"], False) # Svarar man fel flyttas ordet till Låda 1
                         st.error(f"❌ Fel. Det rätta svaret är **{correct_answer}**.")
 
         # Visa inlärningsstrategi om eleven svarat fel flera gånger (>= 2) [25, 261]
@@ -643,9 +773,11 @@ else:
                 if student_answer == correct_answer:
                     st.session_state.score += 1
                     st.session_state.failed_attempts[current_word["svenska"]] = 0 # Nollställ försök vid rätt svar
+                    update_word_box(current_word["svenska"], True) # Uppdatera Leitner-boxen
                     st.success(f"🎉 Strålande! **{current_word[prompt_lang]}** stavas mycket riktigt **{target_word}**.")
                 else:
                     st.session_state.failed_attempts[current_word["svenska"]] = st.session_state.failed_attempts.get(current_word["svenska"], 0) + 1
+                    update_word_box(current_word["svenska"], False) # Svarar man fel flyttas ordet till Låda 1
                     st.error(f"❌ Tyvärr felstavat eller fel ord. Det korrekta svaret är **{target_word}**.")
 
         # Visa inlärningsstrategi om eleven svarat fel flera gånger (>= 2) [25, 261]
