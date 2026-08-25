@@ -230,6 +230,12 @@ if "current_list_name" not in st.session_state:
 if "direction_mode" not in st.session_state:
     st.session_state.direction_mode = "Svenska ➔ Målspråk"
 
+if "mn_direction" not in st.session_state:
+    st.session_state.mn_direction = st.session_state.direction_mode
+
+if "sb_direction" not in st.session_state:
+    st.session_state.sb_direction = st.session_state.direction_mode
+
 if "target_language" not in st.session_state:
     st.session_state.target_language = "Engelska"
 
@@ -304,13 +310,13 @@ with col_info:
 with col_sel:
     def sync_from_main():
         st.session_state.direction_mode = st.session_state.mn_direction
+        st.session_state.sb_direction = st.session_state.mn_direction
         reset_progress()
 
     st.selectbox(
         "Träningsriktning:",
         ("Svenska ➔ Målspråk", "Målspråk ➔ Svenska"),
         key="mn_direction",
-        index=0 if st.session_state.direction_mode == "Svenska ➔ Målspråk" else 1,
         label_visibility="collapsed",
         on_change=sync_from_main,
     )
@@ -362,13 +368,13 @@ direction_label_2 = "Målspråk ➔ Svenska"
 
 def sync_from_sidebar():
     st.session_state.direction_mode = st.session_state.sb_direction
+    st.session_state.mn_direction = st.session_state.sb_direction
     reset_progress()
 
 direction = st.sidebar.selectbox(
     "Välj träningsriktning:",
     (direction_label_1, direction_label_2),
     key="sb_direction",
-    index=0 if st.session_state.direction_mode == direction_label_1 else 1,
     on_change=sync_from_sidebar,
     help="Välj om du vill öva från svenska till målspråket, eller tvärtom."
 )
@@ -409,15 +415,21 @@ else:
         st.subheader("Träna med digitala ordkort")
         st.markdown("Se det markerade ordet, tänk efter vad det betyder, och klicka direkt på kortet för att vända det.")
         
-        # Inbädda fullständig CSS för den vackra 3D-animations-kortet
+        # Inbädda fullständig CSS för den vackra 3D-animations-kortet och osynlig overlay-knapp
         st.markdown("""
             <style>
-            .flashcard-wrapper {
-                perspective: 1000px;
+            .flashcard-container-outer {
+                position: relative;
                 width: 100%;
                 max-width: 500px;
                 height: 250px;
                 margin: 20px auto;
+                z-index: 1;
+            }
+            .flashcard-wrapper {
+                perspective: 1000px;
+                width: 100%;
+                height: 100%;
                 cursor: pointer;
             }
             .flashcard-inner {
@@ -447,10 +459,6 @@ else:
                 padding: 20px;
                 background-color: #FFFFFF;
                 transition: box-shadow 0.3s ease;
-            }
-            .flashcard-wrapper:hover .flashcard-front,
-            .flashcard-wrapper:hover .flashcard-back {
-                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             }
             .flashcard-front {
                 color: #1E3A8A;
@@ -502,30 +510,87 @@ else:
                     color: #64748B !important;
                 }
             }
+            
+            /* --- CSS FOR EXQUISITE STREAMLIT OVERLAY CLICK SYNC --- */
+            /* Target the element container that contains our flashcard outer wrapper */
+            div[data-testid="element-container"]:has(.flashcard-container-outer) {
+                position: relative;
+                z-index: 1;
+            }
+            
+            /* Pull up the Streamlit button container that comes immediately after to overlay on top */
+            div[data-testid="element-container"]:has(.flashcard-container-outer) + div[data-testid="element-container"] {
+                position: relative;
+                margin-top: -270px !important; /* Pull up 250px height + 20px margin */
+                height: 250px !important;
+                z-index: 10 !important;
+            }
+            
+            /* Style the overlay button to be completely invisible but clickable */
+            div[data-testid="element-container"]:has(.flashcard-container-outer) + div[data-testid="element-container"] button {
+                width: 100% !important;
+                max-width: 500px !important;
+                height: 250px !important;
+                margin: 0 auto !important;
+                display: block !important;
+                background: transparent !important;
+                border: none !important;
+                color: transparent !important;
+                box-shadow: none !important;
+                cursor: pointer !important;
+                outline: none !important;
+                transition: none !important;
+            }
+            
+            /* Clean focus, active, and hover states for the invisible overlay button */
+            div[data-testid="element-container"]:has(.flashcard-container-outer) + div[data-testid="element-container"] button:hover,
+            div[data-testid="element-container"]:has(.flashcard-container-outer) + div[data-testid="element-container"] button:active,
+            div[data-testid="element-container"]:has(.flashcard-container-outer) + div[data-testid="element-container"] button:focus {
+                background: transparent !important;
+                border: none !important;
+                color: transparent !important;
+                box-shadow: none !important;
+                outline: none !important;
+            }
+            
+            /* Trigger beautiful card hover shadow effects when the user hovers over either container */
+            div[data-testid="element-container"]:has(.flashcard-container-outer):hover .flashcard-front,
+            div[data-testid="element-container"]:has(.flashcard-container-outer):hover .flashcard-back,
+            div[data-testid="element-container"]:has(.flashcard-container-outer):has(+ div[data-testid="element-container"]:hover) .flashcard-front,
+            div[data-testid="element-container"]:has(.flashcard-container-outer):has(+ div[data-testid="element-container"]:hover) .flashcard-back {
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+            }
             </style>
         """, unsafe_allow_html=True)
         
         # Bestäm om kortet ska vara vänt från start baserat på Streamlit state
         is_flipped_class = "flipped" if st.session_state.flashcard_flipped else ""
         
-        # Skapa den interaktiva HTML-kortet med 3D-flip vid klick
+        # Skapa den interaktiva HTML-kortstrukturen
         card_html = f"""
-        <div class="flashcard-wrapper {is_flipped_class}" onclick="this.classList.toggle('flipped')">
-            <div class="flashcard-inner">
-                <div class="flashcard-front">
-                    <h1 class="card-word">{current_word[prompt_lang]}</h1>
-                    <p class="card-lang">({label_prompt})</p>
-                    <p class="card-hint-text">🖱️ Klicka på kortet för att vända</p>
-                </div>
-                <div class="flashcard-back">
-                    <h1 class="card-word-back">{current_word[target_lang]}</h1>
-                    <p class="card-lang">({label_target})</p>
-                    <p class="card-hint-text">🖱️ Klicka på kortet för att vända tillbaka</p>
+        <div class="flashcard-container-outer">
+            <div class="flashcard-wrapper {is_flipped_class}">
+                <div class="flashcard-inner">
+                    <div class="flashcard-front">
+                        <h1 class="card-word">{current_word[prompt_lang]}</h1>
+                        <p class="card-lang">({label_prompt})</p>
+                        <p class="card-hint-text">🖱️ Klicka på kortet för att vända</p>
+                    </div>
+                    <div class="flashcard-back">
+                        <h1 class="card-word-back">{current_word[target_lang]}</h1>
+                        <p class="card-lang">({label_target})</p>
+                        <p class="card-hint-text">🖱️ Klicka på kortet för att vända tillbaka</p>
+                    </div>
                 </div>
             </div>
         </div>
         """
         st.markdown(card_html, unsafe_allow_html=True)
+        
+        # Osynlig Streamlit-knapp som lägger sig exakt ovanpå kortet via CSS-styling
+        if st.button("Klicka för att vända", key="overlay_flip_btn", use_container_width=True):
+            st.session_state.flashcard_flipped = not st.session_state.flashcard_flipped
+            st.rerun()
 
         col1, col2 = st.columns(2)
         with col1:
