@@ -3,6 +3,70 @@ import random
 import json
 import urllib.request
 
+# Spårning och förslag på inlärningsstrategier enligt vetenskapliga principer (Mnemonic & Dual Coding)
+def get_strategy_tip(word_obj, language):
+    sv = word_obj["svenska"].lower().strip()
+    ut = word_obj["utlandska"].lower().strip()
+    
+    # Custom spanska nyckelordstips (Mnemonic Keyword Technique)
+    spanish_tips = {
+        "bok": "**Nyckelordstips:** *libro* låter lite som engelskans *library* (bibliotek) eller spanskans *libre* (fri) [30, 1104]. Föreställ dig en fri bok som flyger ut genom klassrumsfönstret! [247]",
+        "blyertspenna": "**Nyckelordstips:** *lápiz* låter som *lapis* (blå sten) eller som att 'lappa' [15]. Föreställ dig att du ritar röda lappar på din skoldator med en gigantisk blyertspenna! [247]",
+        "bläckpenna": "**Orddelstips:** *bolígrafo* slutar på *-grafo* (skriva), precis som geografi, biografi eller grafit [724]. Det har alltid med skrivande att göra! [27]",
+        "skrivhäfte": "**Nyckelordstips:** *cuaderno* låter lite som *kvadrat* (*cuadrado* på spanska). Föreställ dig ett helt fyrkantigt, kvadratiskt skrivhäfte! [247]",
+        "ett papper (pappersark)": "**Associationstips:** *hoja de papel* – *papel* känner du igen, och *hoja* betyder egentligen blad (som på ett träd). Ett papper är helt enkelt ett pappersblad!",
+        "ryggsäck": "**Nyckelordstips:** *mochila* låter som *mojito* eller att *mucka*. Föreställ dig en hel mojito (läsk) som läcker i din ryggsäck! [247]",
+        "skåp": "**Associationstips:** *casilla* låter som *casa* (hus) eller *kasse*. Föreställ dig en kasse som du låser in i ditt skolkåp!",
+        "dator": "**Kognat-tips:** *computadora* är nästan identiskt med engelskans *computer* [30, 957]. Enkel kognat! *Ordenador* låter som att 'ordna' – datorn ordnar dina filer.",
+        "laddare": "**Kognat-tips:** *cargador* hänger ihop med engelskans *charge* (ladda) [1]. En *cargador* är det du laddar med!",
+        "sudd": "**Kognat-tips:** *goma* låter som *gummi* (suddgummi) [1, 919]. Tänk dig ett stort suddgummi av tuggummi!",
+        "surfplatta": "**Kognat-tips:** *tableta* låter som *tablett* (en liten platta eller medicin) [30]. Superlätt kognat!",
+        "tavla": "**Nyckelordstips:** *pizarra* låter lite som *pizzor*. Föreställ dig att klassrummets tavla är gjord av en gigantisk, rund pizza! [247]",
+        "god morgon/god dag": "**Orddelstips:** *buenos días* – *buenos* betyder bra, och *días* betyder dagar. 'Bra dagar' = god dag!",
+        "hej då, farväl": "**Associationstips:** *adiós* kommer historiskt från 'A Dios' (till Gud) – en klassisk hälsning när man går.",
+        "jag är här": "**Nyckelordstips:** *estoy aquí* – *estoy* betyder 'jag är' och *aquí* betyder 'här'. Tänk på akvarium – 'jag är här i akvariet!'",
+        "elever": "**Associationstips:** *alumnos* låter som *alumni* (tidigare elever) eller ordet *alumn*. Det betyder helt enkelt elever!",
+        "hund": "**Nyckelordstips:** *perro* låter lite som *pärla*. Föreställ dig en fluffig hund som bär ett glittrande pärlhalsband! [249, 1235]",
+        "katt": "**Kognat-tips:** *gato* är besläktat med engelskans *cat* och tyskans *Katze* [30]. Tänk dig en katt i en hög svart hatt!",
+        "äpple": "**Nyckelordstips:** *manzana* låter lite som *manschett*. Föreställ dig ett rött äpple som har små fina skjortmanschetter runt stjälken! [247]",
+        "vän": "**Associationstips:** *amigo* känner du säkert igen! Det hänger ihop med amor (kärlek) och spanskans ord för vänskap. En riktig kompis!",
+        "hus": "**Associationstips:** *casa* – tänk på *casablanca* (vitt hus) eller *husbil* (*caravan*). *Casa* = hus!",
+        "tid": "**Kognat-tips:** *tiempo* låter som engelskans *tempo* eller *time*. Tempo handlar om tid!"
+    }
+    
+    # Custom engelska nyckelordstips (Top 50)
+    english_tips = {
+        "tid": "**Kognat-tips:** *time* stavas nästan som tid och uttalas nästan likadant! [30]",
+        "år": "**Associationstips:** *year* – tänk på nyår (*New Year*) eller födelsedag (*birthday*).",
+        "folk": "**Associationstips:** *people* – tänk på 'pöbel' eller engelskans populära *people*.",
+        "sätt": "**Associationstips:** *way* – tänk på *highway* (motorväg) eller 'on my way' (på min väg/mitt sätt).",
+        "dag": "**Kognat-tips:** *day* är en enkel kognat. Det låter nästan som det svenska ordet dag! [30]",
+        "sak": "**Associationstips:** *thing* – tänk på 'ingenting' (*nothing*) eller 'någonting' (*something*) – *thing* är en sak!",
+        "man": "**Kognat-tips:** *man* stavas och betyder exakt samma sak på engelska! [30]",
+        "värld": "**Associationstips:** *world* – tänk på världskarta (*World Map*) eller *World Wide Web* (www).",
+        "liv": "**Associationstips:** *life* – tänk på livvakt (*lifeguard*) eller livsstil (*lifestyle*).",
+        "skola": "**Kognat-tips:** *school* är mycket likt svenska skola! Enkel kognat [30].",
+        "familj": "**Kognat-tips:** *family* är mycket likt svenskans familj. Enkel kognat [30].",
+        "student": "**Kognat-tips:** *student* stavas och betyder exakt samma sak på engelska! [30]",
+        "land": "**Associationstips:** *country* – tänk på countrymusik (landsbygdsmusik) eller *countryside*.",
+        "problem": "**Kognat-tips:** *problem* stavas och betyder exakt samma sak på engelska! [30]",
+        "hand": "**Kognat-tips:** *hand* stavas och betyder exakt samma sak på engelska! [30]",
+        "del": "**Associationstips:** *part* – tänk på partner eller att ta del av en 'part' (en bit).",
+        "plats": "**Kognat-tips:** *place* är mycket likt svenskans 'plats'. Tänk på marknadsplats (*marketplace*) [30].",
+        "vecka": "**Associationstips:** *week* – tänk på helg (*weekend*) eller veckodag (*weekday*).",
+        "arbete": "**Associationstips:** *work* – mycket likt svenskans verk/verksamhet. *Work* = arbete!",
+        "system": "**Kognat-tips:** *system* stavas och betyder exakt samma sak på engelska! [30]"
+    }
+    
+    if language.lower() == "spanska" and sv in spanish_tips:
+        return spanish_tips[sv]
+    elif language.lower() == "engelska" and sv in english_tips:
+        return english_tips[sv]
+    
+    # Generellt tips om det saknas specifik källkod
+    return f"**Nyckelordsmetoden:** Prova att hitta ett svenskt ord som låter som det utländska ordet '{ut}'. Föreställ dig sedan en rolig eller konstig bild i huvudet där det ordet kopplas ihop med betydelsen '{sv}'! Det hjälper hjärnan att bygga en stark form-betydelse-bro [31, 247]."
+
+
 # Sätt sidkonfiguration
 st.set_page_config(
     page_title="Digitala Glostränaren",
@@ -192,6 +256,10 @@ if "quiz_options" not in st.session_state:
 if "quiz_correct_index" not in st.session_state:
     st.session_state.quiz_correct_index = -1
 
+# Spåra felaktiga försök per ord för att erbjuda strategier [25, 261]
+if "failed_attempts" not in st.session_state:
+    st.session_state.failed_attempts = {}
+
 # Funktion för att nollställa framsteg och blanda om ordningen
 def reset_progress():
     st.session_state.shuffled_order = list(range(len(st.session_state.words)))
@@ -202,6 +270,7 @@ def reset_progress():
     st.session_state.flashcard_flipped = False
     st.session_state.hint_count = 0
     st.session_state.quiz_options = []
+    st.session_state.failed_attempts = {}
 
 # Funktion för att hämta nuvarande ord baserat på den blandade listan
 def get_current_word():
@@ -266,9 +335,9 @@ st.sidebar.markdown("---")
 # Träningsinställningar (träningsriktning) placerade nedanför framsteg
 st.sidebar.subheader("⚙️ Träningsinställningar")
 
-# Välj träningsriktning i dropdown (selectbox) med dynamiskt språknamn
-direction_label_1 = f"Svenska ➔ {target_lang_name}"
-direction_label_2 = f"{target_lang_name} ➔ Svenska"
+# Välj träningsriktning i dropdown (selectbox) med ett generellt och stabilt målspråksnamn
+direction_label_1 = "Svenska ➔ Målspråk"
+direction_label_2 = "Målspråk ➔ Svenska"
 
 direction = st.sidebar.selectbox(
     "Välj träningsriktning:",
@@ -296,7 +365,7 @@ else:
     current_word = get_current_word()
     
     # Bestäm källtext och målsvar baserat på vald riktning och språknamn
-    if direction == direction_label_1:
+    if direction == "Svenska ➔ Målspråk":
         prompt_lang = "svenska"
         target_lang = "utlandska"
         label_prompt = "Svenska"
@@ -314,12 +383,42 @@ else:
         
         card_container = st.container(border=True)
         with card_container:
+            # CSS för att hantera mörkt läge automatiskt i webbläsaren
+            st.markdown("""
+                <style>
+                .flashcard-title-front {
+                    text-align: center; 
+                    color: #1E3A8A; 
+                    font-size: 2.5rem;
+                    font-weight: bold;
+                    margin: 0;
+                    padding: 0;
+                }
+                .flashcard-title-back {
+                    text-align: center; 
+                    color: #10B981; 
+                    font-size: 2.5rem;
+                    font-weight: bold;
+                    margin: 0;
+                    padding: 0;
+                }
+                @media (prefers-color-scheme: dark) {
+                    .flashcard-title-front {
+                        color: #60A5FA !important; /* Ljusblå som syns utmärkt i mörkt läge */
+                    }
+                    .flashcard-title-back {
+                        color: #34D399 !important; /* Klargrön som syns utmärkt i mörkt läge */
+                    }
+                }
+                </style>
+            """, unsafe_allow_html=True)
+            
             st.markdown("<br>", unsafe_allow_html=True)
             if not st.session_state.flashcard_flipped:
-                st.markdown(f"<h1 style='text-align: center; color: #1E3A8A;'>{current_word[prompt_lang].upper()}</h1>", unsafe_allow_html=True)
+                st.markdown(f"<h1 class='flashcard-title-front'>{current_word[prompt_lang].upper()}</h1>", unsafe_allow_html=True)
                 st.markdown(f"<p style='text-align: center; color: gray;'>({label_prompt})</p>", unsafe_allow_html=True)
             else:
-                st.markdown(f"<h1 style='text-align: center; color: #10B981;'>{current_word[target_lang].upper()}</h1>", unsafe_allow_html=True)
+                st.markdown(f"<h1 class='flashcard-title-back'>{current_word[target_lang].upper()}</h1>", unsafe_allow_html=True)
                 st.markdown(f"<p style='text-align: center; color: gray;'>({label_target})</p>", unsafe_allow_html=True)
             st.markdown("<br>", unsafe_allow_html=True)
 
@@ -367,10 +466,17 @@ else:
                     correct_answer = current_word[target_lang]
                     if selected_option == correct_answer:
                         st.session_state.score += 1
+                        st.session_state.failed_attempts[current_word["svenska"]] = 0 # Nollställ försök vid rätt svar
                         st.success(f"🎉 Rätt! **{current_word[prompt_lang].upper()}** betyder **{correct_answer.upper()}**.")
                     else:
+                        st.session_state.failed_attempts[current_word["svenska"]] = st.session_state.failed_attempts.get(current_word["svenska"], 0) + 1
                         st.error(f"❌ Fel. Det rätta svaret är **{correct_answer.upper()}**.")
 
+        # Visa inlärningsstrategi om eleven svarat fel flera gånger (>= 2) [25, 261]
+        failed_count_quiz = st.session_state.failed_attempts.get(current_word["svenska"], 0)
+        if failed_count_quiz >= 2:
+            st.info(f"💡 **Behöver du hjälp att minnas?** Prova den här strategin för ordet:\n\n{get_strategy_tip(current_word, target_lang_name)}")
+        
         if st.button("Nästa fråga ➔", key="next_quiz", use_container_width=True):
             next_word()
             st.rerun()
@@ -414,10 +520,17 @@ else:
 
                 if student_answer == correct_answer:
                     st.session_state.score += 1
+                    st.session_state.failed_attempts[current_word["svenska"]] = 0 # Nollställ försök vid rätt svar
                     st.success(f"🎉 Strålande! **{current_word[prompt_lang].upper()}** stavas mycket riktigt **{target_word.upper()}**.")
                 else:
+                    st.session_state.failed_attempts[current_word["svenska"]] = st.session_state.failed_attempts.get(current_word["svenska"], 0) + 1
                     st.error(f"❌ Tyvärr felstavat eller fel ord. Det korrekta svaret är **{target_word.upper()}**.")
 
+        # Visa inlärningsstrategi om eleven svarat fel flera gånger (>= 2) [25, 261]
+        failed_count_write = st.session_state.failed_attempts.get(current_word["svenska"], 0)
+        if failed_count_write >= 2:
+            st.info(f"💡 **Behöver du hjälp med stavningen?** Prova den här strategin för ordet:\n\n{get_strategy_tip(current_word, target_lang_name)}")
+        
         if st.button("Nästa ord ➔", key="next_write", use_container_width=True):
             next_word()
             st.rerun()
