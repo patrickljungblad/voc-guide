@@ -2,6 +2,7 @@ import streamlit as st
 import random
 import json
 import urllib.request
+import streamlit.components.v1 as components
 
 # Spårning och förslag på inlärningsstrategier enligt vetenskapliga principer (Mnemonic & Dual Coding)
 def get_strategy_tip(word_obj, language):
@@ -415,35 +416,42 @@ else:
         st.subheader("Träna med digitala ordkort")
         st.markdown("Se det markerade ordet, tänk efter vad det betyder, och klicka direkt på kortet för att vända det.")
         
-        # Inbädda fullständig CSS för den vackra 3D-animations-kortet och osynlig overlay-knapp
-        st.markdown("""
+        # HTML-baserad Flashcard med inbyggd JS-baserad vändning (förhindrar Streamlits knapp-interferens och JavaScript-blockering)
+        card_html_code = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
             <style>
-            .flashcard-container-outer {
-                position: relative;
-                width: 100%;
-                max-width: 500px;
+            body {{
+                margin: 0;
+                padding: 0;
+                background-color: transparent;
+                display: flex;
+                justify-content: center;
+                align-items: center;
                 height: 250px;
-                margin: 20px auto;
-                z-index: 1;
-            }
-            .flashcard-wrapper {
+                overflow: hidden;
+            }}
+            .flashcard-wrapper {{
                 perspective: 1000px;
                 width: 100%;
-                height: 100%;
+                max-width: 460px;
+                height: 220px;
                 cursor: pointer;
-            }
-            .flashcard-inner {
+            }}
+            .flashcard-inner {{
                 position: relative;
                 width: 100%;
                 height: 100%;
                 text-align: center;
                 transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
                 transform-style: preserve-3d;
-            }
-            .flashcard-wrapper.flipped .flashcard-inner {
+            }}
+            .flashcard-wrapper.flipped .flashcard-inner {{
                 transform: rotateY(180deg);
-            }
-            .flashcard-front, .flashcard-back {
+            }}
+            .flashcard-front, .flashcard-back {{
                 position: absolute;
                 width: 100%;
                 height: 100%;
@@ -451,156 +459,100 @@ else:
                 backface-visibility: hidden;
                 border-radius: 16px;
                 border: 2px solid #E2E8F0;
-                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
                 padding: 20px;
+                box-sizing: border-box;
                 background-color: #FFFFFF;
                 transition: box-shadow 0.3s ease;
-            }
-            .flashcard-front {
-                color: #1E3A8A;
-            }
-            .flashcard-back {
-                color: #10B981;
-                transform: rotateY(180deg);
-            }
-            .card-word {
-                font-size: 2.5rem;
+            }}
+            .flashcard-wrapper:hover .flashcard-front,
+            .flashcard-wrapper:hover .flashcard-back {{
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            }}
+            .card-word {{
+                font-size: 2.2rem;
                 font-weight: bold;
                 margin: 0;
                 color: #1E3A8A;
-            }
-            .card-word-back {
-                font-size: 2.5rem;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            }}
+            .card-word-back {{
+                font-size: 2.2rem;
                 font-weight: bold;
                 margin: 0;
                 color: #10B981;
-            }
-            .card-lang {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            }}
+            .card-lang {{
                 color: #64748B;
                 font-size: 0.9rem;
                 margin-top: 8px;
-                margin-bottom: 24px;
-            }
-            .card-hint-text {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            }}
+            .card-hint-text {{
                 color: #94A3B8;
                 font-size: 0.8rem;
                 margin: 0;
                 position: absolute;
-                bottom: 15px;
-            }
-            @media (prefers-color-scheme: dark) {
-                .flashcard-front, .flashcard-back {
+                bottom: 12px;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            }}
+            
+            /* Mörkt läge support baserat på systeminställningar */
+            @media (prefers-color-scheme: dark) {{
+                .flashcard-front, .flashcard-back {{
                     background-color: #1E293B !important;
                     border-color: #334155 !important;
-                }
-                .card-word {
+                }}
+                .card-word {{
                     color: #60A5FA !important;
-                }
-                .card-word-back {
+                }}
+                .card-word-back {{
                     color: #34D399 !important;
-                }
-                .card-lang {
+                }}
+                .card-lang {{
                     color: #94A3B8 !important;
-                }
-                .card-hint-text {
+                }}
+                .card-hint-text {{
                     color: #64748B !important;
-                }
-            }
-            
-            /* --- CSS FOR EXQUISITE STREAMLIT OVERLAY CLICK SYNC --- */
-            /* Target the element container that contains our flashcard outer wrapper */
-            div[data-testid="element-container"]:has(.flashcard-container-outer) {
-                position: relative;
-                z-index: 1;
-            }
-            
-            /* Pull up the Streamlit button container that comes immediately after to overlay on top */
-            div[data-testid="element-container"]:has(.flashcard-container-outer) + div[data-testid="element-container"] {
-                position: relative;
-                margin-top: -270px !important; /* Pull up 250px height + 20px margin */
-                height: 250px !important;
-                z-index: 10 !important;
-            }
-            
-            /* Style the overlay button to be completely invisible but clickable */
-            div[data-testid="element-container"]:has(.flashcard-container-outer) + div[data-testid="element-container"] button {
-                width: 100% !important;
-                max-width: 500px !important;
-                height: 250px !important;
-                margin: 0 auto !important;
-                display: block !important;
-                background: transparent !important;
-                border: none !important;
-                color: transparent !important;
-                box-shadow: none !important;
-                cursor: pointer !important;
-                outline: none !important;
-                transition: none !important;
-            }
-            
-            /* Clean focus, active, and hover states for the invisible overlay button */
-            div[data-testid="element-container"]:has(.flashcard-container-outer) + div[data-testid="element-container"] button:hover,
-            div[data-testid="element-container"]:has(.flashcard-container-outer) + div[data-testid="element-container"] button:active,
-            div[data-testid="element-container"]:has(.flashcard-container-outer) + div[data-testid="element-container"] button:focus {
-                background: transparent !important;
-                border: none !important;
-                color: transparent !important;
-                box-shadow: none !important;
-                outline: none !important;
-            }
-            
-            /* Trigger beautiful card hover shadow effects when the user hovers over either container */
-            div[data-testid="element-container"]:has(.flashcard-container-outer):hover .flashcard-front,
-            div[data-testid="element-container"]:has(.flashcard-container-outer):hover .flashcard-back,
-            div[data-testid="element-container"]:has(.flashcard-container-outer):has(+ div[data-testid="element-container"]:hover) .flashcard-front,
-            div[data-testid="element-container"]:has(.flashcard-container-outer):has(+ div[data-testid="element-container"]:hover) .flashcard-back {
-                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
-            }
+                }}
+            }}
             </style>
-        """, unsafe_allow_html=True)
-        
-        # Bestäm om kortet ska vara vänt från start baserat på Streamlit state
-        is_flipped_class = "flipped" if st.session_state.flashcard_flipped else ""
-        
-        # Skapa den interaktiva HTML-kortstrukturen
-        card_html = f"""
-        <div class="flashcard-container-outer">
-            <div class="flashcard-wrapper {is_flipped_class}">
+        </head>
+        <body>
+            <div class="flashcard-wrapper" id="card" onclick="toggleFlip()">
                 <div class="flashcard-inner">
                     <div class="flashcard-front">
-                        <h1 class="card-word">{current_word[prompt_lang]}</h1>
+                        <p class="card-word">{current_word[prompt_lang]}</p>
                         <p class="card-lang">({label_prompt})</p>
                         <p class="card-hint-text">🖱️ Klicka på kortet för att vända</p>
                     </div>
-                    <div class="flashcard-back">
-                        <h1 class="card-word-back">{current_word[target_lang]}</h1>
+                    <div class="flashcard-back" style="transform: rotateY(180deg);">
+                        <p class="card-word-back">{current_word[target_lang]}</p>
                         <p class="card-lang">({label_target})</p>
-                        <p class="card-hint-text">🖱️ Klicka på kortet för att vända tillbaka</p>
+                        <p class="card-hint-text">🖱️ Klicka för att vända tillbaka</p>
                     </div>
                 </div>
             </div>
-        </div>
-        """
-        st.markdown(card_html, unsafe_allow_html=True)
-        
-        # Osynlig Streamlit-knapp som lägger sig exakt ovanpå kortet via CSS-styling
-        if st.button("Klicka för att vända", key="overlay_flip_btn", use_container_width=True):
-            st.session_state.flashcard_flipped = not st.session_state.flashcard_flipped
-            st.rerun()
 
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("🔄 Vänd kortet (knapp)", use_container_width=True, type="primary"):
-                st.session_state.flashcard_flipped = not st.session_state.flashcard_flipped
-                st.rerun()
-        with col2:
-            if st.button("Nästa kort ➔", use_container_width=True):
-                next_word()
-                st.rerun()
+            <script>
+            function toggleFlip() {{
+                const card = document.getElementById('card');
+                card.classList.toggle('flipped');
+            }}
+            </script>
+        </body>
+        </html>
+        """
+        components.html(card_html_code, height=270)
+
+        if st.button("Nästa kort ➔", use_container_width=True):
+            next_word()
+            st.rerun()
 
     # ================= TAB 2: FLERVALSQUIZ ================
     with tab2:
