@@ -352,7 +352,19 @@ def next_word():
     st.session_state.quiz_options = []
 
 # --- APP DESIGN & GRÄNSSNITT ---
-st.title("🌊 GlosFlow")
+# Custom elegant branding logo for GlosFlow with CSS
+st.markdown("""
+<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+    <div style="background: linear-gradient(135deg, #3b82f6, #10b981); width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
+        <span style="color: white; font-size: 22px; font-weight: 800; font-family: 'Helvetica Neue', Arial, sans-serif;">G</span>
+    </div>
+    <div>
+        <h1 style="margin: 0; font-size: 34px; font-weight: 800; background: linear-gradient(to right, #1e3a8a, #0d9488); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; letter-spacing: -0.5px;">
+            Glos<span style="background: linear-gradient(to right, #0d9488, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Flow</span>
+        </h1>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 st.markdown("Välkommen till **GlosFlow**! Öva i din egen takt med vetenskapligt beprövade metoder för språkinlärning. Börja med att **välja en gloslista i vänstermenyn** för att starta din träning!")
 
@@ -1052,7 +1064,7 @@ else:
                 quiz_title = st.text_input("Provrubrik på provbladet:", value=f"Glosförhör - {target_lang_name}")
                 quiz_direction = st.selectbox(
                     "Provriktning:",
-                    [f"Svenska ➔ {target_lang_name}", f"{target_lang_name} ➔ Svenska", "Blandat (slumpat)"]
+                    ["Svenska ➔ Målspråk", "Målspråk ➔ Svenska", "Blandat (slumpat)"]
                 )
             with col_p2:
                 max_words = len(st.session_state.words)
@@ -1177,9 +1189,9 @@ else:
                     test_html += "<table class='quiz-table'>"
                     for idx, w in enumerate(test_words, 1):
                         # Prompt-hantering baserat på vald riktning
-                        if quiz_direction == f"Svenska ➔ {target_lang_name}":
+                        if quiz_direction == "Svenska ➔ Målspråk":
                             p_word = w["svenska"]
-                        elif quiz_direction == f"{target_lang_name} ➔ Svenska":
+                        elif quiz_direction == "Målspråk ➔ Svenska":
                             p_word = w["utlandska"]
                         else:
                             # Slumpa riktning per ord i provet
@@ -1248,7 +1260,7 @@ else:
             new_list_title = st.text_input("Vad ska denna gloslista heta i biblioteket?", placeholder="t.ex. Spanska - Kapitel 1")
             new_list_lang = st.text_input("Vilket språk övar eleverna på i denna lista?", placeholder="t.ex. Spanska")
             
-            st.markdown("**How vill du läsa in glosorna?**")
+            st.markdown("**Hur vill du läsa in glosorna?**")
             uploaded_file = st.file_uploader("Metod A: Ladda upp en fil (.txt eller .json)", type=["txt", "json"])
             import_text = st.text_area("Metod B: Klistra in fritext direkt", height=120, placeholder="svenska - översättning\nhund - perro\nkatt - gato")
             
