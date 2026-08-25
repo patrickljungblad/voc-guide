@@ -415,10 +415,10 @@ else:
             
             st.markdown("<br>", unsafe_allow_html=True)
             if not st.session_state.flashcard_flipped:
-                st.markdown(f"<h1 class='flashcard-title-front'>{current_word[prompt_lang].upper()}</h1>", unsafe_allow_html=True)
+                st.markdown(f"<h1 class='flashcard-title-front'>{current_word[prompt_lang]}</h1>", unsafe_allow_html=True)
                 st.markdown(f"<p style='text-align: center; color: gray;'>({label_prompt})</p>", unsafe_allow_html=True)
             else:
-                st.markdown(f"<h1 class='flashcard-title-back'>{current_word[target_lang].upper()}</h1>", unsafe_allow_html=True)
+                st.markdown(f"<h1 class='flashcard-title-back'>{current_word[target_lang]}</h1>", unsafe_allow_html=True)
                 st.markdown(f"<p style='text-align: center; color: gray;'>({label_target})</p>", unsafe_allow_html=True)
             st.markdown("<br>", unsafe_allow_html=True)
 
@@ -452,7 +452,7 @@ else:
             st.session_state.quiz_options = options
             st.session_state.quiz_correct_index = options.index(correct_ans)
 
-        st.markdown(f"Vad betyder: **{current_word[prompt_lang].upper()}**?")
+        st.markdown(f"Vad betyder: **{current_word[prompt_lang]}**?")
         
         with st.form("quiz_form"):
             selected_option = st.radio("Välj ett alternativ:", st.session_state.quiz_options, index=None)
@@ -467,10 +467,10 @@ else:
                     if selected_option == correct_answer:
                         st.session_state.score += 1
                         st.session_state.failed_attempts[current_word["svenska"]] = 0 # Nollställ försök vid rätt svar
-                        st.success(f"🎉 Rätt! **{current_word[prompt_lang].upper()}** betyder **{correct_answer.upper()}**.")
+                        st.success(f"🎉 Rätt! **{current_word[prompt_lang]}** betyder **{correct_answer}**.")
                     else:
                         st.session_state.failed_attempts[current_word["svenska"]] = st.session_state.failed_attempts.get(current_word["svenska"], 0) + 1
-                        st.error(f"❌ Fel. Det rätta svaret är **{correct_answer.upper()}**.")
+                        st.error(f"❌ Fel. Det rätta svaret är **{correct_answer}**.")
 
         # Visa inlärningsstrategi om eleven svarat fel flera gånger (>= 2) [25, 261]
         failed_count_quiz = st.session_state.failed_attempts.get(current_word["svenska"], 0)
@@ -486,7 +486,7 @@ else:
         st.subheader("✍️ Skriv och stava rätt")
         st.markdown("Aktiv återkallning är den mest effektiva metoden för att lära sig glosor utantill.")
 
-        st.markdown(f"Översätt ordet: <h3 style='display:inline;'>{current_word[prompt_lang].upper()}</h3>", unsafe_allow_html=True)
+        st.markdown(f"Översätt ordet: <h3 style='display:inline;'>{current_word[prompt_lang]}</h3>", unsafe_allow_html=True)
         
         # Form för enter-stöd vid rättning
         with st.form("write_form"):
@@ -521,10 +521,10 @@ else:
                 if student_answer == correct_answer:
                     st.session_state.score += 1
                     st.session_state.failed_attempts[current_word["svenska"]] = 0 # Nollställ försök vid rätt svar
-                    st.success(f"🎉 Strålande! **{current_word[prompt_lang].upper()}** stavas mycket riktigt **{target_word.upper()}**.")
+                    st.success(f"🎉 Strålande! **{current_word[prompt_lang]}** stavas mycket riktigt **{target_word}**.")
                 else:
                     st.session_state.failed_attempts[current_word["svenska"]] = st.session_state.failed_attempts.get(current_word["svenska"], 0) + 1
-                    st.error(f"❌ Tyvärr felstavat eller fel ord. Det korrekta svaret är **{target_word.upper()}**.")
+                    st.error(f"❌ Tyvärr felstavat eller fel ord. Det korrekta svaret är **{target_word}**.")
 
         # Visa inlärningsstrategi om eleven svarat fel flera gånger (>= 2) [25, 261]
         failed_count_write = st.session_state.failed_attempts.get(current_word["svenska"], 0)
