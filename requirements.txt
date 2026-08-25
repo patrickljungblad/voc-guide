@@ -1,0 +1,5 @@
+# requirements.txt för Glostränaren v23
+# Det här dokumentet innehåller alla nödvändiga Python-paket för att köra appen på livemy.app eller Streamlit Community Cloud.
+
+streamlit>=1.30.0
+pandas>=2.0.0
