@@ -227,6 +227,9 @@ if "words" not in st.session_state:
 if "current_list_name" not in st.session_state:
     st.session_state.current_list_name = "Engelska (Topp 50 vanligaste)"
 
+if "direction_mode" not in st.session_state:
+    st.session_state.direction_mode = "Svenska ➔ Målspråk"
+
 if "target_language" not in st.session_state:
     st.session_state.target_language = "Engelska"
 
@@ -293,6 +296,25 @@ def next_word():
 st.title("🎓 Glostränaren")
 st.markdown("Välkommen till **Glostränaren**! Öva i din egen takt med vetenskapligt beprövade metoder för språkinlärning. Börja med att **välja en gloslista i vänstermenyn** för att starta din träning!")
 
+# Snabbval för träningsriktning direkt vid övningen (om eleven missat den i sidomenyn)
+st.markdown("---")
+col_info, col_sel = st.columns([2, 1])
+with col_info:
+    st.markdown("<p style='margin-top: 10px; font-weight: bold; color: #475569;'>⚙️ Snabbval för träningsriktning:</p>", unsafe_allow_html=True)
+with col_sel:
+    def sync_from_main():
+        st.session_state.direction_mode = st.session_state.mn_direction
+        reset_progress()
+
+    st.selectbox(
+        "Träningsriktning:",
+        ("Svenska ➔ Målspråk", "Målspråk ➔ Svenska"),
+        key="mn_direction",
+        index=0 if st.session_state.direction_mode == "Svenska ➔ Målspråk" else 1,
+        label_visibility="collapsed",
+        on_change=sync_from_main,
+    )
+
 # --- SIDOMENY: GLOSBIBLIOTEK ---
 st.sidebar.header("📚 Glosbibliotek")
 
@@ -335,14 +357,19 @@ st.sidebar.markdown("---")
 # Träningsinställningar (träningsriktning) placerade nedanför framsteg
 st.sidebar.subheader("⚙️ Träningsinställningar")
 
-# Välj träningsriktning i dropdown (selectbox) med ett generellt och stabilt målspråksnamn
 direction_label_1 = "Svenska ➔ Målspråk"
 direction_label_2 = "Målspråk ➔ Svenska"
+
+def sync_from_sidebar():
+    st.session_state.direction_mode = st.session_state.sb_direction
+    reset_progress()
 
 direction = st.sidebar.selectbox(
     "Välj träningsriktning:",
     (direction_label_1, direction_label_2),
-    on_change=reset_progress,
+    key="sb_direction",
+    index=0 if st.session_state.direction_mode == direction_label_1 else 1,
+    on_change=sync_from_sidebar,
     help="Välj om du vill öva från svenska till målspråket, eller tvärtom."
 )
 
@@ -365,6 +392,7 @@ else:
     current_word = get_current_word()
     
     # Bestäm källtext och målsvar baserat på vald riktning och språknamn
+    direction = st.session_state.direction_mode
     if direction == "Svenska ➔ Målspråk":
         prompt_lang = "svenska"
         target_lang = "utlandska"
@@ -379,52 +407,129 @@ else:
     # ================= TAB 1: FLASHCARDS =================
     with tab1:
         st.subheader("Träna med digitala ordkort")
-        st.markdown("Se det markerade ordet, tänk efter vad det betyder, och klicka på kortet för att vända det.")
+        st.markdown("Se det markerade ordet, tänk efter vad det betyder, och klicka direkt på kortet för att vända det.")
         
-        card_container = st.container(border=True)
-        with card_container:
-            # CSS för att hantera mörkt läge automatiskt i webbläsaren
-            st.markdown("""
-                <style>
-                .flashcard-title-front {
-                    text-align: center; 
-                    color: #1E3A8A; 
-                    font-size: 2.5rem;
-                    font-weight: bold;
-                    margin: 0;
-                    padding: 0;
+        # Inbädda fullständig CSS för den vackra 3D-animations-kortet
+        st.markdown("""
+            <style>
+            .flashcard-wrapper {
+                perspective: 1000px;
+                width: 100%;
+                max-width: 500px;
+                height: 250px;
+                margin: 20px auto;
+                cursor: pointer;
+            }
+            .flashcard-inner {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                text-align: center;
+                transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+                transform-style: preserve-3d;
+            }
+            .flashcard-wrapper.flipped .flashcard-inner {
+                transform: rotateY(180deg);
+            }
+            .flashcard-front, .flashcard-back {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+                border-radius: 16px;
+                border: 2px solid #E2E8F0;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                padding: 20px;
+                background-color: #FFFFFF;
+                transition: box-shadow 0.3s ease;
+            }
+            .flashcard-wrapper:hover .flashcard-front,
+            .flashcard-wrapper:hover .flashcard-back {
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            }
+            .flashcard-front {
+                color: #1E3A8A;
+            }
+            .flashcard-back {
+                color: #10B981;
+                transform: rotateY(180deg);
+            }
+            .card-word {
+                font-size: 2.5rem;
+                font-weight: bold;
+                margin: 0;
+                color: #1E3A8A;
+            }
+            .card-word-back {
+                font-size: 2.5rem;
+                font-weight: bold;
+                margin: 0;
+                color: #10B981;
+            }
+            .card-lang {
+                color: #64748B;
+                font-size: 0.9rem;
+                margin-top: 8px;
+                margin-bottom: 24px;
+            }
+            .card-hint-text {
+                color: #94A3B8;
+                font-size: 0.8rem;
+                margin: 0;
+                position: absolute;
+                bottom: 15px;
+            }
+            @media (prefers-color-scheme: dark) {
+                .flashcard-front, .flashcard-back {
+                    background-color: #1E293B !important;
+                    border-color: #334155 !important;
                 }
-                .flashcard-title-back {
-                    text-align: center; 
-                    color: #10B981; 
-                    font-size: 2.5rem;
-                    font-weight: bold;
-                    margin: 0;
-                    padding: 0;
+                .card-word {
+                    color: #60A5FA !important;
                 }
-                @media (prefers-color-scheme: dark) {
-                    .flashcard-title-front {
-                        color: #60A5FA !important; /* Ljusblå som syns utmärkt i mörkt läge */
-                    }
-                    .flashcard-title-back {
-                        color: #34D399 !important; /* Klargrön som syns utmärkt i mörkt läge */
-                    }
+                .card-word-back {
+                    color: #34D399 !important;
                 }
-                </style>
-            """, unsafe_allow_html=True)
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            if not st.session_state.flashcard_flipped:
-                st.markdown(f"<h1 class='flashcard-title-front'>{current_word[prompt_lang]}</h1>", unsafe_allow_html=True)
-                st.markdown(f"<p style='text-align: center; color: gray;'>({label_prompt})</p>", unsafe_allow_html=True)
-            else:
-                st.markdown(f"<h1 class='flashcard-title-back'>{current_word[target_lang]}</h1>", unsafe_allow_html=True)
-                st.markdown(f"<p style='text-align: center; color: gray;'>({label_target})</p>", unsafe_allow_html=True)
-            st.markdown("<br>", unsafe_allow_html=True)
+                .card-lang {
+                    color: #94A3B8 !important;
+                }
+                .card-hint-text {
+                    color: #64748B !important;
+                }
+            }
+            </style>
+        """, unsafe_allow_html=True)
+        
+        # Bestäm om kortet ska vara vänt från start baserat på Streamlit state
+        is_flipped_class = "flipped" if st.session_state.flashcard_flipped else ""
+        
+        # Skapa den interaktiva HTML-kortet med 3D-flip vid klick
+        card_html = f"""
+        <div class="flashcard-wrapper {is_flipped_class}" onclick="this.classList.toggle('flipped')">
+            <div class="flashcard-inner">
+                <div class="flashcard-front">
+                    <h1 class="card-word">{current_word[prompt_lang]}</h1>
+                    <p class="card-lang">({label_prompt})</p>
+                    <p class="card-hint-text">🖱️ Klicka på kortet för att vända</p>
+                </div>
+                <div class="flashcard-back">
+                    <h1 class="card-word-back">{current_word[target_lang]}</h1>
+                    <p class="card-lang">({label_target})</p>
+                    <p class="card-hint-text">🖱️ Klicka på kortet för att vända tillbaka</p>
+                </div>
+            </div>
+        </div>
+        """
+        st.markdown(card_html, unsafe_allow_html=True)
 
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("🔄 Vänd kortet", use_container_width=True, type="primary"):
+            if st.button("🔄 Vänd kortet (knapp)", use_container_width=True, type="primary"):
                 st.session_state.flashcard_flipped = not st.session_state.flashcard_flipped
                 st.rerun()
         with col2:
@@ -432,7 +537,7 @@ else:
                 next_word()
                 st.rerun()
 
-    # ================= TAB 2: FLERVALSQUIZ =================
+    # ================= TAB 2: FLERVALSQUIZ ================
     with tab2:
         st.subheader("🎯 Testa dina kunskaper")
         st.markdown("Välj det alternativ som motsvarar rätt översättning.")
