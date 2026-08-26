@@ -327,6 +327,9 @@ def reset_progress():
     st.session_state.hint_count = 0
     st.session_state.quiz_options = []
     st.session_state.failed_attempts = {}
+    # Rensa inmatat svar
+    if "write_input" in st.session_state:
+        st.session_state["write_input"] = """
     
     # Återställ Leitner-lådor för den aktiva listan till Låda 1
     if "leitner_boxes" in st.session_state:
@@ -350,6 +353,9 @@ def next_word():
     st.session_state.flashcard_flipped = False
     st.session_state.hint_count = 0
     st.session_state.quiz_options = []
+    # Rensa inmatat svar för nästa glosa
+    if "write_input" in st.session_state:
+        st.session_state["write_input"] = """
 
 # --- APP DESIGN & GRÄNSSNITT ---
 # Custom elegant branding logo for GlosFlow with CSS
@@ -1008,7 +1014,12 @@ else:
                 st.session_state.total_answered += 1
                 correct_answer = current_word[target_lang].strip().lower()
                 student_answer = user_input.strip().lower()
-                if student_answer == correct_answer:
+                
+                # Tolerera punkter i slutet (var mindre noggrann med ord som slutar med punkter)
+                clean_correct = correct_answer.rstrip('. ').strip()
+                clean_student = student_answer.rstrip('. ').strip()
+                
+                if clean_student == clean_correct:
                     st.session_state.score += 1
                     st.session_state.failed_attempts[current_word["svenska"]] = 0 # Nollställ försök vid rätt svar
                     update_word_box(current_word["svenska"], True) # Uppdatera Leitner-boxen
