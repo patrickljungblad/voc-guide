@@ -991,12 +991,11 @@ else:
         
         # Form för enter-stöd vid rättning (TOPRA-modellen)
         with st.form("write_form"):
-            # Om vi redan svarat rätt inaktiverar vi fältet temporärt så att nästa Enter går vidare
+            # Håll fältet aktivt så att användaren kan trycka Enter igen för att gå vidare till nästa ord (TOPRA)
             user_input = st.text_input(
                 "Skriv din översättning här:", 
                 key=f"write_input_{st.session_state.current_index}", 
-                placeholder="Stava noggrant...",
-                disabled=st.session_state.write_correct_answered
+                placeholder="Stava noggrant..."
             )
             col1, col2 = st.columns(2)
             with col1:
