@@ -327,9 +327,6 @@ def reset_progress():
     st.session_state.hint_count = 0
     st.session_state.quiz_options = []
     st.session_state.failed_attempts = {}
-    # Rensa inmatat svar
-    if "write_input" in st.session_state:
-        st.session_state["write_input"] = ""
     
     # Återställ Leitner-lådor för den aktiva listan till Låda 1
     if "leitner_boxes" in st.session_state:
@@ -353,9 +350,6 @@ def next_word():
     st.session_state.flashcard_flipped = False
     st.session_state.hint_count = 0
     st.session_state.quiz_options = []
-    # Rensa inmatat svar för nästa glosa
-    if "write_input" in st.session_state:
-        st.session_state["write_input"] = ""
 
 # --- APP DESIGN & GRÄNSSNITT ---
 # Custom elegant branding logo for GlosFlow with CSS
@@ -988,7 +982,7 @@ else:
         
         # Form för enter-stöd vid rättning (TOPRA-modellen)
         with st.form("write_form"):
-            user_input = st.text_input("Skriv din översättning här:", key="write_input", placeholder="Stava noggrant...")
+            user_input = st.text_input("Skriv din översättning här:", key=f"write_input_{st.session_state.current_index}", placeholder="Stava noggrant...")
             col1, col2 = st.columns(2)
             with col1:
                 check_write = st.form_submit_button("Rätta mitt svar", use_container_width=True)
