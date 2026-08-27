@@ -327,6 +327,7 @@ def reset_progress():
     st.session_state.hint_count = 0
     st.session_state.quiz_options = []
     st.session_state.failed_attempts = {}
+    st.session_state.write_correct_answered = False
     
     # Återställ Leitner-lådor för den aktiva listan till Låda 1
     if "leitner_boxes" in st.session_state:
@@ -350,6 +351,7 @@ def next_word():
     st.session_state.flashcard_flipped = False
     st.session_state.hint_count = 0
     st.session_state.quiz_options = []
+    st.session_state.write_correct_answered = False
 
 # --- APP DESIGN & GRÄNSSNITT ---
 # Custom elegant branding logo for GlosFlow with CSS
@@ -980,14 +982,27 @@ else:
         st.markdown("Aktiv återkallning är den mest effektiva metoden för att lära sig glosor utantill.")
         st.markdown(f"Översätt ordet: <h3 style='display:inline;'>{current_word[prompt_lang]}</h3>", unsafe_allow_html=True)
         
+        # Initiera write_correct_answered i session_state om den saknas
+        if "write_correct_answered" not in st.session_state:
+            st.session_state.write_correct_answered = False
+
+        # Dynamisk knapp-etikett för Dubbelt Enter-flödet (TOPRA-modellen)
+        button_label = "Nästa ord ➔ [Tryck på Enter igen]" if st.session_state.write_correct_answered else "Rätta mitt svar [Enter]"
+        
         # Form för enter-stöd vid rättning (TOPRA-modellen)
         with st.form("write_form"):
-            user_input = st.text_input("Skriv din översättning här:", key=f"write_input_{st.session_state.current_index}", placeholder="Stava noggrant...")
+            # Om vi redan svarat rätt inaktiverar vi fältet temporärt så att nästa Enter går vidare
+            user_input = st.text_input(
+                "Skriv din översättning här:", 
+                key=f"write_input_{st.session_state.current_index}", 
+                placeholder="Stava noggrant...",
+                disabled=st.session_state.write_correct_answered
+            )
             col1, col2 = st.columns(2)
             with col1:
-                check_write = st.form_submit_button("Rätta mitt svar", use_container_width=True)
+                check_write = st.form_submit_button(button_label, use_container_width=True, type="primary" if st.session_state.write_correct_answered else "secondary")
             with col2:
-                hint_btn = st.form_submit_button("💡 Få en ledtråd", use_container_width=True)
+                hint_btn = st.form_submit_button("💡 Få en ledtråd", use_container_width=True, disabled=st.session_state.write_correct_answered)
                 
         # Hantera ledtråd
         target_word = current_word[target_lang]
@@ -1000,9 +1015,14 @@ else:
             hint_text = target_word[:st.session_state.hint_count] + "_" * (len(target_word) - st.session_state.hint_count)
             st.info(f"Ledtråd: `{hint_text}` (visar {st.session_state.hint_count} av {len(target_word)} bokstäver)")
             
-        # Rätta skrivet svar
+        # Rätta skrivet svar / Gå vidare
         if check_write:
-            if not user_input.strip():
+            # Om ordet redan var rättbesvarat och användaren trycker Enter igen -> Gå till nästa ord
+            if st.session_state.write_correct_answered:
+                next_word()
+                st.session_state.write_correct_answered = False
+                st.rerun()
+            elif not user_input.strip():
                 st.warning("Skriv in ett svar först!")
             else:
                 st.session_state.total_answered += 1
@@ -1017,11 +1037,16 @@ else:
                     st.session_state.score += 1
                     st.session_state.failed_attempts[current_word["svenska"]] = 0 # Nollställ försök vid rätt svar
                     update_word_box(current_word["svenska"], True) # Uppdatera Leitner-boxen
+                    st.session_state.write_correct_answered = True # Aktivera flödet för Dubbelt Enter!
                     st.success(f"🎉 Strålande! **{current_word[prompt_lang]}** stavas mycket riktigt **{target_word}**.")
+                    st.info("👉 Tryck på **Enter** igen eller klicka på knappen ovan för att gå vidare till nästa ord!")
+                    st.rerun()
                 else:
                     st.session_state.failed_attempts[current_word["svenska"]] = st.session_state.failed_attempts.get(current_word["svenska"], 0) + 1
                     update_word_box(current_word["svenska"], False) # Svarar man fel flyttas ordet till Låda 1
+                    st.session_state.write_correct_answered = False
                     st.error(f"❌ Tyvärr felstavat eller fel ord. Det korrekta svaret är **{target_word}**.")
+                    st.rerun()
                     
         # Visa inlärningsstrategi om eleven svarat fel flera gånger (>= 2)
         failed_count_write = st.session_state.failed_attempts.get(current_word["svenska"], 0)
@@ -1030,6 +1055,7 @@ else:
             
         if st.button("Nästa ord ➔", key="next_write", use_container_width=True):
             next_word()
+            st.session_state.write_correct_answered = False
             st.rerun()
 
     # ================= TAB 4: LÄRARPANEL & LÖSENORDSSKYDD =================
