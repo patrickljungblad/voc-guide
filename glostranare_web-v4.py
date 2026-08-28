@@ -352,7 +352,7 @@ def reset_progress():
     st.session_state.write_correct_answered = False
     st.session_state.write_feedback = None
     if "write_input" in st.session_state:
-        st.session_state.write_input = """
+        st.session_state.write_input = ""
     
     # Återställ Leitner-lådor för den aktiva listan till Låda 1
     if "leitner_boxes" in st.session_state:
@@ -379,7 +379,7 @@ def next_word():
     st.session_state.write_correct_answered = False
     st.session_state.write_feedback = None
     if "write_input" in st.session_state:
-        st.session_state.write_input = """
+        st.session_state.write_input = ""
 
 # --- APP DESIGN & GRÄNSSNITT ---
 # Custom elegant branding logo for GlosFlow with CSS
@@ -753,6 +753,22 @@ st.markdown(f"""
     margin-bottom: 15px;
 }}
 {theme_css}
+
+/* Style primary buttons inside forms to be green (success color) instead of Streamlit's default red/orange */
+div[data-testid="stForm"] button[kind="primary"] {
+    background-color: #10B981 !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2), 0 2px 4px -1px rgba(16, 185, 129, 0.1) !important;
+}
+div[data-testid="stForm"] button[kind="primary"]:hover {
+    background-color: #059669 !important;
+    box-shadow: 0 10px 15px -3px rgba(5, 150, 105, 0.3), 0 4px 6px -2px rgba(5, 150, 105, 0.1) !important;
+}
+div[data-testid="stForm"] button[kind="primary"]:focus {
+    background-color: #059669 !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.5) !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -1048,7 +1064,7 @@ else:
             
             col1, col2 = st.columns(2)
             with col1:
-                check_write = st.form_submit_button(button_label, use_container_width=True)
+                check_write = st.form_submit_button(button_label, use_container_width=True, type="primary" if st.session_state.write_correct_answered else "secondary")
             with col2:
                 hint_btn = st.form_submit_button("💡 Få en ledtråd", use_container_width=True)
 
