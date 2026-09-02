@@ -294,7 +294,7 @@ if "target_language" not in st.session_state:
 
 # Initiera spelmekanik
 if "gsheets_url" not in st.session_state:
-    st.session_state.gsheets_url = st.secrets.get("GSHEETS_URL", "")
+    st.session_state.gsheets_url = st.secrets.get("GSHEETS_URL", "https://script.google.com/macros/s/AKfycbyxCS_n6BLvWJuHIGOXqgZErDlmq04gH9Y5A8RKTE71AxBZyXQc9uODyuFP6qNo7WnqRg/exec")
 
 if "leitner_boxes" not in st.session_state:
     st.session_state.leitner_boxes = {}
