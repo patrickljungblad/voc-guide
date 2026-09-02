@@ -3,6 +3,8 @@ import random
 import json
 import urllib.request
 import streamlit.components.v1 as components
+from fpdf import FPDF
+import io
 
 def clean_html(html_str):
     return "\n".join(line.strip() for line in html_str.split("\n"))
@@ -78,6 +80,94 @@ def get_strategy_tip(word_obj, language):
         return english_tips[sv]
     
     return f"**Nyckelordsmetoden:** Prova att hitta ett svenskt ord som låter som det utländska ordet '{ut}'. Föreställ dig sedan en rolig eller konstig bild i huvudet där det ordet kopplas ihop med betydelsen '{sv}'! Det hjälper hjärnan att bygga en stark form-betydelse-bro [31, 247]."
+
+
+def generate_pdf_bytes(test_words, quiz_title, target_lang_name, include_answers):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_margin(20)
+    
+    # Accent color (#10B981)
+    pdf.set_draw_color(16, 185, 129)
+    
+    # Title
+    pdf.set_font("helvetica", "B", size=20)
+    pdf.set_text_color(30, 58, 138) # Dark Blue
+    pdf.cell(w=0, h=12, text=quiz_title, align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(5)
+    
+    # Divider line
+    pdf.line(20, pdf.get_y(), 190, pdf.get_y())
+    pdf.ln(8)
+    
+    # Student Info box
+    pdf.set_text_color(51, 65, 85) # Slate Dark Gray
+    pdf.set_font("helvetica", size=11)
+    pdf.cell(w=30, h=8, text="Elevens namn:")
+    pdf.cell(w=60, h=8, border="B", text="")
+    pdf.cell(w=10, h=8, text="")
+    pdf.cell(w=25, h=8, text="Klass/Grupp:")
+    pdf.cell(w=45, h=8, border="B", text="")
+    pdf.ln(10)
+    
+    pdf.cell(w=15, h=8, text="Datum:")
+    pdf.cell(w=45, h=8, border="B", text="")
+    pdf.cell(w=10, h=8, text="")
+    pdf.set_font("helvetica", "B", size=11)
+    pdf.cell(w=0, h=8, text=f"Poäng: ________ av {len(test_words)} rätt", align="R", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(12)
+    
+    # Table headers
+    pdf.set_draw_color(226, 232, 240) # Light slate grey
+    pdf.set_font("helvetica", "B", size=12)
+    pdf.set_text_color(15, 23, 42)
+    pdf.cell(w=15, h=8, text="Nr", border="B")
+    pdf.cell(w=80, h=8, text="Svenska / Glosa", border="B")
+    pdf.cell(w=75, h=8, text="Översättning", border="B", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(4)
+    
+    # Rows
+    pdf.set_font("helvetica", size=11)
+    pdf.set_text_color(51, 65, 85)
+    for idx, w in enumerate(test_words, 1):
+        p_word = w.get("prompt_word", w["svenska"]).replace("➔", "->")
+        pdf.cell(w=15, h=10, text=f"{idx}.")
+        pdf.cell(w=80, h=10, text=p_word)
+        pdf.set_draw_color(148, 163, 184) # slate-400
+        pdf.cell(w=75, h=10, border="B", text="", new_x="LMARGIN", new_y="NEXT")
+        
+    # Page 2: Facit
+    if include_answers:
+        pdf.add_page()
+        pdf.set_draw_color(16, 185, 129)
+        pdf.set_font("helvetica", "B", size=20)
+        pdf.set_text_color(30, 58, 138)
+        pdf.cell(w=0, h=12, text=f"FACIT: {quiz_title}", align="C", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(5)
+        pdf.line(20, pdf.get_y(), 190, pdf.get_y())
+        pdf.ln(10)
+        
+        # Table headers
+        pdf.set_draw_color(226, 232, 240)
+        pdf.set_font("helvetica", "B", size=12)
+        pdf.set_text_color(15, 23, 42)
+        pdf.cell(w=15, h=8, text="Nr", border="B")
+        pdf.cell(w=80, h=8, text="Fråga", border="B")
+        pdf.cell(w=75, h=8, text="Rätt svar", border="B", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(4)
+        
+        # Rows
+        pdf.set_font("helvetica", size=11)
+        for idx, w in enumerate(test_words, 1):
+            p_word = w.get("prompt_word", w["svenska"]).replace("➔", "->")
+            a_word = w.get("answer_word", w["utlandska"]).replace("➔", "->")
+            pdf.set_text_color(51, 65, 85)
+            pdf.cell(w=15, h=10, text=f"{idx}.")
+            pdf.cell(w=80, h=10, text=p_word)
+            pdf.set_text_color(16, 185, 129) # Emerald Green
+            pdf.cell(w=75, h=10, text=a_word, new_x="LMARGIN", new_y="NEXT")
+            
+    return pdf.output()
 
 # Sätt sidkonfiguration
 st.set_page_config(
@@ -1195,6 +1285,29 @@ else:
                     if quiz_count != "Alla":
                         test_words = test_words[:int(quiz_count)]
                         
+                    # Pre-generera prompt_word och answer_word för konsistens mellan HTML och PDF
+                    for w in test_words:
+                        if quiz_direction == "Svenska ➔ Målspråk":
+                            w["prompt_word"] = w["svenska"]
+                            w["answer_word"] = w["utlandska"]
+                        elif quiz_direction == "Målspråk ➔ Svenska":
+                            w["prompt_word"] = w["utlandska"]
+                            w["answer_word"] = w["svenska"]
+                        else:
+                            # Blandat
+                            if random.choice([True, False]):
+                                w["prompt_word"] = w["svenska"] + f" (➔ {target_lang_name})"
+                                w["answer_word"] = w["utlandska"]
+                            else:
+                                w["prompt_word"] = w["utlandska"] + " (➔ Svenska)"
+                                w["answer_word"] = w["svenska"]
+                    
+                    # Spara i session state för PDF-generatorn
+                    st.session_state.quiz_test_words = test_words
+                    st.session_state.quiz_title_val = quiz_title
+                    st.session_state.quiz_include_answers = include_answers
+                    st.session_state.quiz_target_lang = target_lang_name
+                    
                     test_html = ""
                     facit_html = ""
                     
@@ -1328,18 +1441,7 @@ else:
                     """
                     test_html += "<table class='quiz-table'>"
                     for idx, w in enumerate(test_words, 1):
-                        # Prompt-hantering baserat på vald riktning
-                        if quiz_direction == "Svenska ➔ Målspråk":
-                            p_word = w["svenska"]
-                        elif quiz_direction == "Målspråk ➔ Svenska":
-                            p_word = w["utlandska"]
-                        else:
-                            # Slumpa riktning per ord i provet
-                            if random.choice([True, False]):
-                                p_word = w["svenska"] + f" (➔ {target_lang_name})"
-                            else:
-                                p_word = w["utlandska"] + " (➔ Svenska)"
-                                
+                        p_word = w["prompt_word"]
                         test_html += f"""
                         <tr class='quiz-row'>
                             <td class='quiz-num'>{idx}.</td>
@@ -1356,11 +1458,13 @@ else:
                         facit_html += f"<div class='print-title'>FACIT: {quiz_title}</div>"
                         facit_html += "<table class='quiz-table'>"
                         for idx, w in enumerate(test_words, 1):
+                            p_word = w["prompt_word"]
+                            a_word = w["answer_word"]
                             facit_html += f"""
                             <tr class='quiz-row'>
                                 <td class='quiz-num'>{idx}.</td>
-                                <td class='quiz-prompt' style='color:#555;'>Svenska: <b>{w["svenska"]}</b></td>
-                                <td>{target_lang_name}: <span class='quiz-answer-text'>{w["utlandska"]}</span></td>
+                                <td class='quiz-prompt' style='color:#555;'>Fråga: <b>{p_word}</b></td>
+                                <td>Svar: <span class='quiz-answer-text'>{a_word}</span></td>
                             </tr>
                             """
                         facit_html += "</table>"
@@ -1375,11 +1479,20 @@ else:
                 st.success("📝 Utskriftsklart förhör finns redo nedan!")
                 col_b1, col_b2 = st.columns(2)
                 with col_b1:
-                    # Lägg in en knapp som anropar window.print()
-                    st.markdown(
-                        '<button onclick="window.print()" class="print-hide" style="width:100%; height:42px; border-radius:5px; background-color:#10B981; color:white; border:none; font-weight:bold; cursor:pointer;">🖨️ Öppna utskriftsdialogen</button>',
-                        unsafe_allow_html=True
-                    )
+                    if "quiz_test_words" in st.session_state:
+                        pdf_data = generate_pdf_bytes(
+                            st.session_state.quiz_test_words,
+                            st.session_state.quiz_title_val,
+                            st.session_state.quiz_target_lang,
+                            st.session_state.quiz_include_answers
+                        )
+                        st.download_button(
+                            label="📥 Ladda ner förhör som PDF",
+                            data=bytes(pdf_data),
+                            file_name=f"{st.session_state.quiz_title_val.replace(' ', '_')}.pdf",
+                            mime="application/pdf",
+                            use_container_width=True
+                        )
                 with col_b2:
                     if st.button("❌ Radera genererat förhör", use_container_width=True):
                         del st.session_state.printable_test
