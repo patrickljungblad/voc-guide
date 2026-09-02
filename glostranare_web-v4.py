@@ -18,6 +18,11 @@ def get_strategy_tip(word_obj, language):
     
     # Custom spanska nyckelordstips (Mnemonic Keyword Technique)
     spanish_tips = {
+        "ser": "**Associationstips:** *ser* är grundformen för att vara på spanska. Tänk på ordet *seriös* eller engelskans *series* (en serie av händelser som bara 'är').",
+        "suecia": "**Kognat-tips:** *Suecia* låter nästan som *Sverige* på franska (*Suède*) eller engelska (*Sweden*)!",
+        "español": "**Kognat-tips:** *español* är väldigt likt svenskans spanska och engelskans *Spanish*.",
+        "inglés": "**Kognat-tips:** *inglés* är superlikt *engelska* (eller franskans *anglais*).",
+        "hablo": "**Associationstips:** *hablo* kommer från *hablar* (att prata). Tänk på 'hävla ur sig' ord eller engelskans *babble* (babbit/prata).",
         "lunes": "**Etymologitips:** *lunes* kommer från latinets *luna* (måne) [30]. Måndag är helt enkelt 'måndagen'!",
         "martes": "**Etymologitips:** *martes* är uppkallat efter krigsguden Mars [30]. På svenska är tisdag uppkallad efter vår krigsgud Tyr – båda dagarna tillhör krigsgudarna!",
         "miércoles": "**Etymologitips:** *miércoles* är uppkallat efter budbäraren och handelsguden Merkurius [30].",
@@ -182,127 +187,24 @@ ADMIN_PASSWORD = "skola123"
 # Du kan förbereda permanenta listor i biblioteket direkt i koden här!
 # Detta gör att de alltid ligger laddade för eleverna när hemsidan startas.
 PERMANENT_LIBRARY = {
-    "Spanska - veckodagar": {
+    "Spanska nybörjare - till v. 37": {
         "language": "Spanska",
         "words": [
-            {"svenska": "måndag", "utlandska": "lunes"},
-            {"svenska": "tisdag", "utlandska": "martes"},
-            {"svenska": "onsdag", "utlandska": "miércoles"},
-            {"svenska": "torsdag", "utlandska": "jueves"},
-            {"svenska": "fredag", "utlandska": "viernes"},
-            {"svenska": "lördag", "utlandska": "sábado"},
-            {"svenska": "söndag", "utlandska": "domingo"}
-        ]
-    },
-
-    "Engelska (Topp 50 vanligaste)": {
-        "language": "Engelska",
-        "words": [
-            {"svenska": "tid", "utlandska": "time"},
-            {"svenska": "år", "utlandska": "year"},
-            {"svenska": "folk", "utlandska": "people"},
-            {"svenska": "sätt", "utlandska": "way"},
-            {"svenska": "dag", "utlandska": "day"},
-            {"svenska": "sak", "utlandska": "thing"},
-            {"svenska": "man", "utlandska": "man"},
-            {"svenska": "värld", "utlandska": "world"},
-            {"svenska": "liv", "utlandska": "life"},
-            {"svenska": "skola", "utlandska": "school"},
-            {"svenska": "familj", "utlandska": "family"},
-            {"svenska": "student", "utlandska": "student"},
-            {"svenska": "land", "utlandska": "country"},
-            {"svenska": "problem", "utlandska": "problem"},
-            {"svenska": "hand", "utlandska": "hand"},
-            {"svenska": "del", "utlandska": "part"},
-            {"svenska": "plats", "utlandska": "place"},
-            {"svenska": "vecka", "utlandska": "week"},
-            {"svenska": "arbete", "utlandska": "work"},
-            {"svenska": "system", "utlandska": "system"},
-            {"svenska": "grupp", "utlandska": "group"},
-            {"svenska": "nummer", "utlandska": "number"},
-            {"svenska": "kvinna", "utlandska": "woman"},
-            {"svenska": "barn", "utlandska": "child"},
-            {"svenska": "sida", "utlandska": "side"},
-            {"svenska": "skriva", "utlandska": "write"},
-            {"svenska": "läsa", "utlandska": "read"},
-            {"svenska": "göra", "utlandska": "do"},
-            {"svenska": "se", "utlandska": "see"},
-            {"svenska": "gå", "utlandska": "go"},
-            {"svenska": "komma", "utlandska": "come"},
-            {"svenska": "ha", "utlandska": "have"},
-            {"svenska": "ge", "utlandska": "give"},
-            {"svenska": "veta", "utlandska": "know"},
-            {"svenska": "säga", "utlandska": "say"},
-            {"svenska": "ny", "utlandska": "new"},
-            {"svenska": "stor", "utlandska": "big"},
-            {"svenska": "bra", "utlandska": "good"},
-            {"svenska": "först", "utlandska": "first"},
-            {"svenska": "vatten", "utlandska": "water"},
-            {"svenska": "hus", "utlandska": "house"},
-            {"svenska": "vän", "utlandska": "friend"},
-            {"svenska": "stad", "utlandska": "city"},
-            {"svenska": "bok", "utlandska": "book"},
-            {"svenska": "mat", "utlandska": "food"},
-            {"svenska": "äpple", "utlandska": "apple"},
-            {"svenska": "katt", "utlandska": "cat"},
-            {"svenska": "hund", "utlandska": "dog"},
-            {"svenska": "liten", "utlandska": "small"},
-            {"svenska": "person", "utlandska": "person"}
-        ]
-    },
-    "Spanska (Topp 50 vanligaste)": {
-        "language": "Spanska",
-        "words": [
-            {"svenska": "tid", "utlandska": "tiempo"},
-            {"svenska": "år", "utlandska": "año"},
-            {"svenska": "folk", "utlandska": "gente"},
-            {"svenska": "sätt", "utlandska": "manera"}, # Korrigerat till 'manera' (Sense Selection enligt Paul Nation s. 76)
-            {"svenska": "dag", "utlandska": "día"},
-            {"svenska": "sak", "utlandska": "cosa"},
-            {"svenska": "man", "utlandska": "hombre"},
-            {"svenska": "värld", "utlandska": "mundo"},
-            {"svenska": "liv", "utlandska": "vida"},
-            {"svenska": "skola", "utlandska": "escuela"},
-            {"svenska": "familj", "utlandska": "familia"},
-            {"svenska": "student", "utlandska": "estudiante"},
-            {"svenska": "land", "utlandska": "país"},
-            {"svenska": "problem", "utlandska": "problema"},
-            {"svenska": "hand", "utlandska": "mano"},
-            {"svenska": "del", "utlandska": "parte"},
-            {"svenska": "plats", "utlandska": "lugar"},
-            {"svenska": "vecka", "utlandska": "semana"},
-            {"svenska": "arbete", "utlandska": "trabajo"},
-            {"svenska": "system", "utlandska": "sistema"},
-            {"svenska": "grupp", "utlandska": "grupo"},
-            {"svenska": "nummer", "utlandska": "número"},
-            {"svenska": "kvinna", "utlandska": "mujer"},
-            {"svenska": "barn", "utlandska": "niño"},
-            {"svenska": "sida", "utlandska": "lado"},
-            {"svenska": "skriva", "utlandska": "escribir"},
-            {"svenska": "läsa", "utlandska": "leer"},
-            {"svenska": "göra", "utlandska": "hacer"},
-            {"svenska": "se", "utlandska": "ver"},
-            {"svenska": "gå", "utlandska": "ir"},
-            {"svenska": "komma", "utlandska": "venir"},
-            {"svenska": "ha", "utlandska": "tener"},
-            {"svenska": "ge", "utlandska": "dar"},
-            {"svenska": "veta", "utlandska": "saber"},
-            {"svenska": "säga", "utlandska": "decir"},
-            {"svenska": "ny", "utlandska": "nuevo"},
-            {"svenska": "stor", "utlandska": "grande"},
-            {"svenska": "bra", "utlandska": "bueno"},
-            {"svenska": "först", "utlandska": "primero"},
-            {"svenska": "vatten", "utlandska": "agua"},
-            {"svenska": "hus", "utlandska": "casa"},
-            {"svenska": "vän", "utlandska": "amigo"},
-            {"svenska": "stad", "utlandska": "ciudad"},
-            {"svenska": "bok", "utlandska": "libro"},
-            {"svenska": "mat", "utlandska": "comida"},
-            {"svenska": "äpple", "utlandska": "manzana"},
-            {"svenska": "katt", "utlandska": "gato"},
-            {"svenska": "hund", "utlandska": "perro"},
-            {"svenska": "liten", "utlandska": "pequeño"},
-            {"svenska": "person", "utlandska": "persona"}
+            {"svenska": "att vara", "utlandska": "ser"},
+            {"svenska": "jag är", "utlandska": "yo soy"},
+            {"svenska": "du är", "utlandska": "tú eres"},
+            {"svenska": "han/hon är", "utlandska": "él/ella es"},
+            {"svenska": "vad heter du?", "utlandska": "¿Cómo te llamas?"},
+            {"svenska": "Jag heter...", "utlandska": "Me llamo..."},
+            {"svenska": "Jag är från...", "utlandska": "Soy de"},
+            {"svenska": "Han/hon är från...", "utlandska": "Es de..."},
+            {"svenska": "Sverige", "utlandska": "Suecia"},
+            {"svenska": "jag pratar/talar", "utlandska": "hablo"},
+            {"svenska": "svenska", "utlandska": "sueco"},
+            {"svenska": "spanska", "utlandska": "español"},
+            {"svenska": "engelska", "utlandska": "inglés"},
+            {"svenska": "Var är du från?", "utlandska": "¿De dónde eres?"},
+            {"svenska": "Vilka språk talar du?", "utlandska": "¿Qué lenguas hablas?"}
         ]
     },
     "Spanska nybörjare - v. 36": {
@@ -351,6 +253,18 @@ PERMANENT_LIBRARY = {
             {"svenska": "spela fotboll", "utlandska": "jugar al fútbol"}
         ]
     },
+    "Spanska - veckodagar": {
+        "language": "Spanska",
+        "words": [
+            {"svenska": "måndag", "utlandska": "lunes"},
+            {"svenska": "tisdag", "utlandska": "martes"},
+            {"svenska": "onsdag", "utlandska": "miércoles"},
+            {"svenska": "torsdag", "utlandska": "jueves"},
+            {"svenska": "fredag", "utlandska": "viernes"},
+            {"svenska": "lördag", "utlandska": "sábado"},
+            {"svenska": "söndag", "utlandska": "domingo"}
+        ]
+    }
 }
 
 # Initiera biblioteket i session state
@@ -359,12 +273,12 @@ if "library" not in st.session_state:
 
 # Initiera aktiv ordlista och målspråk
 if "words" not in st.session_state:
-    st.session_state.words = st.session_state.library["Engelska (Topp 50 vanligaste)"]["words"].copy()
-    st.session_state.target_language = "Engelska"
-    st.session_state.current_list_name = "Engelska (Topp 50 vanligaste)"
+    st.session_state.words = st.session_state.library["Spanska nybörjare - till v. 37"]["words"].copy()
+    st.session_state.target_language = "Spanska"
+    st.session_state.current_list_name = "Spanska nybörjare - till v. 37"
 
 if "current_list_name" not in st.session_state:
-    st.session_state.current_list_name = "Engelska (Topp 50 vanligaste)"
+    st.session_state.current_list_name = "Spanska nybörjare - till v. 37"
 
 if "direction_mode" not in st.session_state:
     st.session_state.direction_mode = "Svenska ➔ Målspråk"
@@ -376,9 +290,12 @@ if "sb_direction" not in st.session_state:
     st.session_state.sb_direction = st.session_state.direction_mode
 
 if "target_language" not in st.session_state:
-    st.session_state.target_language = "Engelska"
+    st.session_state.target_language = "Spanska"
 
 # Initiera spelmekanik
+if "gsheets_url" not in st.session_state:
+    st.session_state.gsheets_url = st.secrets.get("GSHEETS_URL", "")
+
 if "leitner_boxes" not in st.session_state:
     st.session_state.leitner_boxes = {}
 
@@ -573,6 +490,40 @@ st.sidebar.markdown(f"""
 </div>
 <p style='font-size: 0.75rem; color: gray; margin-top: 5px; text-align: center;'>Svara rätt i rad för att flytta upp ord till gröna lådan!</p>
 """, unsafe_allow_html=True)
+
+# Molndatabas (Google Sheets) sändningsgränssnitt i sidomenyn
+st.sidebar.markdown("---")
+st.sidebar.subheader("📤 Skicka poäng till läraren")
+student_name_val = st.sidebar.text_input("Ditt namn:", placeholder="Ditt för- & efternamn...", key="student_name_input")
+if st.sidebar.button("Skicka in resultat", use_container_width=True):
+    if not student_name_val.strip():
+        st.sidebar.error("⚠️ Du måste ange ditt namn först!")
+    elif not st.session_state.gsheets_url:
+        st.sidebar.warning("⚠️ Ingen molndatabas har konfigurerats av läraren än.")
+    else:
+        import datetime
+        try:
+            payload = {
+                "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "student": student_name_val.strip(),
+                "list_name": st.session_state.current_list_name,
+                "score": st.session_state.score,
+                "total": st.session_state.total_answered,
+                "box1": box1_count,
+                "box2": box2_count,
+                "box3": box3_count
+            }
+            req = urllib.request.Request(
+                st.session_state.gsheets_url, 
+                data=json.dumps(payload).encode('utf-8'), 
+                headers={'Content-Type': 'application/json'}
+            )
+            with urllib.request.urlopen(req, timeout=10) as response:
+                res_body = response.read().decode('utf-8')
+            st.sidebar.success("🎉 Dina framsteg har skickats till din lärare!")
+            st.toast("Resultat skickat!")
+        except Exception as e:
+            st.sidebar.error(f"❌ Fel vid sändning: {str(e)}")
 
 st.sidebar.markdown("---")
 
@@ -1589,6 +1540,52 @@ else:
                 else:
                     st.warning("Hittade inga giltiga glosor att läsa in. Ladda upp en fil eller klistra in fritext.")
                     
+            st.markdown("---")
+            st.markdown("### 📈 Konfigurera Molndatabas (Google Sheets)")
+            st.markdown("""
+            Du kan konfigurera en automatisk molndatabas så dina elevers framsteg och poäng sparas live i ett Google kalkylark.
+            
+            #### 🛠️ Snabbguide för installation:
+            1. Skapa ett nytt **Google Sheet** (t.ex. med namnet `GlosFlow_Statistik`).
+            2. Skriv in följande exakta kolumnrubriker i första raden (kolumn A till H):
+               `Tidsstämpel` | `Elevnamn` | `Gloslista` | `Rätt Svar` | `Totala Försök` | `Låda 1 (Röd)` | `Låda 2 (Gul)` | `Låda 3 (Grön)`
+            3. Klicka på **Tillägg (Extensions) ➔ Apps Script** i ditt Google Sheet.
+            4. Ta bort all kod i rutan och klistra in följande skript:
+            ```javascript
+            function doPost(e) {
+              var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+              var data = JSON.parse(e.postData.contents);
+              sheet.appendRow([
+                data.timestamp, 
+                data.student, 
+                data.list_name, 
+                data.score, 
+                data.total, 
+                data.box1, 
+                data.box2, 
+                data.box3
+              ]);
+              return ContentService.createTextOutput("Success");
+            }
+            ```
+            5. Klicka på den blå knappen **Distribuera (Deploy) ➔ Ny distribution (New deployment)**.
+            6. Välj typ: **Webbapplikation (Web app)**.
+               - *Kör som (Execute as):* **Mig (Me)**.
+               - *Vem har tillgång (Who has access):* **Alla (Anyone)**.
+            7. Klicka på Distribuera, godkänn rättigheterna med ditt Google-konto, och kopiera din **Webbapp-URL**.
+            8. Klistra in din Webbapp-URL här nedanför!
+            """)
+            
+            db_url_input = st.text_input(
+                "Ange din Google Apps Script Web App-URL:", 
+                value=st.session_state.gsheets_url, 
+                placeholder="https://script.google.com/macros/s/.../exec"
+            )
+            if st.button("💾 Spara databasanslutning", type="primary", use_container_width=True):
+                st.session_state.gsheets_url = db_url_input.strip()
+                st.success("🎉 Databasanslutningen har sparats för den här sessionen! För permanent lagring på livemy.app, lägg till den som en Secret med namnet `GSHEETS_URL`.")
+                st.rerun()
+                
             st.markdown("---")
             st.markdown("### 🗑️ Ta bort gloslistor från biblioteket")
             
