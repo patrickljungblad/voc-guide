@@ -1198,18 +1198,47 @@ else:
                     test_html = ""
                     facit_html = ""
                     
-                    # CSS för provbladsutskrift
+                    # CSS för provbladsutskrift (Extremt robust döljning av Streamlit UI under utskrift)
                     style_block = """
                     <style>
                     @media print {
-                        /* Dölj helt alla Streamlit-element, knappar och tabbar */
-                        header, [data-testid="stSidebar"], [data-testid="stHeader"],
-                        .stAppDeployButton, [data-testid="stDecoration"], button,
-                        .print-hide, .stTabs, hr, iframe {
+                        /* Dölj Streamlits egna layoutkomponenter helt */
+                        header, footer, [data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="stToolbar"], .stTabs, button, hr, .print-hide {
                             display: none !important;
+                            height: 0 !important;
+                            padding: 0 !important;
+                            margin: 0 !important;
                         }
-                        /* Återställ provbladsstilen för utskrift på papper */
+                        
+                        /* Nollställ höjd- och scrollbegränsningar på Streamlits yttre containers */
+                        body, .stApp, .main, .block-container, [data-testid="stAppViewContainer"], [data-testid="stVerticalBlock"] {
+                            height: auto !important;
+                            min-height: 0 !important;
+                            max-height: none !important;
+                            overflow: visible !important;
+                            padding: 0 !important;
+                            margin: 0 !important;
+                            width: 100% !important;
+                            display: block !important;
+                        }
+                        
+                        /* Dölj ALLA element på hela sidan som standard */
+                        body * {
+                            visibility: hidden !important;
+                        }
+                        
+                        /* Gör ENBART själva förhörsbehållaren och dess innehåll synligt */
+                        .print-container, .print-container * {
+                            visibility: visible !important;
+                        }
+                        
+                        /* Positionera förhöret absolut längst upp till vänster på papperet */
                         .print-container {
+                            position: absolute !important;
+                            left: 0 !important;
+                            top: 0 !important;
+                            width: 100% !important;
+                            height: auto !important;
                             border: none !important;
                             box-shadow: none !important;
                             padding: 0 !important;
@@ -1217,6 +1246,7 @@ else:
                             background: white !important;
                             color: black !important;
                         }
+                        
                         .page-break {
                             page-break-before: always !important;
                         }
