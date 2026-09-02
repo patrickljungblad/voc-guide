@@ -4,6 +4,11 @@ import json
 import urllib.request
 import streamlit.components.v1 as components
 
+def clean_html(html_str):
+    return "\n".join(line.strip() for line in html_str.split("\n"))
+
+
+
 # Spårning och förslag på inlärningsstrategier enligt vetenskapliga principer (Mnemonic & Dual Coding)
 def get_strategy_tip(word_obj, language):
     sv = word_obj["svenska"].lower().strip()
@@ -1353,7 +1358,7 @@ else:
                 st.markdown("<br>", unsafe_allow_html=True)
                 
                 # Förhandsgranskning av provet
-                st.markdown(st.session_state.printable_test, unsafe_allow_html=True)
+                st.markdown(clean_html(st.session_state.printable_test), unsafe_allow_html=True)
                 
             st.markdown("---")
             
