@@ -5,6 +5,7 @@ import urllib.request
 import streamlit.components.v1 as components
 from fpdf import FPDF
 import io
+import time
 
 def clean_html(html_str):
     return "\n".join(line.strip() for line in html_str.split("\n"))
@@ -174,6 +175,76 @@ def generate_pdf_bytes(test_words, quiz_title, target_lang_name, include_answers
             
     return pdf.output()
 
+
+# ================= MOLNDATABAS (GOOGLE SHEETS) HJÄLPFUNKTIONER =================
+def fetch_users_from_db():
+    if not st.session_state.gsheets_url:
+        return []
+    try:
+        payload = {"action": "get_users"}
+        req = urllib.request.Request(
+            st.session_state.gsheets_url,
+            data=json.dumps(payload).encode('utf-8'),
+            headers={'Content-Type': 'application/json'}
+        )
+        with urllib.request.urlopen(req, timeout=10) as response:
+            res_body = response.read().decode('utf-8')
+            res_data = json.loads(res_body)
+            if res_data.get("status") == "success":
+                return res_data.get("users", [])
+    except Exception as e:
+        pass
+    return []
+
+def save_user_progress_to_db():
+    if not st.session_state.gsheets_url or not st.session_state.get("logged_in_user"):
+        return False
+    try:
+        payload = {
+            "action": "save_progress",
+            "name": st.session_state.logged_in_user["name"],
+            "leitner": st.session_state.leitner_boxes,
+            "score": st.session_state.score,
+            "total": st.session_state.total_answered
+        }
+        req = urllib.request.Request(
+            st.session_state.gsheets_url,
+            data=json.dumps(payload).encode('utf-8'),
+            headers={'Content-Type': 'application/json'}
+        )
+        with urllib.request.urlopen(req, timeout=10) as response:
+            res_body = response.read().decode('utf-8')
+            res_data = json.loads(res_body)
+            return res_data.get("status") == "success"
+    except Exception as e:
+        pass
+    return False
+
+def create_user_in_db(name, pin, group):
+    if not st.session_state.gsheets_url:
+        return False, "Ingen databas ansluten"
+    try:
+        payload = {
+            "action": "create_user",
+            "name": name.strip(),
+            "pin": str(pin).strip(),
+            "group": group.strip()
+        }
+        req = urllib.request.Request(
+            st.session_state.gsheets_url,
+            data=json.dumps(payload).encode('utf-8'),
+            headers={'Content-Type': 'application/json'}
+        )
+        with urllib.request.urlopen(req, timeout=10) as response:
+            res_body = response.read().decode('utf-8')
+            res_data = json.loads(res_body)
+            if res_data.get("status") == "success":
+                return True, "Elevkonto skapat!"
+            else:
+                return False, res_data.get("message", "Ett fel uppstod")
+    except Exception as e:
+        return False, f"Databasfel: {str(e)}"
+
 # Sätt sidkonfiguration
 st.set_page_config(
     page_title="GlosFlow - Digitala Glostränaren",
@@ -271,14 +342,27 @@ PERMANENT_LIBRARY = {
 if "library" not in st.session_state:
     st.session_state.library = PERMANENT_LIBRARY.copy()
 
+# Inloggnings- och elevstatus
+if "logged_in_user" not in st.session_state:
+    st.session_state.logged_in_user = None
+if "users_list" not in st.session_state:
+    st.session_state.users_list = []
+if "last_users_sync" not in st.session_state:
+    st.session_state.last_users_sync = 0
+
+# Hämta användare från molndatabasen vid uppstart
+if st.session_state.gsheets_url and not st.session_state.users_list:
+    st.session_state.users_list = fetch_users_from_db()
+
+
 # Initiera aktiv ordlista och målspråk
 if "words" not in st.session_state:
     st.session_state.words = st.session_state.library["Spanska nybörjare - till v. 37"]["words"].copy()
     st.session_state.target_language = "Spanska"
-    st.session_state.current_list_name = "Spanska nybörjare - till v. 37"
+    st.session_state.current_list_name = None
 
 if "current_list_name" not in st.session_state:
-    st.session_state.current_list_name = "Spanska nybörjare - till v. 37"
+    st.session_state.current_list_name = None
 
 if "direction_mode" not in st.session_state:
     st.session_state.direction_mode = "Svenska ➔ Målspråk"
@@ -425,134 +509,113 @@ with col_sel:
         on_change=sync_from_main,
     )
 
-# --- SIDOMENY: GLOSBIBLIOTEK ---
-st.sidebar.header("📚 Glosbibliotek")
 
-# Tydlig instruktion för eleverna
-st.sidebar.info("👉 **Börja här!** Välj först den gloslista du vill träna på i menyn nedan:")
+# ================= ELEVINLOGGNING & GLOSBIBLIOTEK-SKÄRM =================
+# Kontrollera om användaren är inloggad. Om inte, visa den vackra login-skärmen.
+if not st.session_state.logged_in_user:
+    st.markdown("<br>", unsafe_allow_html=True)
+    col_log_left, col_log_mid, col_log_right = st.columns([1, 4, 1])
+    with col_log_mid:
+        st.markdown("""
+        <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); text-align: center;">
+            <h2 style="margin-top: 0; color: #1E3A8A; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">🔑 Välkommen till GlosFlow</h2>
+            <p style="color: #475569; font-size: 0.95rem; margin-bottom: 20px;">Vänligen logga in med din PIN-kod som du fått av din lärare för att hämta dina framsteg.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        login_tab1, login_tab2 = st.tabs(["👤 Elevinloggning", "👩‍🏫 Lärar- / Admininloggning"])
+        
+        with login_tab1:
+            users = st.session_state.users_list
+            groups = sorted(list(set([u["group"] for u in users]))) if users else []
+            
+            if not users:
+                st.warning("⚠️ Inga elevkonton hittades i databasen än. Din lärare kan logga in i lärarfliken bredvid för att skapa konton och ansluta kalkylarket.")
+                if st.button("🚀 Fortsätt som Gäst (Träna offline)", use_container_width=True):
+                    st.session_state.logged_in_user = {"name": "Gäst", "group": "Gästklass", "score": 0, "total": 0, "leitner": {}}
+                    st.session_state.leitner_boxes = {}
+                    st.session_state.current_list_name = None
+                    st.toast("Inloggad som gäst!")
+                    st.rerun()
+            else:
+                sel_group = st.selectbox("1. Välj din klass:", ["Välj klass..."] + groups)
+                if sel_group != "Välj klass...":
+                    filtered_users = [u for u in users if u["group"] == sel_group]
+                    user_names = sorted([u["name"] for u in filtered_users])
+                    sel_name = st.selectbox("2. Välj ditt namn:", ["Välj ditt namn..."] + user_names)
+                    
+                    if sel_name != "Välj ditt namn...":
+                        pin_input = st.text_input("3. Ange din 4-siffriga PIN-kod:", type="password", max_chars=4)
+                        if st.button("Logga in ➔", type="primary", use_container_width=True):
+                            # Hitta elev
+                            user = next((u for u in filtered_users if u["name"] == sel_name), None)
+                            if user and str(user["pin"]).strip() == str(pin_input).strip():
+                                st.session_state.logged_in_user = user
+                                st.session_state.leitner_boxes = user.get("leitner", {})
+                                st.session_state.score = user.get("score", 0)
+                                st.session_state.total_answered = user.get("total", 0)
+                                st.session_state.current_list_name = None # Starta med listväljaren!
+                                st.toast(f"Välkommen tillbaka, {sel_name}! Din progression är laddad.")
+                                st.rerun()
+                            else:
+                                st.error("❌ Felaktig PIN-kod. Försök igen eller fråga din lärare.")
+            
+        with login_tab2:
+            entered_admin_pw = st.text_input("Ange administratörslösenord:", type="password")
+            if st.button("Logga in som Lärare", type="primary", use_container_width=True):
+                if entered_admin_pw == ADMIN_PASSWORD:
+                    st.session_state.admin_authenticated = True
+                    st.session_state.logged_in_user = {"name": "Lärare", "group": "Lärarrummet", "score": 0, "total": 0, "leitner": {}}
+                    st.session_state.current_list_name = list(st.session_state.library.keys())[0] if st.session_state.library else None
+                    if st.session_state.current_list_name:
+                        st.session_state.words = st.session_state.library[st.session_state.current_list_name]["words"].copy()
+                        st.session_state.target_language = st.session_state.library[st.session_state.current_list_name]["language"]
+                    st.toast("🔓 Lärarläge upplåst!")
+                    st.rerun()
+                else:
+                    st.error("❌ Felaktigt lösenord!")
+    st.stop()
 
-# Låt eleverna välja gloslista från biblioteket
-library_options = list(st.session_state.library.keys())
-selected_list = st.sidebar.selectbox(
-    "Välj gloslista:",
-    library_options,
-    index=library_options.index(st.session_state.current_list_name) if st.session_state.current_list_name in library_options else 0,
-    help="Här väljer du vilket kapitel eller vilken ordlista du vill träna på just nu."
-)
-
-# Om användaren byter lista i biblioteket, ladda in den direkt
-if selected_list != st.session_state.current_list_name:
-    st.session_state.current_list_name = selected_list
-    st.session_state.words = st.session_state.library[selected_list]["words"].copy()
-    st.session_state.target_language = st.session_state.library[selected_list]["language"]
-    reset_progress()
-    st.rerun()
-
-# Hämta namnet på målspråket från session state
-target_lang_name = st.session_state.target_language
-
-st.sidebar.markdown("---")
-
-# Visa statistik (Dina framsteg) ovanför träningsinställningarna
-st.sidebar.subheader("📊 Dina framsteg")
-st.sidebar.write(f"Ord i listan: **{len(st.session_state.words)}**")
-
-if st.session_state.total_answered > 0:
-    pct = int((st.session_state.score / st.session_state.total_answered) * 100)
-    st.sidebar.write(f"Rätt svar: **{st.session_state.score}** av **{st.session_state.total_answered}** ({pct}%)")
-else:
-    st.sidebar.write("Rätt svar: **0**")
-
-# Beräkna fördelning i Leitner-lådorna
-box1_count = sum(1 for w in st.session_state.words if get_word_box(w["svenska"]) == 1)
-box2_count = sum(1 for w in st.session_state.words if get_word_box(w["svenska"]) == 2)
-box3_count = sum(1 for w in st.session_state.words if get_word_box(w["svenska"]) == 3)
-
-st.sidebar.markdown("---")
-st.sidebar.subheader("📦 Gloslådor (Leitner)")
+# --- SIDOMENY: PROFIL & LEITNER-STADA ---
 st.sidebar.markdown(f"""
-<div style='display: flex; gap: 4px; margin-bottom: 5px;'>
-    <div style='flex: 1; background-color: #FEE2E2; border: 1px solid #FCA5A5; border-radius: 6px; padding: 6px 4px; text-align: center;'>
-        <span style='font-size: 1.1rem;'>🔴</span><br>
-        <b style='color: #991B1B; font-size: 0.75rem; display:block; margin: 2px 0;'>Låda 1</b>
-        <span style='color: #991B1B; font-size: 1rem; font-weight: bold;'>{box1_count}</span>
-    </div>
-    <div style='flex: 1; background-color: #FEF3C7; border: 1px solid #FCD34D; border-radius: 6px; padding: 6px 4px; text-align: center;'>
-        <span style='font-size: 1.1rem;'>🟡</span><br>
-        <b style='color: #92400E; font-size: 0.75rem; display:block; margin: 2px 0;'>Låda 2</b>
-        <span style='color: #92400E; font-size: 1rem; font-weight: bold;'>{box2_count}</span>
-    </div>
-    <div style='flex: 1; background-color: #D1FAE5; border: 1px solid #6EE7B7; border-radius: 6px; padding: 6px 4px; text-align: center;'>
-        <span style='font-size: 1.1rem;'>🟢</span><br>
-        <b style='color: #065F46; font-size: 0.75rem; display:block; margin: 2px 0;'>Låda 3</b>
-        <span style='color: #065F46; font-size: 1rem; font-weight: bold;'>{box3_count}</span>
-    </div>
+<div style="background: linear-gradient(135deg, #1e3a8a, #0f172a); border-radius: 10px; padding: 12px; color: white; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(30, 58, 138, 0.15);">
+    <h4 style="margin: 0; color: #10B981; font-size: 1.15rem;">👤 {st.session_state.logged_in_user['name']}</h4>
+    <p style="margin: 0; font-size: 0.85rem; color: #94A3B8;">Klass: {st.session_state.logged_in_user['group']}</p>
 </div>
-<p style='font-size: 0.75rem; color: gray; margin-top: 5px; text-align: center;'>Svara rätt i rad för att flytta upp ord till gröna lådan!</p>
 """, unsafe_allow_html=True)
 
-# Molndatabas (Google Sheets) sändningsgränssnitt i sidomenyn
-st.sidebar.markdown("---")
-st.sidebar.subheader("📤 Skicka poäng till läraren")
-student_name_val = st.sidebar.text_input("Ditt namn:", placeholder="Ditt för- & efternamn...", key="student_name_input")
-if st.sidebar.button("Skicka in resultat", use_container_width=True):
-    if not student_name_val.strip():
-        st.sidebar.error("⚠️ Du måste ange ditt namn först!")
-    elif not st.session_state.gsheets_url:
-        st.sidebar.warning("⚠️ Ingen molndatabas har konfigurerats av läraren än.")
-    else:
-        import datetime
-        try:
-            payload = {
-                "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
-                "student": student_name_val.strip(),
-                "list_name": st.session_state.current_list_name,
-                "score": st.session_state.score,
-                "total": st.session_state.total_answered,
-                "box1": box1_count,
-                "box2": box2_count,
-                "box3": box3_count
-            }
-            req = urllib.request.Request(
-                st.session_state.gsheets_url, 
-                data=json.dumps(payload).encode('utf-8'), 
-                headers={'Content-Type': 'application/json'}
-            )
-            with urllib.request.urlopen(req, timeout=10) as response:
-                res_body = response.read().decode('utf-8')
-            st.sidebar.success("🎉 Dina framsteg har skickats till din lärare!")
-            st.toast("Resultat skickat!")
-        except Exception as e:
-            st.sidebar.error(f"❌ Fel vid sändning: {str(e)}")
-
-st.sidebar.markdown("---")
-
-# Träningsinställningar (träningsriktning) placerade nedanför framsteg
-st.sidebar.subheader("⚙️ Träningsinställningar")
-
-direction_label_1 = "Svenska ➔ Målspråk"
-direction_label_2 = "Målspråk ➔ Svenska"
-
-def sync_from_sidebar():
-    st.session_state.direction_mode = st.session_state.sb_direction
-    st.session_state.mn_direction = st.session_state.sb_direction
-    reset_progress()
-
-direction = st.sidebar.selectbox(
-    "Välj träningsriktning:",
-    (direction_label_1, direction_label_2),
-    key="sb_direction",
-    on_change=sync_from_sidebar,
-    help="Välj om du vill öva från svenska till målspråket, eller tvärtom."
-)
-
-if st.sidebar.button("🔄 Nollställ framsteg", use_container_width=True):
-    reset_progress()
-    st.toast("Framsteg nollställda!")
-
-st.sidebar.markdown("---")
+# Knapp för att spara framsteg manuellt
+if st.session_state.logged_in_user["name"] != "Gäst" and st.session_state.logged_in_user["name"] != "Lärare":
+    col_save, col_logout = st.columns(2)
+    with col_save:
+        if st.button("💾 Spara", use_container_width=True, help="Spara dina framsteg i molnet"):
+            with st.spinner("Sparar..."):
+                success = save_user_progress_to_db()
+                if success:
+                    st.toast("Framsteg sparade!")
+                    st.success("Sparat!")
+                else:
+                    st.error("Kunde inte spara.")
+    with col_logout:
+        if st.button("🚪 Logga ut", use_container_width=True):
+            with st.spinner("Sparar framsteg..."):
+                save_user_progress_to_db()
+            st.session_state.logged_in_user = None
+            st.session_state.current_list_name = None
+            st.session_state.words = None
+            st.toast("Utloggad!")
+            st.rerun()
+else:
+    if st.sidebar.button("🚪 Logga ut", use_container_width=True):
+        st.session_state.logged_in_user = None
+        st.session_state.current_list_name = None
+        st.session_state.words = None
+        st.session_state.admin_authenticated = False
+        st.toast("Utloggad!")
+        st.rerun()
 
 # Färgtema inställningar
+st.sidebar.markdown("---")
 st.sidebar.subheader("🎨 Färgtema")
 theme_mode = st.sidebar.selectbox(
     "Välj färgtema:",
@@ -791,7 +854,7 @@ st.markdown(f"""
 .box-l1, .box-l2, .box-l3 {{
     border-radius: 12px;
     padding: 12px;
-    min-height: 200px;
+    min-height: 120px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     margin-bottom: 15px;
 }}
@@ -799,51 +862,162 @@ st.markdown(f"""
 </style>
 """, unsafe_allow_html=True)
 
-# Beräkna fördelningen för expandern
+
+# Kontrollera om eleven befinner sig på Glosbiblioteksskärmen (current_list_name är None)
+if st.session_state.current_list_name is None and st.session_state.logged_in_user["name"] != "Lärare":
+    st.markdown("---")
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #1e3a8a, #0d9488); padding: 25px; border-radius: 12px; color: white; text-align: center; margin-bottom: 25px;">
+        <h2 style="margin: 0; font-size: 2rem; font-family: sans-serif;">📚 Välj en gloslista att öva</h2>
+        <p style="margin: 10px 0 0 0; font-size: 1rem; opacity: 0.9;">Välj den ordlista du vill utmana dig själv med idag för att ladda din progressionsteg.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Grid med tillgängliga listor
+    all_available_lists = list(st.session_state.library.keys())
+    
+    if not all_available_lists:
+        st.info("Det finns inga gloslistor registrerade än. Logga in i Lärarpanelen för att lägga till gloslistor.")
+    else:
+        # Visa listor som vackra kort
+        for list_name in all_available_lists:
+            list_info = st.session_state.library[list_name]
+            lang = list_info.get("language", "Spanska")
+            word_count = len(list_info.get("words", []))
+            
+            with st.container():
+                st.markdown(f"""
+                <div style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 15px; margin-bottom: 12px; background-color: #F8FAFC;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-size: 1.25rem; font-weight: bold; color: #1E3A8A;">📁 {list_name}</span><br>
+                            <span style="font-size: 0.85rem; color: #64748B;">Språk: <b>{lang}</b> • Antal ord: <b>{word_count}</b></span>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                if st.button(f"Öva listan '{list_name}' ➔", key=f"select_list_{list_name}", use_container_width=True):
+                    st.session_state.current_list_name = list_name
+                    st.session_state.words = list_info["words"].copy()
+                    st.session_state.target_language = lang
+                    reset_progress()
+                    
+                    # Elevens specifika progression laddades redan in i st.session_state.leitner_boxes vid login!
+                    st.rerun()
+                    
+    st.stop() # Avbryt körning här så vi inte ritar upp träningslägena när ingen lista valts!
+
+# Spara gSheets url-namnet
+target_lang_name = st.session_state.target_language
+
+# Beräkna fördelning i Leitner-lådorna för den aktiva listan
+box1_count = sum(1 for w in st.session_state.words if get_word_box(w["svenska"]) == 1)
+box2_count = sum(1 for w in st.session_state.words if get_word_box(w["svenska"]) == 2)
+box3_count = sum(1 for w in st.session_state.words if get_word_box(w["svenska"]) == 3)
+
+# Vertikala färgkodade lådor ("Klätterstegen") i sidofältet
+st.sidebar.markdown("---")
+st.sidebar.subheader("📦 Gloslådor (Klätterstegen)")
+st.sidebar.markdown(f"""
+<div style='display: flex; flex-direction: column; gap: 8px;'>
+    <div style='background-color: #D1FAE5; border-left: 5px solid #10B981; border-radius: 6px; padding: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);'>
+        <span style='font-size: 1.1rem;'>🟢</span> <b>Kan bra!</b> (Låda 3)<br>
+        <span style='font-size: 1.3rem; font-weight: bold; color: #065F46;'>{box3_count} ord</span>
+    </div>
+    <div style='background-color: #FEF3C7; border-left: 5px solid #F59E0B; border-radius: 6px; padding: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);'>
+        <span style='font-size: 1.1rem;'>🟡</span> <b>På väg</b> (Låda 2)<br>
+        <span style='font-size: 1.3rem; font-weight: bold; color: #92400E;'>{box2_count} ord</span>
+    </div>
+    <div style='background-color: #FEE2E2; border-left: 5px solid #EF4444; border-radius: 6px; padding: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);'>
+        <span style='font-size: 1.1rem;'>🔴</span> <b>Ska övas</b> (Låda 1)<br>
+        <span style='font-size: 1.3rem; font-weight: bold; color: #991B1B;'>{box1_count} ord</span>
+    </div>
+</div>
+<p style='font-size: 0.75rem; color: gray; margin-top: 5px; text-align: center;'>Ord du kan utantill klättrar upp till den gröna lådan!</p>
+""", unsafe_allow_html=True)
+
+# Träningsinställningar i sidofältet
+st.sidebar.markdown("---")
+st.sidebar.subheader("⚙️ Träningsinställningar")
+
+direction_label_1 = "Svenska ➔ Målspråk"
+direction_label_2 = "Målspråk ➔ Svenska"
+
+def sync_from_sidebar():
+    st.session_state.direction_mode = st.session_state.sb_direction
+    st.session_state.mn_direction = st.session_state.sb_direction
+    reset_progress()
+
+direction = st.sidebar.selectbox(
+    "Välj träningsriktning:",
+    (direction_label_1, direction_label_2),
+    key="sb_direction",
+    on_change=sync_from_sidebar,
+    help="Välj om du vill öva från svenska till målspråket, eller tvärtom."
+)
+
+if st.sidebar.button("🔄 Nollställ framsteg", use_container_width=True):
+    reset_progress()
+    st.toast("Framsteg nollställda!")
+
+# Navigeringsrad längst upp på huvudsidan
+col_back_nav, col_curr_list = st.columns([1, 4])
+with col_back_nav:
+    if st.button("📚 Gloslistor", use_container_width=True, help="Gå tillbaka till biblioteket och välj en annan lista"):
+        st.session_state.current_list_name = None
+        st.rerun()
+with col_curr_list:
+    st.info(f"👉 Aktiv lista: **{st.session_state.current_list_name}** ({target_lang_name})")
+
+# Beräkna fördelningen för den vertikala progressionen på huvudsidan
 main_box1 = [w for w in st.session_state.words if get_word_box(w["svenska"]) == 1]
 main_box2 = [w for w in st.session_state.words if get_word_box(w["svenska"]) == 2]
 main_box3 = [w for w in st.session_state.words if get_word_box(w["svenska"]) == 3]
 
-with st.expander("📦 Se dina gloslådor (Leitner-systemet)"):
+with st.expander("📦 Se dina gloslådor (Klätterstegen)"):
     st.markdown("""
-Här ser du hur dina ord är fördelade i dina personliga gloslådor.
-Svara rätt flera gånger i följd för att flytta upp ordet till **Låda 3 (Grön)**.
-Om du svarar fel faller ordet direkt tillbaka till **Låda 1 (Röd)** så att du får öva mer på det!
-""")
-    col_l1, col_l2, col_l3 = st.columns(3)
+    Här ser du hur dina ord är fördelade i dina personliga gloslådor.
+    Svara rätt i rad för att få ordet att klättra uppför stegen till **Låda 3 (Grön - Kan bra!)**.
+    Om du svarar fel faller ordet direkt tillbaka till **Låda 1 (Röd - Ska övas)** så att du kan öva mer på det!
+    """)
     
-    with col_l1:
-        st.markdown("<div class='box-l1'>", unsafe_allow_html=True)
-        st.markdown("<h4 style='margin: 0 0 10px 0; text-align:center;'>🔴 Låda 1<br><small style='font-weight:normal; font-size:0.75rem;'>Behöver öva mer</small></h4>", unsafe_allow_html=True)
-        if main_box1:
-            for w in main_box1:
-                st.markdown(f"<div class='leitner-card' style='border-left: 4px solid #EF4444;'><b>{w['svenska']}</b><br><span style='color:gray; font-size:0.75rem;'>{w['utlandska']}</span></div>", unsafe_allow_html=True)
-        else:
-            st.markdown("<p style='text-align:center; color: #991B1B; font-size:0.8rem; font-style:italic; margin-top:20px;'>Tomt! Snyggt jobbat!</p>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-        
-    with col_l2:
-        st.markdown("<div class='box-l2'>", unsafe_allow_html=True)
-        st.markdown("<h4 style='margin: 0 0 10px 0; text-align:center;'>🟡 Låda 2<br><small style='font-weight:normal; font-size:0.75rem;'>Kan sisådär</small></h4>", unsafe_allow_html=True)
-        if main_box2:
-            for w in main_box2:
-                st.markdown(f"<div class='leitner-card' style='border-left: 4px solid #F59E0B;'><b>{w['svenska']}</b><br><span style='color:gray; font-size:0.75rem;'>{w['utlandska']}</span></div>", unsafe_allow_html=True)
-        else:
-            st.markdown("<p style='text-align:center; color: #92400E; font-size:0.8rem; font-style:italic; margin-top:20px;'>Inga ord här än.</p>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-        
-    with col_l3:
-        st.markdown("<div class='box-l3'>", unsafe_allow_html=True)
-        st.markdown("<h4 style='margin: 0 0 10px 0; text-align:center;'>🟢 Låda 3<br><small style='font-weight:normal; font-size:0.75rem;'>Behärskas väl</small></h4>", unsafe_allow_html=True)
-        if main_box3:
-            for w in main_box3:
-                st.markdown(f"<div class='leitner-card' style='border-left: 4px solid #10B981;'><b>{w['svenska']}</b><br><span style='color:gray; font-size:0.75rem;'>{w['utlandska']}</span></div>", unsafe_allow_html=True)
-        else:
-            st.markdown("<p style='text-align:center; color: #065F46; font-size:0.8rem; font-style:italic; margin-top:20px;'>Inga ord avklarade än.</p>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+    # Låda 3 (Kan bra! - Överst på stegen)
+    st.markdown("<div class='box-l3' style='margin-bottom:12px;'>", unsafe_allow_html=True)
+    st.markdown("<h4 style='margin: 0 0 10px 0;'>🟢 Låda 3 - Kan bra!<br><small style='font-weight:normal; font-size:0.75rem; color:#059669;'>Ord du kan utantill</small></h4>", unsafe_allow_html=True)
+    if main_box3:
+        cols_l3 = st.columns(4)
+        for idx, w in enumerate(main_box3):
+            with cols_l3[idx % 4]:
+                st.markdown(f"<div class='leitner-card' style='border-left: 4px solid #10B981; margin: 4px 0;'><b>{w['svenska']}</b><br><span style='color:gray; font-size:0.75rem;'>{w['utlandska']}</span></div>", unsafe_allow_html=True)
+    else:
+        st.caption("Inga ord i Låda 3 än.")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # Låda 2 (På väg - Mitten på stegen)
+    st.markdown("<div class='box-l2' style='margin-bottom:12px;'>", unsafe_allow_html=True)
+    st.markdown("<h4 style='margin: 0 0 10px 0;'>🟡 Låda 2 - På väg<br><small style='font-weight:normal; font-size:0.75rem; color:#D97706;'>Ord du håller på att lära dig</small></h4>", unsafe_allow_html=True)
+    if main_box2:
+        cols_l2 = st.columns(4)
+        for idx, w in enumerate(main_box2):
+            with cols_l2[idx % 4]:
+                st.markdown(f"<div class='leitner-card' style='border-left: 4px solid #F59E0B; margin: 4px 0;'><b>{w['svenska']}</b><br><span style='color:gray; font-size:0.75rem;'>{w['utlandska']}</span></div>", unsafe_allow_html=True)
+    else:
+        st.caption("Inga ord i Låda 2 än.")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # Låda 1 (Ska övas - Botten på stegen)
+    st.markdown("<div class='box-l1' style='margin-bottom:12px;'>", unsafe_allow_html=True)
+    st.markdown("<h4 style='margin: 0 0 10px 0;'>🔴 Låda 1 - Ska övas<br><small style='font-weight:normal; font-size:0.75rem; color:#B91C1C;'>Ord du behöver träna mer på</small></h4>", unsafe_allow_html=True)
+    if main_box1:
+        cols_l1 = st.columns(4)
+        for idx, w in enumerate(main_box1):
+            with cols_l1[idx % 4]:
+                st.markdown(f"<div class='leitner-card' style='border-left: 4px solid #EF4444; margin: 4px 0;'><b>{w['svenska']}</b><br><span style='color:gray; font-size:0.75rem;'>{w['utlandska']}</span></div>", unsafe_allow_html=True)
+    else:
+        st.caption("Tomt! Snyggt jobbat!")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
-
 # Skapa tab-paneler för de olika träningslägena
 tab1, tab2, tab3, tab4 = st.tabs([
     "🎴 Flashcards (Se & Öva)",
@@ -1204,6 +1378,62 @@ else:
                     del st.session_state.printable_test
                 st.rerun()
                 
+            st.markdown("---")
+            
+            # ================= SEKTION: ELEV- & KONTOHANTERING (MOLNDATABAS) =================
+            st.markdown("### 👥 Elev- & Kontohantering (Molndatabas)")
+            st.markdown("Här kan du skapa elevkonton och följa dina elevers framsteg live. Elevdata och PIN-koder sparas i kalkylarkets flik 'Användare'.")
+            
+            if not st.session_state.gsheets_url:
+                st.warning("⚠️ Ingen molndatabas ansluten. Du kan ansluta din Google Apps Script URL längst ner på denna sida för att börja lägga till elever.")
+            else:
+                col_u1, col_u2 = st.columns(2)
+                with col_u1:
+                    new_student_name = st.text_input("Namn på elev:", placeholder="t.ex. Johan Andersson", key="admin_add_student_name")
+                    new_student_class = st.text_input("Klass/Grupp:", placeholder="t.ex. Klass 7A", key="admin_add_student_group")
+                with col_u2:
+                    new_student_pin = st.text_input("Välj 4-siffrig PIN-kod (endast siffror):", max_chars=4, placeholder="t.ex. 1234", key="admin_add_student_pin")
+                
+                if st.button("👥 Skapa elevkonto", type="primary", use_container_width=True):
+                    if not new_student_name.strip() or not new_student_pin.strip() or not new_student_class.strip():
+                        st.error("⚠️ Alla fält (Namn, Klass och PIN-kod) måste fyllas i!")
+                    elif not new_student_pin.strip().isdigit() or len(new_student_pin.strip()) != 4:
+                        st.error("⚠️ PIN-koden måste bestå av exakt 4 siffror!")
+                    else:
+                        with st.spinner("Skapar konto i databasen..."):
+                            success, msg = create_user_in_db(new_student_name, new_student_pin, new_student_class)
+                            if success:
+                                st.success(f"🎉 {msg}")
+                                st.session_state.users_list = fetch_users_from_db()
+                                time.sleep(1)
+                                st.rerun()
+                            else:
+                                st.error(f"❌ {msg}")
+                
+                # Visa befintliga konton
+                if st.session_state.users_list:
+                    st.markdown("#### 📂 Registrerade elevkonton")
+                    student_data = []
+                    for u in st.session_state.users_list:
+                        leitner_progress = u.get("leitner", {})
+                        bemastrade = sum(1 for k, v in leitner_progress.items() if v == 3)
+                        student_data.append({
+                            "Namn": u["name"],
+                            "Klass": u["group"],
+                            "PIN-kod": u["pin"],
+                            "Senaste Spara": u.get("last_saved", "Aldrig")[:16].replace("T", " ") if u.get("last_saved") else "Aldrig",
+                            "Totalt svarade": u.get("total", 0),
+                            "Bemästrade ord (Låda 3)": bemastrade
+                        })
+                    st.dataframe(student_data, use_container_width=True)
+                    
+                    if st.button("🔄 Synkronisera elevlista", key="sync_user_list_btn"):
+                        st.session_state.users_list = fetch_users_from_db()
+                        st.success("Elevlistan har synkroniserats!")
+                        st.rerun()
+                else:
+                    st.info("Inga elever registrerade än. Använd fälten ovan för att lägga till din första elev!")
+                    
             st.markdown("---")
             
             # ================= SEKTION: UTSKRIFTSBART GLOSFÖRHÖR =================
