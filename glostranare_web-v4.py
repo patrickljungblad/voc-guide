@@ -350,6 +350,9 @@ if "users_list" not in st.session_state:
 if "last_users_sync" not in st.session_state:
     st.session_state.last_users_sync = 0
 
+if "gsheets_url" not in st.session_state:
+    st.session_state.gsheets_url = st.secrets.get("GSHEETS_URL", "https://script.google.com/macros/s/AKfycbyxCS_n6BLvWJuHIGOXqgZErDlmq04gH9Y5A8RKTE71AxBZyXQc9uODyuFP6qNo7WnqRg/exec")
+
 # Hämta användare från molndatabasen vid uppstart
 if st.session_state.gsheets_url and not st.session_state.users_list:
     st.session_state.users_list = fetch_users_from_db()
@@ -377,8 +380,6 @@ if "target_language" not in st.session_state:
     st.session_state.target_language = "Spanska"
 
 # Initiera spelmekanik
-if "gsheets_url" not in st.session_state:
-    st.session_state.gsheets_url = st.secrets.get("GSHEETS_URL", "https://script.google.com/macros/s/AKfycbyxCS_n6BLvWJuHIGOXqgZErDlmq04gH9Y5A8RKTE71AxBZyXQc9uODyuFP6qNo7WnqRg/exec")
 
 if "leitner_boxes" not in st.session_state:
     st.session_state.leitner_boxes = {}
