@@ -498,6 +498,9 @@ def get_current_word():
 
 # Gå till nästa ord
 def next_word():
+    # Autospara elevens framsteg i bakgrunden vid byte av ord
+    if st.session_state.get("logged_in_user") and st.session_state.logged_in_user["name"] not in ["Gäst", "Lärare"]:
+        save_user_progress_to_db()
     st.session_state.current_index = (st.session_state.current_index + 1) % len(st.session_state.words)
     st.session_state.flashcard_flipped = False
     st.session_state.hint_count = 0
@@ -520,7 +523,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("Välkommen till **GlosFlow**! Öva i din egen takt med vetenskapligt beprövade metoder för språkinlärning. Börja med att **välja en gloslista i vänstermenyn** för att starta din träning!")
+st.markdown("Välkommen till **GlosFlow**! Öva i din egen takt med vetenskapligt beprövade metoder för språkinlärning.")
 
 # Snabbval för träningsriktning direkt vid övningen (om eleven missat den i sidomenyn)
 st.markdown("---")
@@ -892,6 +895,99 @@ st.markdown(f"""
     margin-bottom: 15px;
 }}
 {theme_css}
+
+/* Custom CSS for clickable category cards and list cards */
+div[data-testid="element-container"]:has(.folder-card-anchor) + div[data-testid="element-container"] .stButton button {{
+    background-color: #EFF6FF !important;
+    border: 1px solid #3B82F6 !important;
+    border-left: 6px solid #3B82F6 !important;
+    border-radius: 10px !important;
+    padding: 18px 24px !important;
+    font-size: 1.35rem !important;
+    font-weight: bold !important;
+    color: #1E3A8A !important;
+    text-align: left !important;
+    width: 100% !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.05) !important;
+    margin-bottom: 12px !important;
+    display: block !important;
+    height: auto !important;
+}}
+
+div[data-testid="element-container"]:has(.folder-card-anchor) + div[data-testid="element-container"] .stButton button:hover {{
+    background-color: #DBEAFE !important;
+    border-color: #2563EB !important;
+    box-shadow: 0 6px 15px rgba(59, 130, 246, 0.1) !important;
+    transform: translateY(-1px) !important;
+}}
+
+div[data-testid="element-container"]:has(.list-card-anchor) + div[data-testid="element-container"] .stButton button {{
+    background-color: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 10px !important;
+    padding: 16px 20px !important;
+    font-size: 1.2rem !important;
+    font-weight: bold !important;
+    color: #1E3A8A !important;
+    text-align: left !important;
+    width: 100% !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02) !important;
+    margin-bottom: 12px !important;
+    display: block !important;
+    height: auto !important;
+}}
+
+div[data-testid="element-container"]:has(.list-card-anchor) + div[data-testid="element-container"] .stButton button:hover {{
+    background-color: #F8FAFC !important;
+    border-color: #CBD5E1 !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05) !important;
+    transform: translateY(-1px) !important;
+}}
+
+@media (prefers-color-scheme: dark) {{
+    div[data-testid="element-container"]:has(.folder-card-anchor) + div[data-testid="element-container"] .stButton button {{
+        background-color: #1E293B !important;
+        border: 1px solid #3B82F6 !important;
+        border-left: 6px solid #3B82F6 !important;
+        color: #60A5FA !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2) !important;
+    }}
+    div[data-testid="element-container"]:has(.folder-card-anchor) + div[data-testid="element-container"] .stButton button:hover {{
+        background-color: #334155 !important;
+        border-color: #60A5FA !important;
+    }}
+    div[data-testid="element-container"]:has(.list-card-anchor) + div[data-testid="element-container"] .stButton button {{
+        background-color: #1E293B !important;
+        border: 1px solid #334155 !important;
+        color: #F8FAFC !important;
+    }}
+    div[data-testid="element-container"]:has(.list-card-anchor) + div[data-testid="element-container"] .stButton button:hover {{
+        background-color: #334155 !important;
+        border-color: #475569 !important;
+    }}
+}}
+
+
+@media (max-width: 768px) {{
+    h1 {{
+        font-size: 26px !important;
+    }}
+    .box-l1, .box-l2, .box-l3 {{
+        min-height: auto !important;
+        padding: 10px !important;
+        margin-bottom: 10px !important;
+    }}
+    div[data-testid="element-container"]:has(.folder-card-anchor) + div[data-testid="element-container"] .stButton button {{
+        padding: 14px 18px !important;
+        font-size: 1.15rem !important;
+    }}
+    div[data-testid="element-container"]:has(.list-card-anchor) + div[data-testid="element-container"] .stButton button {{
+        padding: 12px 16px !important;
+        font-size: 1.0rem !important;
+    }}
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -920,19 +1016,14 @@ if st.session_state.current_list_name is None and st.session_state.logged_in_use
         if not categories_dict:
             st.info("Det finns inga gloslistor registrerade än. Logga in i Lärarpanelen för att lägga till gloslistor.")
         else:
-            # Visa kategorier som mappar
+            # Visa kategorier som klickbara mappar (knappen ÄR själva mappen!)
             for cat_name, list_names in categories_dict.items():
                 list_count = len(list_names)
-                with st.container():
-                    st.markdown(f"""
-                    <div style="border: 1px solid #3B82F6; border-radius: 10px; padding: 18px; margin-bottom: 12px; background-color: #EFF6FF; border-left: 6px solid #3B82F6;">
-                        <span style="font-size: 1.35rem; font-weight: bold; color: #1E3A8A;">📁 {cat_name}</span><br>
-                        <span style="font-size: 0.85rem; color: #64748B;">Antal listor i mappen: <b>{list_count}</b></span>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    if st.button(f"Öppna mappen '{cat_name}' ➔", key=f"select_cat_{cat_name}", use_container_width=True):
-                        st.session_state.selected_category = cat_name
-                        st.rerun()
+                suffix = "lista" if list_count == 1 else "listor"
+                st.markdown('<div class="folder-card-anchor"></div>', unsafe_allow_html=True)
+                if st.button(f"📁 {cat_name}  ({list_count} {suffix}) ➔", key=f"select_cat_{cat_name}", use_container_width=True):
+                    st.session_state.selected_category = cat_name
+                    st.rerun()
     else:
         # En kategori är vald! Visa listor inuti den kategorin
         cat_name = st.session_state.selected_category
@@ -961,18 +1052,9 @@ if st.session_state.current_list_name is None and st.session_state.logged_in_use
                 lang = list_info.get("language", "Spanska")
                 word_count = len(list_info.get("words", []))
                 
-                with st.container():
-                    st.markdown(f"""
-                    <div style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 15px; margin-bottom: 12px; background-color: #F8FAFC;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <span style="font-size: 1.25rem; font-weight: bold; color: #1E3A8A;">📄 {list_name}</span><br>
-                                <span style="font-size: 0.85rem; color: #64748B;">Språk: <b>{lang}</b> • Antal ord: <b>{word_count}</b></span>
-                            </div>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    if st.button(f"Öva listan '{list_name}' ➔", key=f"select_list_{list_name}", use_container_width=True):
+                # Visa gloslistor som klickbara kort (knappen ÄR själva listkortet!)
+                st.markdown('<div class="list-card-anchor"></div>', unsafe_allow_html=True)
+                if st.button(f"📄 {list_name}  ({lang} • {word_count} ord) ➔", key=f"select_list_{list_name}", use_container_width=True):
                         st.session_state.current_list_name = list_name
                         st.session_state.words = list_info["words"].copy()
                         st.session_state.target_language = lang
@@ -1431,6 +1513,15 @@ else:
     with tab4:
         st.subheader("👩🏫 Lärarpanel (Hantera Glosbiblioteket)")
         
+        # Automatisk synkronisering av elevstatistiken när läraren visar fliken
+        if st.session_state.get("admin_authenticated"):
+            import time
+            current_time = time.time()
+            last_sync = st.session_state.get("last_users_sync", 0)
+            if current_time - last_sync > 5:  # Synkronisera automatiskt var 5:e sekund
+                st.session_state.users_list = fetch_users_from_db()
+                st.session_state.last_users_sync = current_time
+        
         # Initiera lösenordsstatus i session state
         if "admin_authenticated" not in st.session_state:
             st.session_state.admin_authenticated = False
@@ -1549,6 +1640,7 @@ else:
                         st.metric("Bemästrade glosor", total_mastered)
                     
                     st.markdown("#### 📁 Detaljerad elevlista")
+                    st.caption("⚡ *Elevlistan och statistiken synkroniseras nu helt automatiskt var 5:e sekund vid aktivitet i fliken.*")
                     import pandas as pd
                     df = pd.DataFrame(student_data)
                     st.dataframe(df, use_container_width=True)
