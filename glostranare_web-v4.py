@@ -178,13 +178,14 @@ def generate_pdf_bytes(test_words, quiz_title, target_lang_name, include_answers
 
 
 # ================= MOLNDATABAS (GOOGLE SHEETS) HJÄLPFUNKTIONER =================
-def fetch_users_from_db():
-    if not st.session_state.gsheets_url:
+@st.cache_data(ttl=15, show_spinner=False)
+def fetch_users_from_db(gsheets_url):
+    if not gsheets_url:
         return []
     try:
         payload = {"action": "get_users"}
         req = urllib.request.Request(
-            st.session_state.gsheets_url,
+            gsheets_url,
             data=json.dumps(payload).encode('utf-8'),
             headers={'Content-Type': 'application/json'}
         )
@@ -419,7 +420,7 @@ if "gsheets_url" not in st.session_state:
 
 # Hämta användare från molndatabasen vid uppstart
 if st.session_state.gsheets_url and not st.session_state.users_list:
-    st.session_state.users_list = fetch_users_from_db()
+    st.session_state.users_list = fetch_users_from_db(st.session_state.gsheets_url)
 
 
 # Initiera aktiv ordlista och målspråk
@@ -1684,7 +1685,7 @@ else:
             current_time = time.time()
             last_sync = st.session_state.get("last_users_sync", 0)
             if current_time - last_sync > 5:  # Synkronisera automatiskt var 5:e sekund
-                st.session_state.users_list = fetch_users_from_db()
+                st.session_state.users_list = fetch_users_from_db(st.session_state.gsheets_url)
                 st.session_state.last_users_sync = current_time
         
         # Initiera lösenordsstatus i session state
@@ -1735,7 +1736,8 @@ else:
                             success, msg = create_user_in_db(new_student_name, new_student_pin, new_student_class)
                             if success:
                                 st.success(f"🎉 {msg}")
-                                st.session_state.users_list = fetch_users_from_db()
+                                fetch_users_from_db.clear()
+                                st.session_state.users_list = fetch_users_from_db(st.session_state.gsheets_url)
                                 time.sleep(1)
                                 st.rerun()
                             else:
@@ -1811,7 +1813,8 @@ else:
                     st.dataframe(df, use_container_width=True)
                     
                     if st.button("🔄 Synkronisera elevlista", key="sync_user_list_btn"):
-                        st.session_state.users_list = fetch_users_from_db()
+                        fetch_users_from_db.clear()
+                        st.session_state.users_list = fetch_users_from_db(st.session_state.gsheets_url)
                         st.success("Elevlistan har synkroniserats!")
                         st.rerun()
                 else:
