@@ -960,13 +960,26 @@ div[data-testid="stTextInput"] input:focus, div[data-testid="stSelectbox"] [role
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }}
 .box-l1, .box-l2, .box-l3 {{
-    border-radius: 12px;
-    padding: 12px;
-    min-height: 120px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0px !important;
+    min-height: auto !important;
     margin-bottom: 15px;
 }}
 {theme_css}
+
+/* Snygg, minimalistisk design för gloslådor utan stora bakgrundsblock */
+div[data-testid="stExpander"] .box-l1,
+div[data-testid="stExpander"] .box-l2,
+div[data-testid="stExpander"] .box-l3 {{
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0px !important;
+    min-height: auto !important;
+    margin-bottom: 25px !important;
+}}
 
 /* Custom CSS for clickable category cards and list cards */
 div[data-testid="element-container"]:has(.folder-card-anchor) + div[data-testid="element-container"] .stButton button {{
@@ -1478,6 +1491,8 @@ else:
         components.html(card_html_code, height=270)
         
         if st.button("Nästa kort ➔", use_container_width=True):
+            if st.session_state.get("logged_in_user") and st.session_state.logged_in_user["name"] not in ["Gäst", "Lärare"]:
+                st.session_state.leitner_boxes["_stats_flashcard_total"] = st.session_state.leitner_boxes.get("_stats_flashcard_total", 0) + 1
             next_word()
             st.rerun()
 
@@ -1509,6 +1524,10 @@ else:
             if selected_option is None:
                 st.warning("Vänligen välj ett alternativ först!")
             else:
+                if st.session_state.get("logged_in_user") and st.session_state.logged_in_user["name"] not in ["Gäst", "Lärare"]:
+                    st.session_state.leitner_boxes["_stats_quiz_total"] = st.session_state.leitner_boxes.get("_stats_quiz_total", 0) + 1
+                    if selected_option == correct_answer:
+                        st.session_state.leitner_boxes["_stats_quiz_correct"] = st.session_state.leitner_boxes.get("_stats_quiz_correct", 0) + 1
                 st.session_state.total_answered += 1
                 correct_answer = current_word[target_lang]
                 if selected_option == correct_answer:
@@ -1640,6 +1659,10 @@ else:
                 clean_correct = correct_answer.rstrip('. ').strip()
                 clean_student = student_answer.rstrip('. ').strip()
                 
+                if st.session_state.get("logged_in_user") and st.session_state.logged_in_user["name"] not in ["Gäst", "Lärare"]:
+                    st.session_state.leitner_boxes["_stats_write_total"] = st.session_state.leitner_boxes.get("_stats_write_total", 0) + 1
+                    if clean_student == clean_correct:
+                        st.session_state.leitner_boxes["_stats_write_correct"] = st.session_state.leitner_boxes.get("_stats_write_correct", 0) + 1
                 if clean_student == clean_correct:
                     st.session_state.score += 1
                     st.session_state.failed_attempts[current_word["svenska"]] = 0 # Nollställ försök vid rätt svar
@@ -1712,13 +1735,221 @@ else:
                 
             st.markdown("---")
             
-            # ================= SEKTION: ELEV- & KONTOHANTERING (MOLNDATABAS) =================
-            st.markdown("### 👥 Elev- & Kontohantering (Molndatabas)")
-            st.markdown("Här kan du skapa elevkonton och följa dina elevers framsteg live. Elevdata och PIN-koder sparas i kalkylarkets flik 'Användare'.")
+            # ================= NY RESTRUKTURERAD LÄRARPANEL =================
+            # Dela upp lärarpanelen i två renodlade flikar för bättre översikt
+            sub_tab1, sub_tab2 = st.tabs(["📊 Elevstatistik & Progression", "⚙️ Kursadministration & Hantering"])
             
-            if not st.session_state.gsheets_url:
-                st.warning("⚠️ Ingen molndatabas ansluten. Du kan ansluta din Google Apps Script URL längst ner på denna sida för att börja lägga till elever.")
-            else:
+            with sub_tab1:
+                st.markdown("### 📊 Elevstatistik & Progression")
+                st.markdown("Följ dina elevers framsteg, aktivitet och precision i realtid. Statistiken uppdateras automatiskt.")
+                
+                if not st.session_state.gsheets_url:
+                    st.warning("⚠️ Ingen molndatabas ansluten. Gå till fliken 'Kursadministration & Hantering' för att ansluta kalkylarket.")
+                else:
+                    if st.session_state.users_list:
+                        # Initiera aggregat
+                        student_data = []
+                        total_questions = 0
+                        total_mastered = 0
+                        
+                        student_names = []
+                        student_totals = []
+                        student_scores = []
+                        
+                        total_box1 = 0
+                        total_box2 = 0
+                        total_box3 = 0
+                        
+                        total_fc = 0
+                        total_qz = 0
+                        total_qz_corr = 0
+                        total_wr = 0
+                        total_wr_corr = 0
+                        
+                        exercise_data = []
+                        
+                        def safe_str(val):
+                            if isinstance(val, list):
+                                return str(val[0]) if val else ""
+                            return str(val)
+
+                        def safe_int(val):
+                            if isinstance(val, list):
+                                val = val[0] if val else 0
+                            try:
+                                return int(float(val))
+                            except:
+                                return 0
+                        
+                        for u in st.session_state.users_list:
+                            name = safe_str(u.get("name", ""))
+                            group = safe_str(u.get("group", ""))
+                            pin = safe_str(u.get("pin", ""))
+                            last_saved_val = safe_str(u.get("last_saved", ""))
+                            if last_saved_val and len(last_saved_val) >= 16:
+                                last_saved = last_saved_val[:16].replace("T", " ")
+                            else:
+                                last_saved = "Aldrig"
+                                
+                            total = safe_int(u.get("total", 0))
+                            score = safe_int(u.get("score", 0))
+                            
+                            # Leitner data
+                            leitner_progress = u.get("leitner", {})
+                            if not isinstance(leitner_progress, dict):
+                                leitner_progress = {}
+                                
+                            # Beräkna bemästrade (Låda 3) - uteslut statistiknycklar
+                            bemastrade = sum(1 for k, v in leitner_progress.items() if not k.startswith("_stats_") and safe_int(v) == 3)
+                            
+                            # Räkna lådfördelning
+                            for k, v in leitner_progress.items():
+                                if k.startswith("_stats_"):
+                                    continue
+                                val = safe_int(v)
+                                if val == 1:
+                                    total_box1 += 1
+                                elif val == 2:
+                                    total_box2 += 1
+                                elif val == 3:
+                                    total_box3 += 1
+                                    
+                            # Övningsspecifik statistik
+                            fc_val = safe_int(leitner_progress.get("_stats_flashcard_total", 0))
+                            qz_val = safe_int(leitner_progress.get("_stats_quiz_total", 0))
+                            qz_corr_val = safe_int(leitner_progress.get("_stats_quiz_correct", 0))
+                            wr_val = safe_int(leitner_progress.get("_stats_write_total", 0))
+                            wr_corr_val = safe_int(leitner_progress.get("_stats_write_correct", 0))
+                            
+                            total_fc += fc_val
+                            total_qz += qz_val
+                            total_qz_corr += qz_corr_val
+                            total_wr += wr_val
+                            total_wr_corr += wr_corr_val
+                            
+                            qz_acc = f"{int((qz_corr_val / qz_val) * 100)}%" if qz_val > 0 else "-"
+                            wr_acc = f"{int((wr_corr_val / wr_val) * 100)}%" if wr_val > 0 else "-"
+                            
+                            exercise_data.append({
+                                "Elev": name,
+                                "Klass": group,
+                                "Flashcards (visningar)": fc_val,
+                                "Flervalsquiz (svar)": qz_val,
+                                "Flervalsquiz (rätt)": qz_corr_val,
+                                "Flervalsquiz (precision)": qz_acc,
+                                "Skrivträning (svar)": wr_val,
+                                "Skrivträning (rätt)": wr_corr_val,
+                                "Skrivträning (precision)": wr_acc
+                            })
+                            
+                            total_questions += total
+                            total_mastered += bemastrade
+                            
+                            acc = f"{int((score / total) * 100)}%" if total > 0 else "0%"
+                            
+                            student_data.append({
+                                "Elev": name,
+                                "Klass/Grupp": group,
+                                "PIN-kod": pin,
+                                "Senaste Aktivitet": last_saved,
+                                "Svarade Frågor": total,
+                                "Rätt Svar": score,
+                                "Precision": acc,
+                                "Bemästrade Glosor (Låda 3)": bemastrade
+                            })
+                            
+                            student_names.append(name)
+                            student_totals.append(total)
+                            student_scores.append(score)
+                            
+                        # Klassrumssammanfattning
+                        st.markdown("#### 🎯 Klassrumssammanfattning")
+                        col_m1, col_m2, col_m3 = st.columns(3)
+                        with col_m1:
+                            st.metric("Registrerade elever", len(st.session_state.users_list))
+                        with col_m2:
+                            st.metric("Svarade frågor (totalt)", total_questions)
+                        with col_m3:
+                            st.metric("Bemästrade glosor", total_mastered)
+                            
+                        st.markdown("---")
+                        
+                        # Grafiska diagram
+                        st.markdown("#### 📈 Grafisk Översikt")
+                        col_chart1, col_chart2 = st.columns(2)
+                        
+                        with col_chart1:
+                            st.markdown("<p style='font-weight: bold; text-align: center; color: #1E3A8A;'>📦 Fördelning av gloslådor (Klätterstegen)</p>", unsafe_allow_html=True)
+                            box_df = pd.DataFrame({
+                                "Antal ord i klassen": [total_box1, total_box2, total_box3]
+                            }, index=["🔴 Låda 1 (Ska övas)", "🟡 Låda 2 (På väg)", "🟢 Låda 3 (Kan bra)"])
+                            st.bar_chart(box_df, color="#3B82F6")
+                            st.caption("Visar det sammanlagda antalet ord som eleverna har placerade i de olika lådorna.")
+                            
+                        with col_chart2:
+                            st.markdown("<p style='font-weight: bold; text-align: center; color: #1E3A8A;'>⚡ Elevaktivitet och Rätt svar</p>", unsafe_allow_html=True)
+                            if student_names:
+                                chart_df = pd.DataFrame({
+                                    "Svarade frågor": student_totals,
+                                    "Rätt svar": student_scores
+                                }, index=student_names)
+                                st.bar_chart(chart_df)
+                            st.caption("Jämför antalet besvarade frågor och antalet rätta svar per elev.")
+                            
+                        st.markdown("---")
+                        
+                        # Fördelning av övningsform
+                        st.markdown("#### 🔄 Aktivitet per övningsform")
+                        col_ex_info, col_ex_chart = st.columns([1, 1])
+                        
+                        with col_ex_info:
+                            st.markdown("**Sammanlagda svar per övning:**")
+                            st.markdown(f"- 🎴 **Flashcard-visningar:** `{total_fc}` st")
+                            st.markdown(f"- 🎯 **Flervalsquiz-svar:** `{total_qz}` st *(Rätt: {total_qz_corr} st)*")
+                            st.markdown(f"- ✍️ **Skrivtränings-svar:** `{total_wr}` st *(Rätt: {total_wr_corr} st)*")
+                            
+                            qz_overall_acc = f"{int((total_qz_corr / total_qz) * 100)}%" if total_qz > 0 else "-"
+                            wr_overall_acc = f"{int((total_wr_corr / total_wr) * 100)}%" if total_wr > 0 else "-"
+                            st.markdown(f"**Genomsnittlig precision i klassen:**")
+                            st.markdown(f"- Flervalsquiz: **{qz_overall_acc}**")
+                            st.markdown(f"- Skrivträning: **{wr_overall_acc}**")
+                            
+                        with col_ex_chart:
+                            ex_totals = [total_fc, total_qz, total_wr]
+                            ex_df = pd.DataFrame({
+                                "Aktivitet": ex_totals
+                            }, index=["Flashcards", "Flervalsquiz", "Skrivträning"])
+                            st.bar_chart(ex_df, color="#10B981")
+                        
+                        st.markdown("---")
+                        
+                        # Detaljerad elevlista
+                        st.markdown("#### 📁 Detaljerad elevlista")
+                        st.caption("Elevlistan och statistiken synkroniseras automatiskt var 5:e sekund.")
+                        df_students = pd.DataFrame(student_data)
+                        st.dataframe(df_students, use_container_width=True)
+                        
+                        # Detaljerad övningsmetodslista
+                        st.markdown("#### 📊 Övningsmetoder per elev")
+                        df_exercises = pd.DataFrame(exercise_data)
+                        st.dataframe(df_exercises, use_container_width=True)
+                        
+                        if st.button("🔄 Synkronisera elevlista", key="sync_user_list_btn"):
+                            fetch_users_from_db.clear()
+                            st.session_state.users_list = fetch_users_from_db(st.session_state.gsheets_url)
+                            st.success("Elevlistan har synkroniserats!")
+                            st.rerun()
+                    else:
+                        st.info("Inga elever registrerade än. Använd administrationsfliken för att lägga till din första elev!")
+            
+            with sub_tab2:
+                st.markdown("### ⚙️ Kursadministration & Hantering")
+                st.markdown("Administrera elevkonton, lägg till/ta bort gloslistor, anslut kalkylark och generera prov.")
+                
+                # ================= SEKTION: ELEV- & KONTOHANTERING =================
+                st.markdown("#### 👥 Elev- & Kontohantering (Molndatabas)")
+                st.markdown("Skapa nya elevkonton här. Löpande resultat sparas automatiskt i kalkylarket.")
+                
                 col_u1, col_u2 = st.columns(2)
                 with col_u1:
                     new_student_name = st.text_input("Namn på elev:", placeholder="t.ex. Johan Andersson", key="admin_add_student_name")
@@ -1743,445 +1974,342 @@ else:
                             else:
                                 st.error(f"❌ {msg}")
                 
-                # Visa befintliga konton (med robust datatyp-konvertering och lärarens översiktspanel)
-                if st.session_state.users_list:
-                    st.markdown("### 📊 Översikt & Elevstatistik")
-                    
-                    def safe_str(val):
-                        if isinstance(val, list):
-                            return str(val[0]) if val else ""
-                        return str(val)
-
-                    def safe_int(val):
-                        if isinstance(val, list):
-                            val = val[0] if val else 0
-                        try:
-                            return int(float(val))
-                        except:
-                            return 0
-                            
-                    student_data = []
-                    total_questions = 0
-                    total_mastered = 0
-                    for u in st.session_state.users_list:
-                        name = safe_str(u.get("name", ""))
-                        group = safe_str(u.get("group", ""))
-                        pin = safe_str(u.get("pin", ""))
-                        last_saved_val = safe_str(u.get("last_saved", ""))
-                        if last_saved_val and len(last_saved_val) >= 16:
-                            last_saved = last_saved_val[:16].replace("T", " ")
-                        else:
-                            last_saved = "Aldrig"
-                        total = safe_int(u.get("total", 0))
-                        score = safe_int(u.get("score", 0))
-                        
-                        leitner_progress = u.get("leitner", {})
-                        if not isinstance(leitner_progress, dict):
-                            leitner_progress = {}
-                        bemastrade = sum(1 for k, v in leitner_progress.items() if safe_int(v) == 3)
-                        
-                        total_questions += total
-                        total_mastered += bemastrade
-                        
-                        acc = f"{int((score / total) * 100)}%" if total > 0 else "0%"
-                        
-                        student_data.append({
-                            "Elev": name,
-                            "Klass/Grupp": group,
-                            "PIN-kod": pin,
-                            "Senaste Aktivitet": last_saved,
-                            "Svarade Frågor": total,
-                            "Rätt Svar": score,
-                            "Precision": acc,
-                            "Bemästrade Glosor (Låda 3)": bemastrade
-                        })
-                    
-                    # Visa lärarens nyckeltal överst
-                    st.markdown("#### 🎯 Klassrumssammanfattning")
-                    col_m1, col_m2, col_m3 = st.columns(3)
-                    with col_m1:
-                        st.metric("Registrerade elever", len(st.session_state.users_list))
-                    with col_m2:
-                        st.metric("Svarade frågor (totalt)", total_questions)
-                    with col_m3:
-                        st.metric("Bemästrade glosor", total_mastered)
-                    
-                    st.markdown("#### 📁 Detaljerad elevlista")
-                    st.caption("⚡ *Elevlistan och statistiken synkroniseras nu helt automatiskt var 5:e sekund vid aktivitet i fliken.*")
-                    import pandas as pd
-                    df = pd.DataFrame(student_data)
-                    st.dataframe(df, use_container_width=True)
-                    
-                    if st.button("🔄 Synkronisera elevlista", key="sync_user_list_btn"):
-                        fetch_users_from_db.clear()
-                        st.session_state.users_list = fetch_users_from_db(st.session_state.gsheets_url)
-                        st.success("Elevlistan har synkroniserats!")
-                        st.rerun()
-                else:
-                    st.info("Inga elever registrerade än. Använd fälten ovan för att lägga till din första elev!")
-                    
-            st.markdown("---")
-            
-            # ================= SEKTION: UTSKRIFTSBART GLOSFÖRHÖR =================
-            st.markdown("### 🖨️ Skapa utskriftsbart glosförhör")
-            st.markdown("Här kan du generera ett professionellt provblad redo att skrivas ut på papper till dina elever. När du klickar på skriv ut-knappen döljs alla webbmenyer automatiskt på utskriften!")
-            
-            col_p1, col_p2 = st.columns(2)
-            with col_p1:
-                quiz_title = st.text_input("Provrubrik på provbladet:", value=f"Glosförhör - {target_lang_name}")
-                quiz_direction = st.selectbox(
-                    "Provriktning:",
-                    ["Svenska ➔ Målspråk", "Målspråk ➔ Svenska", "Blandat (slumpat)"]
-                )
-            with col_p2:
-                max_words = len(st.session_state.words)
-                quiz_count = st.selectbox(
-                    "Antal glosor i förhöret:",
-                    ["Alla"] + [i for i in [5, 10, 15, 20, 25, 30, 40, 50] if i <= max_words],
-                    index=0
-                )
-                include_answers = st.checkbox("Skapa facit-sida också (separat sida)", value=True)
+                st.markdown("---")
                 
-            if st.button("📄 Generera utskriftsklart förhör", type="primary", use_container_width=True):
-                if not st.session_state.words:
-                    st.error("Det finns inga glosor i din lista att generera prov av!")
-                else:
-                    # Blanda glosorna och begränsa antal
-                    test_words = st.session_state.words.copy()
-                    random.shuffle(test_words)
-                    if quiz_count != "Alla":
-                        test_words = test_words[:int(quiz_count)]
-                        
-                    # Pre-generera prompt_word och answer_word för konsistens mellan HTML och PDF
-                    for w in test_words:
-                        if quiz_direction == "Svenska ➔ Målspråk":
-                            w["prompt_word"] = w["svenska"]
-                            w["answer_word"] = w["utlandska"]
-                        elif quiz_direction == "Målspråk ➔ Svenska":
-                            w["prompt_word"] = w["utlandska"]
-                            w["answer_word"] = w["svenska"]
-                        else:
-                            # Blandat
-                            if random.choice([True, False]):
-                                w["prompt_word"] = w["svenska"] + f" (➔ {target_lang_name})"
+                # ================= SEKTION: UTSKRIFTSBART GLOSFÖRHÖR =================
+                st.markdown("#### 🖨️ Skapa utskriftsbart glosförhör")
+                st.markdown("Generera ett professionellt provblad i PDF eller utskriftsformat baserat på den valda gloslistan.")
+                
+                col_p1, col_p2 = st.columns(2)
+                with col_p1:
+                    quiz_title = st.text_input("Provrubrik på provbladet:", value=f"Glosförhör - {target_lang_name}")
+                    quiz_direction = st.selectbox(
+                        "Provriktning:",
+                        ["Svenska ➔ Målspråk", "Målspråk ➔ Svenska", "Blandat (slumpat)"],
+                        key="admin_quiz_direction"
+                    )
+                with col_p2:
+                    max_words = len(st.session_state.words)
+                    quiz_count = st.selectbox(
+                        "Antal glosor i förhöret:",
+                        ["Alla"] + [i for i in [5, 10, 15, 20, 25, 30, 40, 50] if i <= max_words],
+                        index=0,
+                        key="admin_quiz_count"
+                    )
+                    include_answers = st.checkbox("Skapa facit-sida också (separat sida)", value=True, key="admin_quiz_include_answers")
+                    
+                if st.button("📄 Generera utskriftsklart förhör", type="primary", use_container_width=True):
+                    if not st.session_state.words:
+                        st.error("Det finns inga glosor i din lista att generera prov av!")
+                    else:
+                        # Blanda glosorna och begränsa antal
+                        test_words = st.session_state.words.copy()
+                        random.shuffle(test_words)
+                        if quiz_count != "Alla":
+                            test_words = test_words[:int(quiz_count)]
+                            
+                        # Pre-generera prompt_word och answer_word för konsistens
+                        for w in test_words:
+                            if quiz_direction == "Svenska ➔ Målspråk":
+                                w["prompt_word"] = w["svenska"]
                                 w["answer_word"] = w["utlandska"]
-                            else:
-                                w["prompt_word"] = w["utlandska"] + " (➔ Svenska)"
+                            elif quiz_direction == "Målspråk ➔ Svenska":
+                                w["prompt_word"] = w["utlandska"]
                                 w["answer_word"] = w["svenska"]
-                    
-                    # Spara i session state för PDF-generatorn
-                    st.session_state.quiz_test_words = test_words
-                    st.session_state.quiz_title_val = quiz_title
-                    st.session_state.quiz_include_answers = include_answers
-                    st.session_state.quiz_target_lang = target_lang_name
-                    
-                    test_html = ""
-                    facit_html = ""
-                    
-                    # CSS för provbladsutskrift (Extremt robust döljning av Streamlit UI under utskrift)
-                    style_block = """
-                    <style>
-                    @media print {
-                        /* Dölj Streamlits egna layoutkomponenter helt */
-                        header, footer, [data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="stToolbar"], .stTabs, button, hr, .print-hide {
-                            display: none !important;
-                            height: 0 !important;
-                            padding: 0 !important;
-                            margin: 0 !important;
-                        }
+                            else:
+                                if random.choice([True, False]):
+                                    w["prompt_word"] = w["svenska"] + f" (➔ {target_lang_name})"
+                                    w["answer_word"] = w["utlandska"]
+                                else:
+                                    w["prompt_word"] = w["utlandska"] + " (➔ Svenska)"
+                                    w["answer_word"] = w["svenska"]
                         
-                        /* Nollställ höjd- och scrollbegränsningar på Streamlits yttre containers */
-                        body, .stApp, .main, .block-container, [data-testid="stAppViewContainer"], [data-testid="stVerticalBlock"] {
-                            height: auto !important;
-                            min-height: 0 !important;
-                            max-height: none !important;
-                            overflow: visible !important;
-                            padding: 0 !important;
-                            margin: 0 !important;
-                            width: 100% !important;
-                            display: block !important;
-                        }
+                        st.session_state.quiz_test_words = test_words
+                        st.session_state.quiz_title_val = quiz_title
+                        st.session_state.quiz_include_answers = include_answers
+                        st.session_state.quiz_target_lang = target_lang_name
                         
-                        /* Dölj ALLA element på hela sidan som standard */
-                        body * {
-                            visibility: hidden !important;
-                        }
+                        test_html = ""
+                        facit_html = ""
                         
-                        /* Gör ENBART själva förhörsbehållaren och dess innehåll synligt */
-                        .print-container, .print-container * {
-                            visibility: visible !important;
+                        # CSS för utskrift
+                        style_block = """
+                        <style>
+                        @media print {
+                            header, footer, [data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="stToolbar"], .stTabs, button, hr, .print-hide {
+                                display: none !important;
+                                height: 0 !important;
+                                padding: 0 !important;
+                                margin: 0 !important;
+                            }
+                            body, .stApp, .main, .block-container, [data-testid="stAppViewContainer"], [data-testid="stVerticalBlock"] {
+                                height: auto !important;
+                                min-height: 0 !important;
+                                max-height: none !important;
+                                overflow: visible !important;
+                                padding: 0 !important;
+                                margin: 0 !important;
+                                width: 100% !important;
+                                display: block !important;
+                            }
+                            body * {
+                                visibility: hidden !important;
+                            }
+                            .print-container, .print-container * {
+                                visibility: visible !important;
+                            }
+                            .print-container {
+                                position: absolute !important;
+                                left: 0 !important;
+                                top: 0 !important;
+                                width: 100% !important;
+                                height: auto !important;
+                                border: none !important;
+                                box-shadow: none !important;
+                                padding: 0 !important;
+                                margin: 0 !important;
+                                background: white !important;
+                                color: black !important;
+                            }
+                            .page-break {
+                                page-break-before: always !important;
+                            }
                         }
-                        
-                        /* Positionera förhöret absolut längst upp till vänster på papperet */
                         .print-container {
-                            position: absolute !important;
-                            left: 0 !important;
-                            top: 0 !important;
-                            width: 100% !important;
-                            height: auto !important;
-                            border: none !important;
-                            box-shadow: none !important;
-                            padding: 0 !important;
-                            margin: 0 !important;
-                            background: white !important;
-                            color: black !important;
+                            background-color: white;
+                            color: black;
+                            padding: 40px;
+                            border: 1px solid #ddd;
+                            border-radius: 5px;
+                            font-family: 'Courier New', Courier, monospace, Arial, sans-serif;
+                            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+                            margin-top: 20px;
+                            margin-bottom: 20px;
                         }
-                        
-                        .page-break {
-                            page-break-before: always !important;
+                        .print-title {
+                            font-size: 26px;
+                            font-weight: bold;
+                            text-align: center;
+                            margin-bottom: 30px;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
                         }
-                    }
-                    .print-container {
-                        background-color: white;
-                        color: black;
-                        padding: 40px;
-                        border: 1px solid #ddd;
-                        border-radius: 5px;
-                        font-family: 'Courier New', Courier, monospace, Arial, sans-serif;
-                        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-                        margin-top: 20px;
-                        margin-bottom: 20px;
-                    }
-                    .print-title {
-                        font-size: 26px;
-                        font-weight: bold;
-                        text-align: center;
-                        margin-bottom: 30px;
-                        text-transform: uppercase;
-                        letter-spacing: 1px;
-                    }
-                    .print-student-info {
-                        margin-bottom: 35px;
-                        font-size: 15px;
-                        line-height: 1.8;
-                    }
-                    .info-line {
-                        border-bottom: 1px solid black;
-                        display: inline-block;
-                        width: 180px;
-                        margin-right: 20px;
-                    }
-                    .quiz-table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        margin-top: 20px;
-                    }
-                    .quiz-row {
-                        border-bottom: 1px dashed #bbb;
-                        height: 50px;
-                    }
-                    .quiz-num {
-                        width: 50px;
-                        font-weight: bold;
-                        font-size: 18px;
-                    }
-                    .quiz-prompt {
-                        width: 250px;
-                        font-size: 18px;
-                    }
-                    .quiz-answer-line {
-                        border-bottom: 1px solid #000;
-                        display: inline-block;
-                        width: 300px;
-                        height: 25px;
-                    }
-                    .quiz-answer-text {
-                        font-size: 18px;
-                        font-weight: bold;
-                        color: #d32f2f;
-                    }
-                    </style>
-                    """
-                    
-                    # Generera Elevprov
-                    test_html += style_block
-                    test_html += "<div class='print-container'>"
-                    test_html += f"<div class='print-title'>{quiz_title}</div>"
-                    test_html += f"""
-                    <div class='print-student-info'>
-                        Elevens namn: <span class='info-line'></span>
-                        Klass/Grupp:  <span class='info-line'></span>
-                        Datum:        <span class='info-line'></span>
-                        <br>
-                        <b>Poäng: ________ av {len(test_words)} rätt</b>
-                    </div>
-                    """
-                    test_html += "<table class='quiz-table'>"
-                    for idx, w in enumerate(test_words, 1):
-                        p_word = w["prompt_word"]
-                        test_html += f"""
-                        <tr class='quiz-row'>
-                            <td class='quiz-num'>{idx}.</td>
-                            <td class='quiz-prompt'>{p_word}</td>
-                            <td><span class='quiz-answer-line'></span></td>
-                        </tr>
+                        .print-student-info {
+                            margin-bottom: 35px;
+                            font-size: 15px;
+                            line-height: 1.8;
+                        }
+                        .info-line {
+                            border-bottom: 1px solid black;
+                            display: inline-block;
+                            width: 180px;
+                            margin-right: 20px;
+                        }
+                        .quiz-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-top: 20px;
+                        }
+                        .quiz-row {
+                            border-bottom: 1px dashed #bbb;
+                            height: 50px;
+                        }
+                        .quiz-num {
+                            width: 50px;
+                            font-weight: bold;
+                            font-size: 18px;
+                        }
+                        .quiz-prompt {
+                            width: 250px;
+                            font-size: 18px;
+                        }
+                        .quiz-answer-line {
+                            border-bottom: 1px solid #000;
+                            display: inline-block;
+                            width: 300px;
+                            height: 25px;
+                        }
+                        .quiz-answer-text {
+                            font-size: 18px;
+                            font-weight: bold;
+                            color: #d32f2f;
+                        }
+                        </style>
                         """
-                    test_html += "</table>"
-                    test_html += "</div>"
-                    
-                    # Generera Lärarfacit
-                    if include_answers:
-                        facit_html += "<div class='print-container page-break'>"
-                        facit_html += f"<div class='print-title'>FACIT: {quiz_title}</div>"
-                        facit_html += "<table class='quiz-table'>"
+                        
+                        test_html += style_block
+                        test_html += "<div class='print-container'>"
+                        test_html += f"<div class='print-title'>{quiz_title}</div>"
+                        test_html += f"""
+                        <div class='print-student-info'>
+                            Elevens namn: <span class='info-line'></span>
+                            Klass/Grupp:  <span class='info-line'></span>
+                            Datum:        <span class='info-line'></span>
+                            <br>
+                            <b>Poäng: ________ av {len(test_words)} rätt</b>
+                        </div>
+                        """
+                        test_html += "<table class='quiz-table'>"
                         for idx, w in enumerate(test_words, 1):
                             p_word = w["prompt_word"]
-                            a_word = w["answer_word"]
-                            facit_html += f"""
+                            test_html += f"""
                             <tr class='quiz-row'>
                                 <td class='quiz-num'>{idx}.</td>
-                                <td class='quiz-prompt' style='color:#555;'>Fråga: <b>{p_word}</b></td>
-                                <td>Svar: <span class='quiz-answer-text'>{a_word}</span></td>
+                                <td class='quiz-prompt'>{p_word}</td>
+                                <td><span class='quiz-answer-line'></span></td>
                             </tr>
                             """
-                        facit_html += "</table>"
-                        facit_html += "</div>"
+                        test_html += "</table>"
+                        test_html += "</div>"
                         
-                    st.session_state.printable_test = test_html + facit_html
-                    st.toast("Glosförhör har genererats!")
-                    st.rerun()
-                    
-            # Visa förhandsgranskning om det finns skapat
-            if "printable_test" in st.session_state:
-                st.success("📝 Utskriftsklart förhör finns redo nedan!")
-                col_b1, col_b2 = st.columns(2)
-                with col_b1:
-                    if "quiz_test_words" in st.session_state:
-                        pdf_data = generate_pdf_bytes(
-                            st.session_state.quiz_test_words,
-                            st.session_state.quiz_title_val,
-                            st.session_state.quiz_target_lang,
-                            st.session_state.quiz_include_answers
-                        )
-                        st.download_button(
-                            label="📥 Ladda ner förhör som PDF",
-                            data=bytes(pdf_data),
-                            file_name=f"{st.session_state.quiz_title_val.replace(' ', '_')}.pdf",
-                            mime="application/pdf",
-                            use_container_width=True
-                        )
-                with col_b2:
-                    if st.button("❌ Radera genererat förhör", use_container_width=True):
-                        del st.session_state.printable_test
+                        if include_answers:
+                            facit_html += "<div class='print-container page-break'>"
+                            facit_html += f"<div class='print-title'>FACIT: {quiz_title}</div>"
+                            facit_html += "<table class='quiz-table'>"
+                            for idx, w in enumerate(test_words, 1):
+                                p_word = w["prompt_word"]
+                                a_word = w["answer_word"]
+                                facit_html += f"""
+                                <tr class='quiz-row'>
+                                    <td class='quiz-num'>{idx}.</td>
+                                    <td class='quiz-prompt' style='color:#555;'>Fråga: <b>{p_word}</b></td>
+                                    <td>Svar: <span class='quiz-answer-text'>{a_word}</span></td>
+                                </tr>
+                                """
+                            facit_html += "</table>"
+                            facit_html += "</div>"
+                            
+                        st.session_state.printable_test = test_html + facit_html
+                        st.toast("Glosförhör har genererats!")
                         st.rerun()
                         
-                st.markdown("<br>", unsafe_allow_html=True)
-                
-                # Förhandsgranskning av provet
-                st.markdown(clean_html(st.session_state.printable_test), unsafe_allow_html=True)
-                
-            st.markdown("---")
-            
-            # ================= SEKTION: LÄGG TILL NY LISTA =================
-            st.markdown("### ➕ Lägg till en ny gloslista i biblioteket")
-            st.markdown("Här kan du bygga upp ett bibliotek av listor för dina elever (t.ex. 'Kapitel 1', 'Vecka 38', 'Engelska - Djur'). De dyker genast upp i elevernas rullgardinsmeny!")
-            
-            # Unika inställningar för den nya listan
-            new_list_title = st.text_input("Vad ska denna gloslista heta i biblioteket?", placeholder="t.ex. Spanska - Kapitel 1")
-            new_list_lang = st.text_input("Vilket språk övar eleverna på i denna lista?", placeholder="t.ex. Spanska")
-            new_list_category = st.text_input("Vilken mapp/kategori ska listan tillhöra?", placeholder="t.ex. Spanska nybörjare, Spanska fortsättning, Tematiska ordlistor...")
-            
-            st.markdown("**Hur vill du läsa in glosorna?**")
-            uploaded_file = st.file_uploader("Metod A: Ladda upp en fil (.txt eller .json)", type=["txt", "json"])
-            import_text = st.text_area("Metod B: Klistra in fritext direkt", height=120, placeholder="svenska - översättning\nhund - perro\nkatt - gato")
-            
-            if st.button("📥 Lägg till listan i biblioteket", type="primary", use_container_width=True):
-                if not new_list_title.strip():
-                    st.error("Du måste ange ett namn för gloslistan!")
-                    st.stop()
-                if not new_list_lang.strip():
-                    st.error("Du måste ange vilket språk listan gäller!")
-                    st.stop()
+                # Visa förhandsgranskning om det finns skapat
+                if "printable_test" in st.session_state:
+                    st.success("📝 Utskriftsklart förhör finns redo nedan!")
+                    col_b1, col_b2 = st.columns(2)
+                    with col_b1:
+                        if "quiz_test_words" in st.session_state:
+                            pdf_data = generate_pdf_bytes(
+                                st.session_state.quiz_test_words,
+                                st.session_state.quiz_title_val,
+                                st.session_state.quiz_target_lang,
+                                st.session_state.quiz_include_answers
+                            )
+                            st.download_button(
+                                label="📥 Ladda ner förhör som PDF",
+                                data=bytes(pdf_data),
+                                file_name=f"{st.session_state.quiz_title_val.replace(' ', '_')}.pdf",
+                                mime="application/pdf",
+                                use_container_width=True
+                            )
+                    with col_b2:
+                        if st.button("❌ Radera genererat förhör", use_container_width=True, key="del_print_test"):
+                            del st.session_state.printable_test
+                            st.rerun()
+                            
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    st.markdown(clean_html(st.session_state.printable_test), unsafe_allow_html=True)
                     
-                parsed_words = []
+                st.markdown("---")
                 
-                # Alternativ 1: Läs in från uppladdad fil
-                if uploaded_file is not None:
-                    try:
-                        if uploaded_file.name.endswith(".json"):
-                            file_data = json.load(uploaded_file)
-                            if isinstance(file_data, list) and all("svenska" in w and "utlandska" in w for w in file_data):
-                                parsed_words = file_data
-                            else:
-                                st.error("Felaktigt format i JSON-filen!")
-                        elif uploaded_file.name.endswith(".txt"):
-                            string_data = uploaded_file.read().decode("utf-8")
-                            lines = string_data.strip().split("\n")
-                            for line_no, line in enumerate(lines, 1):
-                                if not line.strip():
-                                    continue
-                                parts = None
-                                for sep in ["-", ":", "="]:
-                                    if sep in line:
-                                        parts = line.split(sep, 1)
-                                        break
-                                if parts and len(parts) == 2:
-                                    parsed_words.append({"svenska": parts[0].strip(), "utlandska": parts[1].strip()})
-                                else:
-                                    st.error(f"Kunde inte tolka rad {line_no} i filen.")
-                                    st.stop()
-                    except Exception as e:
-                        st.error(f"Kunde inte läsa uppladdad fil: {str(e)}")
+                # ================= SEKTION: LÄGG TILL NY LISTA =================
+                st.markdown("#### ➕ Lägg till en ny gloslista i biblioteket")
+                new_list_title = st.text_input("Vad ska denna gloslista heta i biblioteket?", placeholder="t.ex. Spanska - Kapitel 1", key="add_list_title")
+                new_list_lang = st.text_input("Vilket språk övar eleverna på i denna lista?", placeholder="t.ex. Spanska", key="add_list_lang")
+                new_list_category = st.text_input("Vilken mapp/kategori ska listan tillhöra?", placeholder="t.ex. Spanska nybörjare, Spanska fortsättning...", key="add_list_category")
+                
+                st.markdown("**Hur vill du läsa in glosorna?**")
+                uploaded_file = st.file_uploader("Metod A: Ladda upp en fil (.txt eller .json)", type=["txt", "json"], key="add_list_file")
+                import_text = st.text_area("Metod B: Klistra in fritext direkt", height=120, placeholder="svenska - översättning\nhund - perro\nkatt - gato", key="add_list_text")
+                
+                if st.button("📥 Lägg till listan i biblioteket", type="primary", use_container_width=True, key="add_list_btn"):
+                    if not new_list_title.strip():
+                        st.error("Du måste ange ett namn för gloslistan!")
+                        st.stop()
+                    if not new_list_lang.strip():
+                        st.error("Du måste ange vilket språk listan gäller!")
                         st.stop()
                         
-                # Alternativ 2: Läs in från fritext (om ingen fil laddats upp)
-                elif import_text.strip():
-                    lines = import_text.strip().split("\n")
-                    for line_no, line in enumerate(lines, 1):
-                        if not line.strip():
-                            continue
-                        parts = None
-                        for sep in ["-", ":", "="]:
-                            if sep in line:
-                                parts = line.split(sep, 1)
-                                break
-                        if parts and len(parts) == 2:
-                            parsed_words.append({"svenska": parts[0].strip(), "utlandska": parts[1].strip()})
-                        else:
-                            st.error(f"Kunde inte tolka rad {line_no} i textrutan.")
-                            st.stop()
-                            
-                # Spara listan i biblioteket
-                if parsed_words:
-                    st.session_state.library[new_list_title] = {
-                        "language": new_list_lang,
-                        "category": new_list_category.strip() if new_list_category.strip() else "Övriga listor",
-                        "words": parsed_words
-                    }
-                    # Gör den nyligen skapade listan till den aktiva listan
-                    st.session_state.current_list_name = new_list_title
-                    st.session_state.words = parsed_words
-                    st.session_state.target_language = new_list_lang
-                    reset_progress()
-                    st.success(f"🎉 Lyckades! Listan '{new_list_title}' med {len(parsed_words)} glosor har lagts till i biblioteket och valts automatiskt!")
-                    st.rerun()
-                else:
-                    st.warning("Hittade inga giltiga glosor att läsa in. Ladda upp en fil eller klistra in fritext.")
+                    parsed_words = []
                     
-            st.markdown("---")
-            st.markdown("### 🗑️ Ta bort gloslistor från biblioteket")
-            
-            # Visa listor och låt läraren rensa
-            all_lists = list(st.session_state.library.keys())
-            for list_name in all_lists:
-                col1, col2 = st.columns([5, 1])
-                with col1:
-                    list_info = st.session_state.library[list_name]
-                    cat = list_info.get("category", "Övriga listor")
-                    st.write(f"📁 {list_name} ({list_info['language']}) [Mapp: *{cat}*] — **{len(list_info['words'])}** ord")
-                with col2:
-                    # Hindra radering om det bara finns en lista kvar
-                    if len(all_lists) > 1:
-                        if st.button("Radera", key=f"del_list_{list_name}"):
-                            st.session_state.library.pop(list_name)
-                            # Om den raderade listan var den aktiva, ladda en annan
-                            if st.session_state.current_list_name == list_name:
-                                new_active = list(st.session_state.library.keys())[0]
-                                st.session_state.current_list_name = new_active
-                                st.session_state.words = st.session_state.library[new_active]["words"].copy()
-                                st.session_state.target_language = st.session_state.library[new_active]["language"]
-                                reset_progress()
-                            st.toast(f"Listan '{list_name}' togs bort från biblioteket!")
-                            st.rerun()
+                    if uploaded_file is not None:
+                        try:
+                            if uploaded_file.name.endswith(".json"):
+                                file_data = json.load(uploaded_file)
+                                if isinstance(file_data, list) and all("svenska" in w and "utlandska" in w for w in file_data):
+                                    parsed_words = file_data
+                                else:
+                                    st.error("Felaktigt format i JSON-filen!")
+                            elif uploaded_file.name.endswith(".txt"):
+                                string_data = uploaded_file.read().decode("utf-8")
+                                lines = string_data.strip().split("\n")
+                                for line_no, line in enumerate(lines, 1):
+                                    if not line.strip():
+                                        continue
+                                    parts = None
+                                    for sep in ["-", ":", "="]:
+                                        if sep in line:
+                                            parts = line.split(sep, 1)
+                                            break
+                                    if parts and len(parts) == 2:
+                                        parsed_words.append({"svenska": parts[0].strip(), "utlandska": parts[1].strip()})
+                                    else:
+                                        st.error(f"Kunde inte tolka rad {line_no} i filen.")
+                                        st.stop()
+                        except Exception as e:
+                            st.error(f"Kunde inte läsa uppladdad fil: {str(e)}")
+                            st.stop()
+                    elif import_text.strip():
+                        lines = import_text.strip().split("\n")
+                        for line_no, line in enumerate(lines, 1):
+                            if not line.strip():
+                                continue
+                            parts = None
+                            for sep in ["-", ":", "="]:
+                                if sep in line:
+                                    parts = line.split(sep, 1)
+                                    break
+                            if parts and len(parts) == 2:
+                                parsed_words.append({"svenska": parts[0].strip(), "utlandska": parts[1].strip()})
+                            else:
+                                st.error(f"Kunde inte tolka rad {line_no} i textrutan.")
+                                st.stop()
+                                
+                    if parsed_words:
+                        st.session_state.library[new_list_title] = {
+                            "language": new_list_lang,
+                            "category": new_list_category.strip() if new_list_category.strip() else "Övriga listor",
+                            "words": parsed_words
+                        }
+                        st.session_state.current_list_name = new_list_title
+                        st.session_state.words = parsed_words
+                        st.session_state.target_language = new_list_lang
+                        reset_progress()
+                        st.success(f"🎉 Lyckades! Listan '{new_list_title}' med {len(parsed_words)} glosor har lagts till i biblioteket!")
+                        st.rerun()
                     else:
-                        st.caption("Kan ej raderas")
+                        st.warning("Hittade inga giltiga glosor att läsa in.")
+                
+                st.markdown("---")
+                st.markdown("#### 🗑️ Ta bort gloslistor från biblioteket")
+                all_lists = list(st.session_state.library.keys())
+                for list_name in all_lists:
+                    col1, col2 = st.columns([5, 1])
+                    with col1:
+                        list_info = st.session_state.library[list_name]
+                        cat = list_info.get("category", "Övriga listor")
+                        st.write(f"📁 {list_name} ({list_info['language']}) [Mapp: *{cat}*] — **{len(list_info['words'])}** ord")
+                    with col2:
+                        if len(all_lists) > 1:
+                            if st.button("Radera", key=f"del_list_{list_name}"):
+                                st.session_state.library.pop(list_name)
+                                if st.session_state.current_list_name == list_name:
+                                    new_active = list(st.session_state.library.keys())[0]
+                                    st.session_state.current_list_name = new_active
+                                    st.session_state.words = st.session_state.library[new_active]["words"].copy()
+                                    st.session_state.target_language = st.session_state.library[new_active]["language"]
+                                    reset_progress()
+                                st.toast(f"Listan '{list_name}' togs bort!")
+                                st.rerun()
+                        else:
+                            st.caption("Kan ej raderas")
