@@ -523,7 +523,13 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("Välkommen till **GlosFlow**! Öva i din egen takt med vetenskapligt beprövade metoder för språkinlärning.")
+st.markdown("""
+<div class="welcome-banner-card">
+    <p class="welcome-banner-text">
+        🎓 Välkommen till <b>GlosFlow</b>! Öva i din egen takt med vetenskapligt beprövade metoder för språkinlärning.
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
 # Snabbval för träningsriktning direkt vid övningen (om eleven missat den i sidomenyn)
 st.markdown("---")
@@ -553,9 +559,9 @@ if not st.session_state.logged_in_user:
     col_log_left, col_log_mid, col_log_right = st.columns([1, 4, 1])
     with col_log_mid:
         st.markdown("""
-        <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); text-align: center;">
-            <h2 style="margin-top: 0; color: #1E3A8A; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">🔑 Välkommen till GlosFlow</h2>
-            <p style="color: #475569; font-size: 0.95rem; margin-bottom: 20px;">Vänligen logga in med din PIN-kod som du fått av din lärare för att hämta dina framsteg.</p>
+        <div class="login-banner-card">
+            <h2 class="login-banner-title">🔑 Välkommen till GlosFlow</h2>
+            <p class="login-banner-text">Vänligen logga in med din PIN-kod som du fått av din lärare för att hämta dina framsteg.</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -939,6 +945,68 @@ div[data-testid="element-container"]:has(.list-card-anchor) + div[data-testid="e
     height: auto !important;
 }}
 
+
+.welcome-banner-card {{
+    background: linear-gradient(135deg, #eff6ff, #ecfdf5) !important;
+    border: 1px solid #bfdbfe !important;
+    border-left: 6px solid #3b82f6 !important;
+    padding: 20px !important;
+    border-radius: 12px !important;
+    margin-bottom: 22px !important;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.05) !important;
+}}
+.welcome-banner-text {{
+    margin: 0 !important;
+    font-size: 1.05rem !important;
+    font-weight: 500 !important;
+    color: #1e3a8a !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    line-height: 1.6 !important;
+}}
+.login-banner-card {{
+    background: linear-gradient(135deg, #eff6ff, #ecfdf5) !important;
+    border: 1px solid #bfdbfe !important;
+    border-left: 6px solid #3b82f6 !important;
+    border-radius: 12px !important;
+    padding: 25px !important;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.05) !important;
+    text-align: center !important;
+}}
+.login-banner-title {{
+    margin-top: 0 !important;
+    color: #1e3a8a !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-weight: 700 !important;
+}}
+.login-banner-text {{
+    color: #475569 !important;
+    font-size: 0.95rem !important;
+    margin-bottom: 20px !important;
+}}
+
+@media (prefers-color-scheme: dark) {{
+    .welcome-banner-card {{
+        background: linear-gradient(135deg, #1e293b, #064e3b) !important;
+        border: 1px solid #334155 !important;
+        border-left: 6px solid #10b981 !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+    }}
+    .welcome-banner-text {{
+        color: #f8fafc !important;
+    }}
+    .login-banner-card {{
+        background: linear-gradient(135deg, #1e293b, #064e3b) !important;
+        border: 1px solid #334155 !important;
+        border-left: 6px solid #10b981 !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+    }}
+    .login-banner-title {{
+        color: #60a5fa !important;
+    }}
+    .login-banner-text {{
+        color: #94a3b8 !important;
+    }}
+}}
 div[data-testid="element-container"]:has(.list-card-anchor) + div[data-testid="element-container"] .stButton button:hover {{
     background-color: #F8FAFC !important;
     border-color: #CBD5E1 !important;
