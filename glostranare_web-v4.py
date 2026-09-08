@@ -533,25 +533,7 @@ st.markdown("""
 
 
 
-# Snabbval för träningsriktning direkt vid övningen (om eleven missat den i sidomenyn)
-st.markdown("---")
-col_info, col_sel = st.columns([2, 1])
-with col_info:
-    st.markdown("<p style='margin-top: 10px; font-weight: bold; color: #475569;'>Snabbval för träningsriktning:</p>", unsafe_allow_html=True)
 
-with col_sel:
-    def sync_from_main():
-        st.session_state.direction_mode = st.session_state.mn_direction
-        st.session_state.sb_direction = st.session_state.mn_direction
-        reset_progress()
-
-    st.selectbox(
-        "Träningsriktning:",
-        ("Svenska ➔ Målspråk", "Målspråk ➔ Svenska"),
-        key="mn_direction",
-        label_visibility="collapsed",
-        on_change=sync_from_main,
-    )
 
 
 # ================= ELEVINLOGGNING & GLOSBIBLIOTEK-SKÄRM =================
@@ -1195,6 +1177,26 @@ with col_back_nav:
         st.rerun()
 with col_curr_list:
     st.info(f"👉 Aktiv lista: **{st.session_state.current_list_name}** ({target_lang_name})")
+
+# Snabbval för träningsriktning direkt vid övningen (om eleven missat den i sidomenyn)
+st.markdown("---")
+col_info, col_sel = st.columns([2, 1])
+with col_info:
+    st.markdown("<p style='margin-top: 10px; font-weight: bold; color: #475569;'>Snabbval för träningsriktning:</p>", unsafe_allow_html=True)
+
+with col_sel:
+    def sync_from_main():
+        st.session_state.direction_mode = st.session_state.mn_direction
+        st.session_state.sb_direction = st.session_state.mn_direction
+        reset_progress()
+
+    st.selectbox(
+        "Träningsriktning:",
+        ("Svenska ➔ Målspråk", "Målspråk ➔ Svenska"),
+        key="mn_direction",
+        label_visibility="collapsed",
+        on_change=sync_from_main,
+    )
 
 # Beräkna fördelningen för den vertikala progressionen på huvudsidan
 main_box1 = [w for w in st.session_state.words if get_word_box(w["svenska"]) == 1]
