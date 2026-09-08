@@ -1,4 +1,5 @@
 import streamlit as st
+import threading
 import random
 import json
 import urllib.request
@@ -196,7 +197,7 @@ def fetch_users_from_db():
         pass
     return []
 
-def save_user_progress_to_db():
+def save_user_progress_to_db(async_save=True):
     if not st.session_state.gsheets_url or not st.session_state.get("logged_in_user"):
         return False
     try:
@@ -207,15 +208,46 @@ def save_user_progress_to_db():
             "score": st.session_state.score,
             "total": st.session_state.total_answered
         }
-        req = urllib.request.Request(
-            st.session_state.gsheets_url,
-            data=json.dumps(payload).encode('utf-8'),
-            headers={'Content-Type': 'application/json'}
-        )
-        with urllib.request.urlopen(req, timeout=10) as response:
-            res_body = response.read().decode('utf-8')
-            res_data = json.loads(res_body)
-            return res_data.get("status") == "success"
+        
+        if async_save:
+            gsheets_url = st.session_state.gsheets_url
+            name = st.session_state.logged_in_user["name"]
+            # Copy leitner boxes to avoid thread race conditions
+            leitner = st.session_state.leitner_boxes.copy() if isinstance(st.session_state.leitner_boxes, dict) else {}
+            score = st.session_state.score
+            total = st.session_state.total_answered
+
+            def worker(url, u_name, u_leitner, u_score, u_total):
+                try:
+                    payload_async = {
+                        "action": "save_progress",
+                        "name": u_name,
+                        "leitner": u_leitner,
+                        "score": u_score,
+                        "total": u_total
+                    }
+                    req_async = urllib.request.Request(
+                        url,
+                        data=json.dumps(payload_async).encode('utf-8'),
+                        headers={'Content-Type': 'application/json'}
+                    )
+                    with urllib.request.urlopen(req_async, timeout=10) as response:
+                        pass
+                except:
+                    pass
+
+            threading.Thread(target=worker, args=(gsheets_url, name, leitner, score, total), daemon=True).start()
+            return True
+        else:
+            req = urllib.request.Request(
+                st.session_state.gsheets_url,
+                data=json.dumps(payload).encode('utf-8'),
+                headers={'Content-Type': 'application/json'}
+            )
+            with urllib.request.urlopen(req, timeout=10) as response:
+                res_body = response.read().decode('utf-8')
+                res_data = json.loads(res_body)
+                return res_data.get("status") == "success"
     except Exception as e:
         pass
     return False
@@ -500,7 +532,7 @@ def get_current_word():
 def next_word():
     # Autospara elevens framsteg i bakgrunden vid byte av ord
     if st.session_state.get("logged_in_user") and st.session_state.logged_in_user["name"] not in ["Gäst", "Lärare"]:
-        save_user_progress_to_db()
+        save_user_progress_to_db(async_save=False)
     st.session_state.current_index = (st.session_state.current_index + 1) % len(st.session_state.words)
     st.session_state.flashcard_flipped = False
     st.session_state.hint_count = 0
@@ -616,7 +648,7 @@ if st.session_state.logged_in_user["name"] != "Gäst" and st.session_state.logge
     with col_save:
         if st.button("💾 Spara", use_container_width=True, help="Spara dina framsteg i molnet"):
             with st.spinner("Sparar..."):
-                success = save_user_progress_to_db()
+                success = save_user_progress_to_db(async_save=False)
                 if success:
                     st.toast("Framsteg sparade!")
                     st.success("Sparat!")
@@ -625,7 +657,7 @@ if st.session_state.logged_in_user["name"] != "Gäst" and st.session_state.logge
     with col_logout:
         if st.button("Logga ut", use_container_width=True):
             with st.spinner("Sparar framsteg..."):
-                save_user_progress_to_db()
+                save_user_progress_to_db(async_save=False)
             st.session_state.logged_in_user = None
             st.session_state.current_list_name = None
             st.session_state.words = None
