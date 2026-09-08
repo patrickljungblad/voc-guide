@@ -533,7 +533,7 @@ def get_current_word():
 def next_word():
     # Autospara elevens framsteg i bakgrunden vid byte av ord
     if st.session_state.get("logged_in_user") and st.session_state.logged_in_user["name"] not in ["Gäst", "Lärare"]:
-        save_user_progress_to_db(async_save=False)
+        save_user_progress_to_db(async_save=True)
     st.session_state.current_index = (st.session_state.current_index + 1) % len(st.session_state.words)
     st.session_state.flashcard_flipped = False
     st.session_state.hint_count = 0
