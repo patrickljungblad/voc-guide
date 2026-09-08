@@ -248,7 +248,7 @@ def create_user_in_db(name, pin, group):
 # Sätt sidkonfiguration
 st.set_page_config(
     page_title="GlosFlow - Digitala Glostränaren",
-    page_icon="🎓",
+    page_icon="G",
     layout="centered"
 )
 
@@ -526,7 +526,7 @@ st.markdown("""
 st.markdown("""
 <div class="welcome-banner-card">
     <p class="welcome-banner-text">
-        🎓 Välkommen till <b>GlosFlow</b>! Öva i din egen takt med vetenskapligt beprövade metoder för språkinlärning.
+        Välkommen till <b>GlosFlow</b>! Öva i din egen takt med vetenskapligt beprövade metoder för språkinlärning.
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -535,7 +535,7 @@ st.markdown("""
 st.markdown("---")
 col_info, col_sel = st.columns([2, 1])
 with col_info:
-    st.markdown("<p style='margin-top: 10px; font-weight: bold; color: #475569;'>⚙️ Snabbval för träningsriktning:</p>", unsafe_allow_html=True)
+    st.markdown("<p style='margin-top: 10px; font-weight: bold; color: #475569;'>Snabbval för träningsriktning:</p>", unsafe_allow_html=True)
 
 with col_sel:
     def sync_from_main():
@@ -560,20 +560,20 @@ if not st.session_state.logged_in_user:
     with col_log_mid:
         st.markdown("""
         <div class="login-banner-card">
-            <h2 class="login-banner-title">🔑 Välkommen till GlosFlow</h2>
+            <h2 class="login-banner-title">Välkommen till GlosFlow</h2>
             <p class="login-banner-text">Vänligen logga in med din PIN-kod som du fått av din lärare för att hämta dina framsteg.</p>
         </div>
         """, unsafe_allow_html=True)
         
-        login_tab1, login_tab2 = st.tabs(["👤 Elevinloggning", "👩‍🏫 Lärar- / Admininloggning"])
+        login_tab1, login_tab2 = st.tabs(["Elevlogin", "Lärarlogin"])
         
         with login_tab1:
             users = st.session_state.users_list
             groups = sorted(list(set([u["group"] for u in users]))) if users else []
             
             if not users:
-                st.warning("⚠️ Inga elevkonton hittades i databasen än. Din lärare kan logga in i lärarfliken bredvid för att skapa konton och ansluta kalkylarket.")
-                if st.button("🚀 Fortsätt som Gäst (Träna offline)", use_container_width=True):
+                st.warning("Inga elevkonton hittades i databasen än. Din lärare kan logga in i lärarfliken bredvid för att skapa konton och ansluta kalkylarket.")
+                if st.button("Fortsätt som Gäst (Träna offline)", use_container_width=True):
                     st.session_state.logged_in_user = {"name": "Gäst", "group": "Gästklass", "score": 0, "total": 0, "leitner": {}}
                     st.session_state.leitner_boxes = {}
                     st.session_state.current_list_name = None
@@ -600,7 +600,7 @@ if not st.session_state.logged_in_user:
                                 st.toast(f"Välkommen tillbaka, {sel_name}! Din progression är laddad.")
                                 st.rerun()
                             else:
-                                st.error("❌ Felaktig PIN-kod. Försök igen eller fråga din lärare.")
+                                st.error("Felaktig PIN-kod. Försök igen eller fråga din lärare.")
             
         with login_tab2:
             entered_admin_pw = st.text_input("Ange administratörslösenord:", type="password")
@@ -612,10 +612,10 @@ if not st.session_state.logged_in_user:
                     if st.session_state.current_list_name:
                         st.session_state.words = st.session_state.library[st.session_state.current_list_name]["words"].copy()
                         st.session_state.target_language = st.session_state.library[st.session_state.current_list_name]["language"]
-                    st.toast("🔓 Lärarläge upplåst!")
+                    st.toast("Lärarläge upplåst!")
                     st.rerun()
                 else:
-                    st.error("❌ Felaktigt lösenord!")
+                    st.error("Felaktigt lösenord!")
     st.stop()
 
 # --- SIDOMENY: PROFIL & LEITNER-STADA ---
@@ -639,7 +639,7 @@ if st.session_state.logged_in_user["name"] != "Gäst" and st.session_state.logge
                 else:
                     st.error("Kunde inte spara.")
     with col_logout:
-        if st.button("🚪 Logga ut", use_container_width=True):
+        if st.button("Logga ut", use_container_width=True):
             with st.spinner("Sparar framsteg..."):
                 save_user_progress_to_db()
             st.session_state.logged_in_user = None
@@ -648,7 +648,7 @@ if st.session_state.logged_in_user["name"] != "Gäst" and st.session_state.logge
             st.toast("Utloggad!")
             st.rerun()
 else:
-    if st.sidebar.button("🚪 Logga ut", use_container_width=True):
+    if st.sidebar.button("Logga ut", use_container_width=True):
         st.session_state.logged_in_user = None
         st.session_state.current_list_name = None
         st.session_state.words = None
@@ -658,10 +658,10 @@ else:
 
 # Färgtema inställningar
 st.sidebar.markdown("---")
-st.sidebar.subheader("🎨 Färgtema")
+st.sidebar.subheader("Färgtema")
 theme_mode = st.sidebar.selectbox(
     "Välj färgtema:",
-    ("Följ systemet", "Ljust läge ☀️", "Mörkt läge 🌙"),
+    ("Följ systemet", "Ljust läge", "Mörkt läge"),
     key="theme_mode",
     help="Här kan du byta färgtema för appen. 'Följ systemet' anpassar sig automatiskt efter din enhets ljusa eller mörka läge."
 )
@@ -1141,7 +1141,7 @@ box3_count = sum(1 for w in st.session_state.words if get_word_box(w["svenska"])
 
 # Vertikala färgkodade lådor ("Klätterstegen") i sidofältet
 st.sidebar.markdown("---")
-st.sidebar.subheader("📦 Gloslådor (Klätterstegen)")
+st.sidebar.subheader("Gloslådor (Klätterstegen)")
 st.sidebar.markdown(f"""
 <div style='display: flex; flex-direction: column; gap: 8px;'>
     <div style='background-color: #D1FAE5; border-left: 5px solid #10B981; border-radius: 6px; padding: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);'>
@@ -1162,7 +1162,7 @@ st.sidebar.markdown(f"""
 
 # Träningsinställningar i sidofältet
 st.sidebar.markdown("---")
-st.sidebar.subheader("⚙️ Träningsinställningar")
+st.sidebar.subheader("Träningsinställningar")
 
 direction_label_1 = "Svenska ➔ Målspråk"
 direction_label_2 = "Målspråk ➔ Svenska"
@@ -1180,7 +1180,7 @@ direction = st.sidebar.selectbox(
     help="Välj om du vill öva från svenska till målspråket, eller tvärtom."
 )
 
-if st.sidebar.button("🔄 Nollställ framsteg", use_container_width=True):
+if st.sidebar.button("Nollställ framsteg", use_container_width=True):
     reset_progress()
     st.toast("Framsteg nollställda!")
 
@@ -1245,10 +1245,10 @@ with st.expander("📦 Se dina gloslådor (Klätterstegen)"):
 st.markdown("<br>", unsafe_allow_html=True)
 # Skapa tab-paneler för de olika träningslägena
 tab1, tab2, tab3, tab4 = st.tabs([
-    "🎴 Flashcards (Se & Öva)",
-    "🎯 Flervalsquiz (Välj rätt)",
-    "✍️ Skrivträning (Stava rätt)",
-    "👩🏫 Lärarpanel (Skapa & Ladda upp)"
+    "Flashcards (Se & Öva)",
+    "Flervalsquiz (Välj rätt)",
+    "Skrivträning (Stava rätt)",
+    "Lärarpanel (Skapa & Ladda upp)"
 ])
 
 # Kontrollera om listan är tom
@@ -1397,7 +1397,7 @@ else:
 
     # ================= TAB 2: FLERVALSQUIZ ================
     with tab2:
-        st.subheader("🎯 Testa dina kunskaper")
+        st.subheader("Testa dina kunskaper")
         st.markdown("Välj det alternativ som motsvarar rätt översättning.")
         
         # Skapa alternativ om de inte redan finns för nuvarande fråga
@@ -1446,7 +1446,7 @@ else:
 
     # ================= TAB 3: SKRIVTRÄNING =================
     with tab3:
-        st.subheader("✍️ Skriv och stava rätt")
+        st.subheader("Skriv och stava rätt")
         st.markdown("Aktiv återkallning är den mest effektiva metoden för att lära sig glosor utantill.")
         st.markdown(f"Översätt ordet: <h3 style='display:inline;'>{current_word[prompt_lang]}</h3>", unsafe_allow_html=True)
         
@@ -1482,7 +1482,7 @@ else:
             """, unsafe_allow_html=True)
             
             # Om användaren uttryckligen har valt mörkt läge i sidopanelen
-            if "theme_mode" in st.session_state and st.session_state.theme_mode == "Mörkt läge 🌙":
+            if "theme_mode" in st.session_state and st.session_state.theme_mode == "Mörkt läge":
                 st.markdown("""
                 <style>
                 div[data-testid="stTextInput"] input {
