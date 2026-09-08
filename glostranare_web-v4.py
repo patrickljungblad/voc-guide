@@ -55,7 +55,24 @@ def get_strategy_tip(word_obj, language):
         "äpple": "**Nyckelordstips:** *manzana* låter lite som *manschett*. Föreställ dig ett rött äpple som har små fina skjortmanschetter runt stjälken! [247]",
         "vän": "**Associationstips:** *amigo* känner du säkert igen! Det hänger ihop med amor (kärlek) och spanskans ord för vänskap. En riktig kompis!",
         "hus": "**Associationstips:** *casa* – tänk på *casablanca* (vitt hus) eller *husbil* (*caravan*). *Casa* = hus!",
-        "tid": "**Kognat-tips:** *tiempo* låter som engelskans *tempo* eller *time*. Tempo handlar om tid!"
+        "hus": "**Associationstips:** *casa* – tänk på *casablanca* (vitt hus) eller *husbil* (*caravan*). *Casa* = hus!",
+        "tid": "**Kognat-tips:** *tiempo* låter som engelskans *tempo* eller *time*. Tempo handlar om tid!",
+        "det är...": "**Associationstips:** *hace...* kommer från verbet *hacer* (att göra). På spanska \'gör\' man väder, t.ex. \'det gör sol\' eller \'det gör kallt\'!",
+        "det blåser": "**Nyckelordstips:** *hace viento* – *viento* låter som svenskans *vind* eller engelskans *wind*. Det blåser hård vind!",
+        "det är kallt": "**Associationstips:** *hace frío* – *frío* är jättenära svenskans *frysa* och engelskans *freezing*! Lätt att koppla till kyla.",
+        "det är varmt": "**Nyckelordstips:** *hace calor* – *calor* låter som *kalorier* (som ger värme!) eller engelskans *calories*.",
+        "det är dåligt väder": "**Associationstips:** *hace mal tiempo* – *mal* betyder dåligt (tänk på *malplacerad* eller *malström*) och *tiempo* betyder väder/tid. Det är helt enkelt \'dålig tid\'!",
+        "det är bra väder": "**Associationstips:** *hace buen tiempo* – *buen* känner du igen från *buenos días* (bra dagar) och *tiempo* är tid/väder. \'Bra tid\'!",
+        "det är soligt": "**Kognat-tips:** *hace sol* – *sol* stavas och betyder exakt samma sak på spanska som på svenska! Superlätt kognat.",
+        "det är molnigt": "**Nyckelordstips:** *está nublado* – *nublado* låter lite som *nebulosa* (ett moln av gas i rymden) eller *nimbusmoln*. Tänk dig ett stort, grått nimbusmoln!",
+        "det regnar": "**Associationstips:** *llueve* kommer från verbet *llover*. Tänk på engelskans *deluge* (syndaflod/störtregn) eller spanskans *lluvia* (regn). Dubbel-L uttalas som j-ljud!",
+        "det snöar": "**Kognat-tips:** *nieva* kommer från *nevar*. Det är släkt med ord som *neve* (snö på italienska/latin) eller *niveus* (snövit). Tänk på det snötäckta berget *Sierra Nevada* (Snöklädda bergskedjan)!",
+        "vinter": "**Kognat-tips:** *invierno* är släkt med engelskans *hibernate* (att övervintra) och franskans *hiver*. Tänk på björnen som går i ide under vintern!",
+        "sommar": "**Associationstips:** *verano* låter lite som *veranda*. Föreställ dig att du sitter på en solig veranda mitt i varma sommaren!",
+        "vår": "**Kognat-tips:** *primavera* – *prima* betyder första (som primör) och *vera* kommer från ett gammalt ord för vår. Våren är årets \'första grönska\'!",
+        "höst": "**Nyckelordstips:** *otoño* låter lite som engelskans *autumn*. Samma startbokstav och väldigt lik känsla!",
+        "årstid": "**Kognat-tips:** *estación* är väldigt likt engelskans *station* eller *season* (via franskans säsong). Tänk på årets fyra stationer som tåget stannar vid!",
+        "vad är det för väder?": "**Associationstips:** *¿qué tiempo hace?* betyder ordagrant \'vilket väder gör det?\' eftersom *tiempo* betyder både tid och väder, och *hace* betyder \'gör\'!" 
     }
     
     # Custom engelska nyckelordstips (Top 50)
@@ -311,6 +328,28 @@ PERMANENT_LIBRARY = {
             {"svenska": "engelska", "utlandska": "inglés"},
             {"svenska": "Var är du från?", "utlandska": "¿De dónde eres?"},
             {"svenska": "Vilka språk talar du?", "utlandska": "¿Qué lenguas hablas?"}
+        ]
+    },
+        "Spanska fortsättning - v. 38": {
+        "language": "Spanska",
+        "category": "Spanska fortsättning",
+        "words": [
+            {"svenska": "det är...", "utlandska": "hace..."},
+            {"svenska": "det blåser", "utlandska": "hace viento"},
+            {"svenska": "det är kallt", "utlandska": "hace frío"},
+            {"svenska": "det är varmt", "utlandska": "hace calor"},
+            {"svenska": "det är dåligt väder", "utlandska": "hace mal tiempo"},
+            {"svenska": "det är bra väder", "utlandska": "hace buen tiempo"},
+            {"svenska": "det är soligt", "utlandska": "hace sol"},
+            {"svenska": "det är molnigt", "utlandska": "está nublado"},
+            {"svenska": "det regnar", "utlandska": "llueve"},
+            {"svenska": "det snöar", "utlandska": "nieva"},
+            {"svenska": "vinter", "utlandska": "invierno"},
+            {"svenska": "sommar", "utlandska": "verano"},
+            {"svenska": "vår", "utlandska": "primavera"},
+            {"svenska": "höst", "utlandska": "otoño"},
+            {"svenska": "årstid", "utlandska": "estación"},
+            {"svenska": "vad är det för väder?", "utlandska": "¿qué tiempo hace?"}
         ]
     },
     "Spanska fortsättning - v. 37": {
@@ -1136,6 +1175,53 @@ div[data-testid="element-container"]:has(.list-card-anchor) + div[data-testid="e
         font-size: 1.0rem !important;
     }}
 }}
+
+.quiz-feedback-card {{
+    padding: 20px !important;
+    border-radius: 12px !important;
+    margin-top: 15px !important;
+    margin-bottom: 20px !important;
+    text-align: center !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+}}
+.feedback-correct {{
+    background: linear-gradient(135deg, #ECFDF5, #D1FAE5) !important;
+    border: 1px solid #A7F3D0 !important;
+    border-left: 6px solid #10B981 !important;
+    color: #065F46 !important;
+}}
+.feedback-incorrect {{
+    background: linear-gradient(135deg, #FFF5F5, #FEE2E2) !important;
+    border: 1px solid #FCA5A5 !important;
+    border-left: 6px solid #EF4444 !important;
+    color: #991B1B !important;
+}}
+
+@keyframes pulse-correct {{
+    0% {{ box-shadow: 0 0 0 0px rgba(16, 185, 129, 0.3); }}
+    100% {{ box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }}
+}}
+@keyframes pulse-incorrect {{
+    0% {{ box-shadow: 0 0 0 0px rgba(239, 68, 68, 0.3); }}
+    100% {{ box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }}
+}}
+
+@media (prefers-color-scheme: dark) {{
+    .feedback-correct {{
+        background: linear-gradient(135deg, #064E3B, #022C22) !important;
+        border: 1px solid #047857 !important;
+        border-left: 6px solid #10B981 !important;
+        color: #A7F3D0 !important;
+    }}
+    .feedback-incorrect {{
+        background: linear-gradient(135deg, #451A1A, #2D0F0F) !important;
+        border: 1px solid #991B1B !important;
+        border-left: 6px solid #EF4444 !important;
+        color: #FCA5A5 !important;
+    }}
+}}
+</style>
 </style>
 """, unsafe_allow_html=True)
 
@@ -1500,7 +1586,7 @@ else:
     # ================= TAB 2: FLERVALSQUIZ ================
     with tab2:
         st.subheader("Testa dina kunskaper")
-        st.markdown("Välj det alternativ som motsvarar rätt översättning.")
+        st.markdown("Klicka på rätt alternativ för att svara. Svaret sparas och appen går vidare automatiskt.")
         
         # Skapa alternativ om de inte redan finns för nuvarande fråga
         if not st.session_state.quiz_options or len(st.session_state.quiz_options) < 4:
@@ -1514,41 +1600,110 @@ else:
             random.shuffle(options)
             st.session_state.quiz_options = options
             st.session_state.quiz_correct_index = options.index(correct_ans)
-            
+            st.session_state.quiz_answered_option = None
+            st.session_state.quiz_scored = False
+
         st.markdown(f"Vad betyder: **{current_word[prompt_lang]}**?")
         
-        with st.form("quiz_form"):
-            selected_option = st.radio("Välj ett alternativ:", st.session_state.quiz_options, index=None)
-            submit_quiz = st.form_submit_button("Rätta mitt svar", use_container_width=True)
+        correct_ans = current_word[target_lang]
+        
+        # Rendera valmöjligheterna
+        if st.session_state.quiz_answered_option is None:
+            # Eleven har inte valt något än -> aktivt val
+            selected_option = st.radio(
+                "Alternativ:", 
+                st.session_state.quiz_options, 
+                index=None, 
+                key=f"quiz_radio_select_{st.session_state.current_index}",
+                label_visibility="collapsed"
+            )
             
-        if submit_quiz:
-            if selected_option is None:
-                st.warning("Vänligen välj ett alternativ först!")
-            else:
+            if selected_option is not None:
+                st.session_state.quiz_answered_option = selected_option
+                st.rerun()
+        else:
+            # Eleven har valt -> Visa låsta alternativ
+            selected_option = st.session_state.quiz_answered_option
+            selected_idx = st.session_state.quiz_options.index(selected_option)
+            st.radio(
+                "Alternativ:", 
+                st.session_state.quiz_options, 
+                index=selected_idx, 
+                disabled=True, 
+                key=f"quiz_radio_disabled_{st.session_state.current_index}",
+                label_visibility="collapsed"
+            )
+            
+            # Kör rättning och poängräkning en gång
+            if not st.session_state.quiz_scored:
+                st.session_state.total_answered += 1
+                
+                # Spara statistik om inloggad elev
                 if st.session_state.get("logged_in_user") and st.session_state.logged_in_user["name"] not in ["Gäst", "Lärare"]:
                     st.session_state.leitner_boxes["_stats_quiz_total"] = st.session_state.leitner_boxes.get("_stats_quiz_total", 0) + 1
-                    if selected_option == correct_answer:
+                    if selected_option == correct_ans:
                         st.session_state.leitner_boxes["_stats_quiz_correct"] = st.session_state.leitner_boxes.get("_stats_quiz_correct", 0) + 1
-                st.session_state.total_answered += 1
-                correct_answer = current_word[target_lang]
-                if selected_option == correct_answer:
+                
+                # Leitner och försök
+                if selected_option == correct_ans:
                     st.session_state.score += 1
-                    st.session_state.failed_attempts[current_word["svenska"]] = 0 # Nollställ försök vid rätt svar
-                    update_word_box(current_word["svenska"], True) # Uppdatera Leitner-boxen
-                    st.success(f"🎉 Rätt! **{current_word[prompt_lang]}** betyder **{correct_answer}**.")
+                    st.session_state.failed_attempts[current_word["svenska"]] = 0
+                    update_word_box(current_word["svenska"], True)
                 else:
                     st.session_state.failed_attempts[current_word["svenska"]] = st.session_state.failed_attempts.get(current_word["svenska"], 0) + 1
-                    update_word_box(current_word["svenska"], False) # Svarar man fel flyttas ordet till Låda 1
-                    st.error(f"❌ Fel. Det rätta svaret är **{correct_answer}**.")
-                    
-        # Visa inlärningsstrategi om eleven svarat fel flera gånger (>= 2)
-        failed_count_quiz = st.session_state.failed_attempts.get(current_word["svenska"], 0)
-        if failed_count_quiz >= 2:
-            st.info(f"💡 **Behöver du hjälp att minnas?** Prova den här strategin för ordet:\n\n{get_strategy_tip(current_word, target_lang_name)}")
+                    update_word_box(current_word["svenska"], False)
+                
+                st.session_state.quiz_scored = True
+                
+                # Spara framsteg asynkront i bakgrunden vid svar
+                if st.session_state.get("logged_in_user") and st.session_state.logged_in_user["name"] not in ["Gäst", "Lärare"]:
+                    save_user_progress_to_db(async_save=True)
             
-        if st.button("Nästa fråga ➔", key="next_quiz", use_container_width=True):
-            next_word()
-            st.rerun()
+            # Rendera flashy feedback-kort
+            is_correct = (selected_option == correct_ans)
+            if is_correct:
+                st.markdown(f"""
+                <div class="quiz-feedback-card feedback-correct" style="animation: pulse-correct 1s infinite alternate;">
+                    <h3 style="margin: 0; font-size: 1.35rem;">🎉 Rätt svar!</h3>
+                    <p style="margin: 8px 0 0 0;"><b>{current_word[prompt_lang]}</b> betyder mycket riktigt <b>{correct_ans}</b>.</p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="quiz-feedback-card feedback-incorrect" style="animation: pulse-incorrect 1s infinite alternate;">
+                    <h3 style="margin: 0; font-size: 1.35rem;">❌ Tyvärr fel</h3>
+                    <p style="margin: 8px 0 0 0;">Det rätta svaret är: <b>{correct_ans}</b></p>
+                </div>
+                """, unsafe_allow_html=True)
+
+            # Visa inlärningsstrategi om eleven svarat fel flera gånger (>= 2)
+            failed_count_quiz = st.session_state.failed_attempts.get(current_word["svenska"], 0)
+            if failed_count_quiz >= 2:
+                st.info(f"💡 **Behöver du hjälp att minnas?** Prova den här strategin för ordet:\n\n{get_strategy_tip(current_word, target_lang_name)}")
+
+            # Rendera en synlig och snygg knapp/indikator med JS-auto-klicker
+            if st.button("Går vidare automatiskt... ➔", key="next_quiz_auto", use_container_width=True):
+                next_word()
+                st.rerun()
+                
+            # JS auto-klicker
+            components.html(
+                """
+                <script>
+                setTimeout(function() {
+                    var buttons = window.parent.document.querySelectorAll('button');
+                    for (var i = 0; i < buttons.length; i++) {
+                        if (buttons[i].textContent.includes('Går vidare')) {
+                            buttons[i].click();
+                            break;
+                        }
+                    }
+                }, 1800); // 1.8 sekunder
+                </script>
+                """,
+                height=0,
+                width=0
+            )
 
     # ================= TAB 3: SKRIVTRÄNING =================
     with tab3:
