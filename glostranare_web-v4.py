@@ -258,8 +258,9 @@ ADMIN_PASSWORD = "skola123"
 # Du kan förbereda permanenta listor i biblioteket direkt i koden här!
 # Detta gör att de alltid ligger laddade för eleverna när hemsidan startas.
 PERMANENT_LIBRARY = {
-    "Spanska nybörjare - till v. 37": {
+        "Spanska nybörjare - till v. 37": {
         "language": "Spanska",
+        "category": "Spanska nybörjare",
         "words": [
             {"svenska": "att vara", "utlandska": "ser"},
             {"svenska": "jag är", "utlandska": "yo soy"},
@@ -278,8 +279,35 @@ PERMANENT_LIBRARY = {
             {"svenska": "Vilka språk talar du?", "utlandska": "¿Qué lenguas hablas?"}
         ]
     },
+    "Spanska fortsättning - v. 37": {
+        "language": "Spanska",
+        "category": "Spanska fortsättning",
+        "words": [
+            {"svenska": "vilket datum är det idag?", "utlandska": "¿qué fecha es hoy?"},
+            {"svenska": "måndag", "utlandska": "lunes"},
+            {"svenska": "tisdag", "utlandska": "martes"},
+            {"svenska": "onsdag", "utlandska": "miércoles"},
+            {"svenska": "torsdag", "utlandska": "jueves"},
+            {"svenska": "fredag", "utlandska": "viernes"},
+            {"svenska": "lördag", "utlandska": "sábado"},
+            {"svenska": "söndag", "utlandska": "domingo"},
+            {"svenska": "januari", "utlandska": "enero"},
+            {"svenska": "februari", "utlandska": "febrero"},
+            {"svenska": "mars", "utlandska": "marzo"},
+            {"svenska": "april", "utlandska": "abril"},
+            {"svenska": "maj", "utlandska": "mayo"},
+            {"svenska": "juni", "utlandska": "junio"},
+            {"svenska": "juli", "utlandska": "julio"},
+            {"svenska": "augusti", "utlandska": "agosto"},
+            {"svenska": "september", "utlandska": "septiembre"},
+            {"svenska": "oktober", "utlandska": "octubre"},
+            {"svenska": "november", "utlandska": "noviembre"},
+            {"svenska": "december", "utlandska": "diciembre"}
+        ]
+    },
     "Spanska nybörjare - v. 36": {
         "language": "Spanska",
+        "category": "Spanska nybörjare",
         "words": [
             {"svenska": "bok", "utlandska": "libro"},
             {"svenska": "blyertspenna", "utlandska": "lápiz"},
@@ -301,6 +329,7 @@ PERMANENT_LIBRARY = {
     },
     "Spanska fortsättning - v. 36": {
         "language": "Spanska",
+        "category": "Spanska fortsättning",
         "words": [
             {"svenska": "på min fritid brukar jag...", "utlandska": "en mi tiempo libre suelo..."},
             {"svenska": "vara med mina vänner", "utlandska": "estar con mis amigos"},
@@ -326,6 +355,7 @@ PERMANENT_LIBRARY = {
     },
     "Spanska - veckodagar": {
         "language": "Spanska",
+        "category": "Tematiska ordlistor",
         "words": [
             {"svenska": "måndag", "utlandska": "lunes"},
             {"svenska": "tisdag", "utlandska": "martes"},
@@ -345,6 +375,8 @@ if "library" not in st.session_state:
 # Inloggnings- och elevstatus
 if "logged_in_user" not in st.session_state:
     st.session_state.logged_in_user = None
+if "selected_category" not in st.session_state:
+    st.session_state.selected_category = None
 if "users_list" not in st.session_state:
     st.session_state.users_list = []
 if "last_users_sync" not in st.session_state:
@@ -867,45 +899,86 @@ st.markdown(f"""
 # Kontrollera om eleven befinner sig på Glosbiblioteksskärmen (current_list_name är None)
 if st.session_state.current_list_name is None and st.session_state.logged_in_user["name"] != "Lärare":
     st.markdown("---")
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, #1e3a8a, #0d9488); padding: 25px; border-radius: 12px; color: white; text-align: center; margin-bottom: 25px;">
-        <h2 style="margin: 0; font-size: 2rem; font-family: sans-serif;">📚 Välj en gloslista att öva</h2>
-        <p style="margin: 10px 0 0 0; font-size: 1rem; opacity: 0.9;">Välj den ordlista du vill utmana dig själv med idag för att ladda din progressionsteg.</p>
-    </div>
-    """, unsafe_allow_html=True)
     
-    # Grid med tillgängliga listor
-    all_available_lists = list(st.session_state.library.keys())
-    
-    if not all_available_lists:
-        st.info("Det finns inga gloslistor registrerade än. Logga in i Lärarpanelen för att lägga till gloslistor.")
-    else:
-        # Visa listor som vackra kort
-        for list_name in all_available_lists:
-            list_info = st.session_state.library[list_name]
-            lang = list_info.get("language", "Spanska")
-            word_count = len(list_info.get("words", []))
+    # Om ingen kategori är vald, visa mapparna
+    if st.session_state.get("selected_category") is None:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #1e3a8a, #0d9488); padding: 25px; border-radius: 12px; color: white; text-align: center; margin-bottom: 25px;">
+            <h2 style="margin: 0; font-size: 2rem; font-family: sans-serif;">📚 Välj kategori</h2>
+            <p style="margin: 10px 0 0 0; font-size: 1rem; opacity: 0.9;">Välj en mapp för att visa tillgängliga gloslistor.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Hämta alla unika kategorier från biblioteket
+        categories_dict = {}
+        for name, info in st.session_state.library.items():
+            cat = info.get("category", "Övriga listor")
+            if cat not in categories_dict:
+                categories_dict[cat] = []
+            categories_dict[cat].append(name)
             
-            with st.container():
-                st.markdown(f"""
-                <div style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 15px; margin-bottom: 12px; background-color: #F8FAFC;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <span style="font-size: 1.25rem; font-weight: bold; color: #1E3A8A;">📁 {list_name}</span><br>
-                            <span style="font-size: 0.85rem; color: #64748B;">Språk: <b>{lang}</b> • Antal ord: <b>{word_count}</b></span>
+        if not categories_dict:
+            st.info("Det finns inga gloslistor registrerade än. Logga in i Lärarpanelen för att lägga till gloslistor.")
+        else:
+            # Visa kategorier som mappar
+            for cat_name, list_names in categories_dict.items():
+                list_count = len(list_names)
+                with st.container():
+                    st.markdown(f"""
+                    <div style="border: 1px solid #3B82F6; border-radius: 10px; padding: 18px; margin-bottom: 12px; background-color: #EFF6FF; border-left: 6px solid #3B82F6;">
+                        <span style="font-size: 1.35rem; font-weight: bold; color: #1E3A8A;">📁 {cat_name}</span><br>
+                        <span style="font-size: 0.85rem; color: #64748B;">Antal listor i mappen: <b>{list_count}</b></span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    if st.button(f"Öppna mappen '{cat_name}' ➔", key=f"select_cat_{cat_name}", use_container_width=True):
+                        st.session_state.selected_category = cat_name
+                        st.rerun()
+    else:
+        # En kategori är vald! Visa listor inuti den kategorin
+        cat_name = st.session_state.selected_category
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #1e3a8a, #0d9488); padding: 25px; border-radius: 12px; color: white; text-align: center; margin-bottom: 25px;">
+            <h2 style="margin: 0; font-size: 2rem; font-family: sans-serif;">📁 {cat_name}</h2>
+            <p style="margin: 10px 0 0 0; font-size: 1rem; opacity: 0.9;">Välj den gloslista du vill träna på.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Knapp för att gå tillbaka till mapp-vyn
+        if st.button("⬅ Gå tillbaka till mappar", use_container_width=True):
+            st.session_state.selected_category = None
+            st.rerun()
+            
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Hämta listor som tillhör den valda kategorin
+        matching_lists = [name for name, info in st.session_state.library.items() if info.get("category", "Övriga listor") == cat_name]
+        
+        if not matching_lists:
+            st.warning("Mappen är tom!")
+        else:
+            for list_name in matching_lists:
+                list_info = st.session_state.library[list_name]
+                lang = list_info.get("language", "Spanska")
+                word_count = len(list_info.get("words", []))
+                
+                with st.container():
+                    st.markdown(f"""
+                    <div style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 15px; margin-bottom: 12px; background-color: #F8FAFC;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-size: 1.25rem; font-weight: bold; color: #1E3A8A;">📄 {list_name}</span><br>
+                                <span style="font-size: 0.85rem; color: #64748B;">Språk: <b>{lang}</b> • Antal ord: <b>{word_count}</b></span>
+                            </div>
                         </div>
                     </div>
-                </div>
-                """, unsafe_allow_html=True)
-                if st.button(f"Öva listan '{list_name}' ➔", key=f"select_list_{list_name}", use_container_width=True):
-                    st.session_state.current_list_name = list_name
-                    st.session_state.words = list_info["words"].copy()
-                    st.session_state.target_language = lang
-                    reset_progress()
-                    
-                    # Elevens specifika progression laddades redan in i st.session_state.leitner_boxes vid login!
-                    st.rerun()
-                    
+                    """, unsafe_allow_html=True)
+                    if st.button(f"Öva listan '{list_name}' ➔", key=f"select_list_{list_name}", use_container_width=True):
+                        st.session_state.current_list_name = list_name
+                        st.session_state.words = list_info["words"].copy()
+                        st.session_state.target_language = lang
+                        reset_progress()
+                        st.rerun()
+                        
     st.stop() # Avbryt körning här så vi inte ritar upp träningslägena när ingen lista valts!
 
 # Spara gSheets url-namnet
@@ -966,6 +1039,7 @@ col_back_nav, col_curr_list = st.columns([1, 4])
 with col_back_nav:
     if st.button("📚 Gloslistor", use_container_width=True, help="Gå tillbaka till biblioteket och välj en annan lista"):
         st.session_state.current_list_name = None
+        st.session_state.selected_category = None
         st.rerun()
 with col_curr_list:
     st.info(f"👉 Aktiv lista: **{st.session_state.current_list_name}** ({target_lang_name})")
@@ -1745,6 +1819,7 @@ else:
             # Unika inställningar för den nya listan
             new_list_title = st.text_input("Vad ska denna gloslista heta i biblioteket?", placeholder="t.ex. Spanska - Kapitel 1")
             new_list_lang = st.text_input("Vilket språk övar eleverna på i denna lista?", placeholder="t.ex. Spanska")
+            new_list_category = st.text_input("Vilken mapp/kategori ska listan tillhöra?", placeholder="t.ex. Spanska nybörjare, Spanska fortsättning, Tematiska ordlistor...")
             
             st.markdown("**Hur vill du läsa in glosorna?**")
             uploaded_file = st.file_uploader("Metod A: Ladda upp en fil (.txt eller .json)", type=["txt", "json"])
@@ -1810,6 +1885,7 @@ else:
                 if parsed_words:
                     st.session_state.library[new_list_title] = {
                         "language": new_list_lang,
+                        "category": new_list_category.strip() if new_list_category.strip() else "Övriga listor",
                         "words": parsed_words
                     }
                     # Gör den nyligen skapade listan till den aktiva listan
@@ -1830,7 +1906,9 @@ else:
             for list_name in all_lists:
                 col1, col2 = st.columns([5, 1])
                 with col1:
-                    st.write(f"📁 {list_name} ({st.session_state.library[list_name]['language']}) — **{len(st.session_state.library[list_name]['words'])}** ord")
+                    list_info = st.session_state.library[list_name]
+                    cat = list_info.get("category", "Övriga listor")
+                    st.write(f"📁 {list_name} ({list_info['language']}) [Mapp: *{cat}*] — **{len(list_info['words'])}** ord")
                 with col2:
                     # Hindra radering om det bara finns en lista kvar
                     if len(all_lists) > 1:
