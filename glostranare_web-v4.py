@@ -868,6 +868,55 @@ else: # Följ systemet
 # Iniciera den globala CSS-designen
 st.markdown(f"""
 <style>
+/* Global Streamlit UI Polish */
+button[data-baseweb="tab"] {{
+    font-size: 1.05rem !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    padding: 10px 18px !important;
+    border-radius: 8px 8px 0 0 !important;
+    transition: all 0.25s ease !important;
+}}
+button[data-baseweb="tab"]:hover {{
+    color: #3B82F6 !important;
+}}
+button[data-baseweb="tab"][aria-selected="true"] {{
+    color: #1E3A8A !important;
+    background-color: #EFF6FF !important;
+    border-bottom: 3px solid #3B82F6 !important;
+}}
+@media (prefers-color-scheme: dark) {{
+    button[data-baseweb="tab"][aria-selected="true"] {{
+        color: #60A5FA !important;
+        background-color: #1E293B !important;
+        border-bottom: 3px solid #60A5FA !important;
+    }}
+}}
+
+div[data-testid="stTextInput"] input, div[data-testid="stSelectbox"] [role="combobox"] {{
+    border-radius: 8px !important;
+    border: 1px solid #CBD5E1 !important;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease !important;
+}}
+div[data-testid="stTextInput"] input:focus, div[data-testid="stSelectbox"] [role="combobox"]:focus {{
+    border-color: #3B82F6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+}}
+@media (prefers-color-scheme: dark) {{
+    div[data-testid="stTextInput"] input, div[data-testid="stSelectbox"] [role="combobox"] {{
+        border-color: #475569 !important;
+    }}
+}}
+
+[data-testid="stSidebar"] {{
+    background-color: #F8FAFC !important;
+}}
+@media (prefers-color-scheme: dark) {{
+    [data-testid="stSidebar"] {{
+        background-color: #0F172A !important;
+    }}
+}}
+
 .leitner-card {{
     border-radius: 6px;
     padding: 6px 10px;
