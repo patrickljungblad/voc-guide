@@ -531,6 +531,8 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+
+
 # Snabbval för träningsriktning direkt vid övningen (om eleven missat den i sidomenyn)
 st.markdown("---")
 col_info, col_sel = st.columns([2, 1])
@@ -560,7 +562,7 @@ if not st.session_state.logged_in_user:
     with col_log_mid:
         st.markdown("""
         <div class="login-banner-card">
-            <h2 class="login-banner-title">Välkommen till GlosFlow</h2>
+            <h2 class="login-banner-title">Inloggning</h2>
             <p class="login-banner-text">Vänligen logga in med din PIN-kod som du fått av din lärare för att hämta dina framsteg.</p>
         </div>
         """, unsafe_allow_html=True)
