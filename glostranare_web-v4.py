@@ -1440,6 +1440,22 @@ else:
             with col2:
                 hint_btn = st.form_submit_button("💡 Få en ledtråd", use_container_width=True, disabled=st.session_state.write_correct_answered)
                 
+        # JavaScript-hack för att automatiskt bibehålla tangentbordsfokus i skrivrutan (TOPRA-modellen)
+        components.html(
+            f"""
+            <script>
+            setTimeout(function() {{
+                var inputs = window.parent.document.querySelectorAll('div[data-testid="stTextInput"] input');
+                if (inputs.length > 0) {{
+                    inputs[inputs.length - 1].focus();
+                }}
+            }}, 100);
+            </script>
+            """,
+            height=0,
+            width=0,
+        )
+                
         # Hantera ledtråd
         target_word = current_word[target_lang]
         if hint_btn:
@@ -1503,11 +1519,7 @@ else:
         if failed_count_write >= 2:
             st.info(f"💡 **Behöver du hjälp med stavningen?** Prova den här strategin för ordet:\n\n{get_strategy_tip(current_word, target_lang_name)}")
             
-        if st.button("Nästa ord ➔", key="next_write", use_container_width=True):
-            next_word()
-            st.session_state.write_correct_answered = False
-            st.session_state.write_feedback = None
-            st.rerun()
+
 
     # ================= TAB 4: LÄRARPANEL & LÖSENORDSSKYDD =================
     with tab4:
