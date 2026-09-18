@@ -1690,18 +1690,29 @@ def render_teacher_panel():
             
             # ================= SEKTION: UTSKRIFTSBART GLOSFÖRHÖR =================
             st.markdown("#### 🖨️ Skapa utskriftsbart glosförhör")
-            st.markdown("Generera ett professionellt provblad i PDF eller utskriftsformat baserat på den valda gloslistan.")
+            st.markdown("Välj en gloslista från biblioteket och generera ett utskriftsklart förhör eller en PDF med tillhörande facit.")
+            
+            quiz_library_options = list(st.session_state.library.keys()) if st.session_state.get("library") else []
+            selected_quiz_list = st.selectbox(
+                "Välj gloslista att göra förhör på:",
+                quiz_library_options,
+                key="admin_selected_quiz_list"
+            )
+            
+            selected_list_info = st.session_state.library.get(selected_quiz_list, {}) if selected_quiz_list else {}
+            selected_list_words = selected_list_info.get("words", [])
+            selected_list_lang = selected_list_info.get("language", "Spanska")
             
             col_p1, col_p2 = st.columns(2)
             with col_p1:
-                quiz_title = st.text_input("Provrubrik på provbladet:", value=f"Glosförhör - {target_lang_name}")
+                quiz_title = st.text_input("Provrubrik på provbladet:", value=f"Glosförhör - {selected_quiz_list if selected_quiz_list else 'Glosor'}", key="admin_quiz_title")
                 quiz_direction = st.selectbox(
                     "Provriktning:",
                     ["Svenska ➔ Målspråk", "Målspråk ➔ Svenska", "Blandat (slumpat)"],
                     key="admin_quiz_direction"
                 )
             with col_p2:
-                max_words = len(st.session_state.words) if st.session_state.words else 0
+                max_words = len(selected_list_words)
                 quiz_count = st.selectbox(
                     "Antal glosor i förhöret:",
                     ["Alla"] + [i for i in [5, 10, 15, 20, 25, 30, 40, 50] if i <= max_words],
@@ -1711,11 +1722,11 @@ def render_teacher_panel():
                 include_answers = st.checkbox("Skapa facit-sida också (separat sida)", value=True, key="admin_quiz_include_answers")
                 
             if st.button("📄 Generera utskriftsklart förhör", type="primary", use_container_width=True):
-                if not st.session_state.words:
-                    st.error("Det finns inga glosor i din lista att generera prov av!")
+                if not selected_list_words:
+                    st.error("Det finns inga glosor i den valda listan att generera prov av!")
                 else:
                     # Blanda glosorna och begränsa antal
-                    test_words = st.session_state.words.copy()
+                    test_words = [w.copy() for w in selected_list_words]
                     random.shuffle(test_words)
                     if quiz_count != "Alla":
                         test_words = test_words[:int(quiz_count)]
@@ -1730,7 +1741,7 @@ def render_teacher_panel():
                             w["answer_word"] = w["svenska"]
                         else:
                             if random.choice([True, False]):
-                                w["prompt_word"] = w["svenska"] + f" (➔ {target_lang_name})"
+                                w["prompt_word"] = w["svenska"] + f" (➔ {selected_list_lang})"
                                 w["answer_word"] = w["utlandska"]
                             else:
                                 w["prompt_word"] = w["utlandska"] + " (➔ Svenska)"
@@ -1739,7 +1750,7 @@ def render_teacher_panel():
                     st.session_state.quiz_test_words = test_words
                     st.session_state.quiz_title_val = quiz_title
                     st.session_state.quiz_include_answers = include_answers
-                    st.session_state.quiz_target_lang = target_lang_name
+                    st.session_state.quiz_target_lang = selected_list_lang
                     
                     test_html = ""
                     facit_html = ""
