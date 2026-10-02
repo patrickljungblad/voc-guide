@@ -129,7 +129,7 @@ def generate_study_list_pdf_bytes(words_list, list_title, target_lang_name):
     
     # Divider line
     pdf.set_draw_color(16, 185, 129)
-    pdf.set_linewidth(0.8)
+    pdf.set_line_width(0.8)
     pdf.line(15, pdf.get_y(), 195, pdf.get_y())
     pdf.ln(6)
     
