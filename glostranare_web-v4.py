@@ -480,10 +480,13 @@ def create_user_in_db(name, pin, group):
     if not st.session_state.gsheets_url:
         return False, "Ingen databas ansluten"
     try:
+        clean_pin = str(pin).strip()
+        if clean_pin.isdigit():
+            clean_pin = clean_pin.zfill(4)
         payload = {
             "action": "create_user",
             "name": name.strip(),
-            "pin": str(pin).strip(),
+            "pin": clean_pin,
             "group": group.strip()
         }
         req = urllib.request.Request(
@@ -911,7 +914,12 @@ if not st.session_state.logged_in_user:
                         if st.button("Logga in ➔", type="primary", use_container_width=True):
                             # Hitta elev
                             user = next((u for u in filtered_users if u["name"] == sel_name), None)
-                            if user and str(user["pin"]).strip() == str(pin_input).strip():
+                            db_pin = str(user["pin"]).strip() if user else ""
+                            in_pin = str(pin_input).strip()
+                            db_pin_zfill = db_pin.zfill(4) if db_pin.isdigit() else db_pin
+                            in_pin_zfill = in_pin.zfill(4) if in_pin.isdigit() else in_pin
+                            
+                            if user and (db_pin == in_pin or db_pin_zfill == in_pin_zfill):
                                 st.session_state.logged_in_user = user
                                 st.session_state.leitner_boxes = user.get("leitner", {})
                                 st.session_state.score = user.get("score", 0)
@@ -1720,7 +1728,8 @@ def render_teacher_panel():
                     for u in st.session_state.users_list:
                         name = safe_str(u.get("name", ""))
                         group = safe_str(u.get("group", ""))
-                        pin = safe_str(u.get("pin", ""))
+                        raw_pin = safe_str(u.get("pin", "")).strip()
+                        pin = raw_pin.zfill(4) if raw_pin.isdigit() else raw_pin
                         last_saved_val = safe_str(u.get("last_saved", ""))
                         if last_saved_val and len(last_saved_val) >= 16:
                             last_saved = last_saved_val[:16].replace("T", " ")
