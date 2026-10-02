@@ -107,6 +107,211 @@ def get_strategy_tip(word_obj, language):
     return f"**Nyckelordsmetoden:** Prova att hitta ett svenskt ord som låter som det utländska ordet '{ut}'. Föreställ dig sedan en rolig eller konstig bild i huvudet där det ordet kopplas ihop med betydelsen '{sv}'! Det hjälper hjärnan att bygga en stark form-betydelse-bro [31, 247]."
 
 
+def generate_study_list_pdf_bytes(words_list, list_title, target_lang_name):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_margin(15)
+    
+    def safe_pdf_str(text):
+        if not isinstance(text, str):
+            text = str(text)
+        text = text.replace("➔", "->").replace("¿", "").replace("¡", "").replace("—", "-")
+        return text.encode('latin-1', 'replace').decode('latin-1')
+
+    # Title
+    pdf.set_font("helvetica", "B", size=18)
+    pdf.set_text_color(30, 58, 138) # Dark Blue
+    pdf.cell(w=0, h=10, text=safe_pdf_str(f"Gloslista: {list_title}"), align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("helvetica", "I", size=10)
+    pdf.set_text_color(100, 116, 139)
+    pdf.cell(w=0, h=6, text=safe_pdf_str(f"Språk: {target_lang_name}  |  Antal glosor: {len(words_list)}"), align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(4)
+    
+    # Divider line
+    pdf.set_draw_color(16, 185, 129)
+    pdf.set_linewidth(0.8)
+    pdf.line(15, pdf.get_y(), 195, pdf.get_y())
+    pdf.ln(6)
+    
+    # Header fields for student name & class
+    pdf.set_text_color(51, 65, 85)
+    pdf.set_font("helvetica", size=10)
+    pdf.cell(w=20, h=7, text=safe_pdf_str("Namn:"))
+    pdf.cell(w=70, h=7, border="B", text="")
+    pdf.cell(w=10, h=7, text="")
+    pdf.cell(w=25, h=7, text=safe_pdf_str("Klass/Grupp:"))
+    pdf.cell(w=55, h=7, border="B", text="")
+    pdf.ln(12)
+    
+    # Table headers
+    pdf.set_draw_color(226, 232, 240)
+    pdf.set_fill_color(241, 245, 249)
+    pdf.set_font("helvetica", "B", size=11)
+    pdf.set_text_color(15, 23, 42)
+    
+    pdf.cell(w=12, h=8, text="Nr", border=1, fill=True)
+    pdf.cell(w=74, h=8, text=safe_pdf_str("Svenska"), border=1, fill=True)
+    pdf.cell(w=74, h=8, text=safe_pdf_str(target_lang_name), border=1, fill=True)
+    pdf.cell(w=20, h=8, text=safe_pdf_str("[ ] Övad"), border=1, fill=True, new_x="LMARGIN", new_y="NEXT")
+    
+    # Rows
+    pdf.set_font("helvetica", size=10)
+    for idx, w in enumerate(words_list, 1):
+        sv = safe_pdf_str(w.get("svenska", ""))
+        ut = safe_pdf_str(w.get("utlandska", ""))
+        pdf.set_text_color(30, 41, 59)
+        pdf.cell(w=12, h=8, text=f"{idx}.", border="B")
+        pdf.cell(w=74, h=8, text=sv, border="B")
+        pdf.cell(w=74, h=8, text=ut, border="B")
+        pdf.set_text_color(148, 163, 184)
+        pdf.cell(w=20, h=8, text="[   ]", border="B", new_x="LMARGIN", new_y="NEXT")
+        
+    return pdf.output()
+
+
+def generate_study_list_html(words_list, list_title, target_lang_name):
+    style_block = """
+    <style>
+    @media print {
+        header, footer, [data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="stToolbar"], .stTabs, button, hr, .print-hide {
+            display: none !important;
+            height: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        body, .stApp, .main, .block-container, [data-testid="stAppViewContainer"], [data-testid="stVerticalBlock"] {
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            display: block !important;
+        }
+        body * {
+            visibility: hidden !important;
+        }
+        .print-container, .print-container * {
+            visibility: visible !important;
+        }
+        .print-container {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: white !important;
+            color: black !important;
+        }
+    }
+    .print-container {
+        background-color: white;
+        color: black;
+        padding: 30px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        margin-top: 15px;
+        margin-bottom: 20px;
+    }
+    .print-title {
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+        color: #1e3a8a;
+        margin-bottom: 5px;
+    }
+    .print-subtitle {
+        font-size: 14px;
+        text-align: center;
+        color: #64748b;
+        margin-bottom: 20px;
+    }
+    .print-student-info {
+        margin-bottom: 20px;
+        font-size: 14px;
+        line-height: 1.8;
+    }
+    .info-line {
+        border-bottom: 1px solid black;
+        display: inline-block;
+        width: 160px;
+        margin-right: 20px;
+    }
+    .study-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+    .study-table th {
+        background-color: #f1f5f9;
+        color: #0f172a;
+        text-align: left;
+        padding: 10px;
+        border-bottom: 2px solid #cbd5e1;
+        font-size: 15px;
+    }
+    .study-table td {
+        padding: 10px;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 15px;
+    }
+    .study-num {
+        width: 40px;
+        font-weight: bold;
+        color: #475569;
+    }
+    .check-box {
+        width: 60px;
+        text-align: center;
+        color: #94a3b8;
+    }
+    </style>
+    """
+    
+    html = style_block + "<div class='print-container'>"
+    html += f"<div class='print-title'>📖 GLOSLISTA: {list_title}</div>"
+    html += f"<div class='print-subtitle'>Språk: {target_lang_name} • Antal glosor: {len(words_list)}</div>"
+    html += """
+    <div class='print-student-info'>
+        <b>Elevens namn:</b> <span class='info-line'></span>
+        <b>Klass/Grupp:</b> <span class='info-line'></span>
+        <b>Datum:</b> <span class='info-line'></span>
+    </div>
+    """
+    html += f"""
+    <table class='study-table'>
+        <thead>
+            <tr>
+                <th class='study-num'>Nr</th>
+                <th>Svenska</th>
+                <th>{target_lang_name}</th>
+                <th class='check-box'>Övad</th>
+            </tr>
+        </thead>
+        <tbody>
+    """
+    for idx, w in enumerate(words_list, 1):
+        sv = w.get("svenska", "")
+        ut = w.get("utlandska", "")
+        html += f"""
+            <tr>
+                <td class='study-num'>{idx}.</td>
+                <td><b>{sv}</b></td>
+                <td>{ut}</td>
+                <td class='check-box'>☐</td>
+            </tr>
+        """
+    html += "</tbody></table></div>"
+    return html
+
+
 def generate_pdf_bytes(test_words, quiz_title, target_lang_name, include_answers):
     pdf = FPDF()
     pdf.add_page()
@@ -309,28 +514,7 @@ ADMIN_PASSWORD = "skola123"
 # Du kan förbereda permanenta listor i biblioteket direkt i koden här!
 # Detta gör att de alltid ligger laddade för eleverna när hemsidan startas.
 PERMANENT_LIBRARY = {
-        "Spanska nybörjare - till v. 37": {
-        "language": "Spanska",
-        "category": "Spanska nybörjare",
-        "words": [
-            {"svenska": "att vara", "utlandska": "ser"},
-            {"svenska": "jag är", "utlandska": "yo soy"},
-            {"svenska": "du är", "utlandska": "tú eres"},
-            {"svenska": "han/hon är", "utlandska": "él/ella es"},
-            {"svenska": "vad heter du?", "utlandska": "¿Cómo te llamas?"},
-            {"svenska": "Jag heter...", "utlandska": "Me llamo..."},
-            {"svenska": "Jag är från...", "utlandska": "Soy de"},
-            {"svenska": "Han/hon är från...", "utlandska": "Es de..."},
-            {"svenska": "Sverige", "utlandska": "Suecia"},
-            {"svenska": "jag pratar/talar", "utlandska": "hablo"},
-            {"svenska": "svenska", "utlandska": "sueco"},
-            {"svenska": "spanska", "utlandska": "español"},
-            {"svenska": "engelska", "utlandska": "inglés"},
-            {"svenska": "Var är du från?", "utlandska": "¿De dónde eres?"},
-            {"svenska": "Vilka språk talar du?", "utlandska": "¿Qué lenguas hablas?"}
-        ]
-    },
-            "Spanska nybörjare - v. 38": {
+    "Spanska nybörjare - v. 38": {
         "language": "Spanska",
         "category": "Spanska nybörjare",
         "words": [
@@ -371,6 +555,27 @@ PERMANENT_LIBRARY = {
             {"svenska": "höst", "utlandska": "otoño"},
             {"svenska": "årstid", "utlandska": "estación"},
             {"svenska": "vad är det för väder?", "utlandska": "¿qué tiempo hace?"}
+        ]
+    },
+    "Spanska nybörjare - till v. 37": {
+        "language": "Spanska",
+        "category": "Spanska nybörjare",
+        "words": [
+            {"svenska": "att vara", "utlandska": "ser"},
+            {"svenska": "jag är", "utlandska": "yo soy"},
+            {"svenska": "du är", "utlandska": "tú eres"},
+            {"svenska": "han/hon är", "utlandska": "él/ella es"},
+            {"svenska": "vad heter du?", "utlandska": "¿Cómo te llamas?"},
+            {"svenska": "Jag heter...", "utlandska": "Me llamo..."},
+            {"svenska": "Jag är från...", "utlandska": "Soy de"},
+            {"svenska": "Han/hon är från...", "utlandska": "Es de..."},
+            {"svenska": "Sverige", "utlandska": "Suecia"},
+            {"svenska": "jag pratar/talar", "utlandska": "hablo"},
+            {"svenska": "svenska", "utlandska": "sueco"},
+            {"svenska": "spanska", "utlandska": "español"},
+            {"svenska": "engelska", "utlandska": "inglés"},
+            {"svenska": "Var är du från?", "utlandska": "¿De dónde eres?"},
+            {"svenska": "Vilka språk talar du?", "utlandska": "¿Qué lenguas hablas?"}
         ]
     },
     "Spanska fortsättning - v. 37": {
@@ -486,7 +691,7 @@ if st.session_state.gsheets_url and not st.session_state.users_list:
 
 # Initiera aktiv ordlista och målspråk
 if "words" not in st.session_state:
-    st.session_state.words = st.session_state.library["Spanska nybörjare - till v. 37"]["words"].copy()
+    st.session_state.words = st.session_state.library["Spanska nybörjare - v. 38"]["words"].copy()
     st.session_state.target_language = "Spanska"
     st.session_state.current_list_name = None
 
@@ -1688,13 +1893,20 @@ def render_teacher_panel():
             
             st.markdown("---")
             
-            # ================= SEKTION: UTSKRIFTSBART GLOSFÖRHÖR =================
-            st.markdown("#### 🖨️ Skapa utskriftsbart glosförhör")
-            st.markdown("Välj en gloslista från biblioteket och generera ett utskriftsklart förhör eller en PDF med tillhörande facit.")
+            # ================= SEKTION: UTSKRIFTSBART PAPPERSMATERIAL =================
+            st.markdown("#### 🖨️ Skapa utskriftsbart pappersmaterial")
+            st.markdown("Skapa pappersark för klassrummet – välj mellan ren gloslista (studieark) eller ett formellt glosförhör med facit.")
+            
+            doc_type = st.radio(
+                "Välj dokumenttyp för utskrift:",
+                ("📄 Ren Gloslista (Studieark med alla ord & bockrutor)", "✏️ Glosförhör (Provblad med tomma svarsrader + facit)"),
+                horizontal=True,
+                key="admin_print_doc_type"
+            )
             
             quiz_library_options = list(st.session_state.library.keys()) if st.session_state.get("library") else []
             selected_quiz_list = st.selectbox(
-                "Välj gloslista att göra förhör på:",
+                "Välj gloslista från biblioteket:",
                 quiz_library_options,
                 key="admin_selected_quiz_list"
             )
@@ -1703,54 +1915,77 @@ def render_teacher_panel():
             selected_list_words = selected_list_info.get("words", [])
             selected_list_lang = selected_list_info.get("language", "Spanska")
             
-            col_p1, col_p2 = st.columns(2)
-            with col_p1:
-                quiz_title = st.text_input("Provrubrik på provbladet:", value=f"Glosförhör - {selected_quiz_list if selected_quiz_list else 'Glosor'}", key="admin_quiz_title")
-                quiz_direction = st.selectbox(
-                    "Provriktning:",
-                    ["Svenska ➔ Målspråk", "Målspråk ➔ Svenska", "Blandat (slumpat)"],
-                    key="admin_quiz_direction"
-                )
-            with col_p2:
-                max_words = len(selected_list_words)
-                quiz_count = st.selectbox(
-                    "Antal glosor i förhöret:",
-                    ["Alla"] + [i for i in [5, 10, 15, 20, 25, 30, 40, 50] if i <= max_words],
-                    index=0,
-                    key="admin_quiz_count"
-                )
-                include_answers = st.checkbox("Skapa facit-sida också (separat sida)", value=True, key="admin_quiz_include_answers")
-                
-            if st.button("📄 Generera utskriftsklart förhör", type="primary", use_container_width=True):
-                if not selected_list_words:
-                    st.error("Det finns inga glosor i den valda listan att generera prov av!")
-                else:
-                    # Blanda glosorna och begränsa antal
-                    test_words = [w.copy() for w in selected_list_words]
-                    random.shuffle(test_words)
-                    if quiz_count != "Alla":
-                        test_words = test_words[:int(quiz_count)]
-                        
-                    # Pre-generera prompt_word och answer_word för konsistens
-                    for w in test_words:
-                        if quiz_direction == "Svenska ➔ Målspråk":
-                            w["prompt_word"] = w["svenska"]
-                            w["answer_word"] = w["utlandska"]
-                        elif quiz_direction == "Målspråk ➔ Svenska":
-                            w["prompt_word"] = w["utlandska"]
-                            w["answer_word"] = w["svenska"]
-                        else:
-                            if random.choice([True, False]):
-                                w["prompt_word"] = w["svenska"] + f" (➔ {selected_list_lang})"
-                                w["answer_word"] = w["utlandska"]
-                            else:
-                                w["prompt_word"] = w["utlandska"] + " (➔ Svenska)"
-                                w["answer_word"] = w["svenska"]
+            if doc_type == "📄 Ren Gloslista (Studieark med alla ord & bockrutor)":
+                col_sl1, col_sl2 = st.columns(2)
+                with col_sl1:
+                    study_pdf = generate_study_list_pdf_bytes(
+                        selected_list_words,
+                        selected_quiz_list,
+                        selected_list_lang
+                    )
+                    st.download_button(
+                        label="📥 Ladda ner studieark som PDF",
+                        data=bytes(study_pdf),
+                        file_name=f"Gloslista_{selected_quiz_list.replace(' ', '_')}.pdf",
+                        mime="application/pdf",
+                        use_container_width=True
+                    )
+                with col_sl2:
+                    if st.button("📄 Generera utskriftsklart studieark", type="primary", use_container_width=True):
+                        st.session_state.printable_test = generate_study_list_html(
+                            selected_list_words,
+                            selected_quiz_list,
+                            selected_list_lang
+                        )
+                        st.toast("Gloslista har genererats!")
+                        st.rerun()
+            else:
+                col_p1, col_p2 = st.columns(2)
+                with col_p1:
+                    quiz_title = st.text_input("Provrubrik på provbladet:", value=f"Glosförhör - {selected_quiz_list}", key="admin_quiz_title")
+                    quiz_direction = st.selectbox(
+                        "Provriktning:",
+                        ["Svenska ➔ Målspråk", "Målspråk ➔ Svenska", "Blandat (slumpat)"],
+                        key="admin_quiz_direction"
+                    )
+                with col_p2:
+                    max_words = len(selected_list_words)
+                    quiz_count = st.selectbox(
+                        "Antal glosor i förhöret:",
+                        ["Alla"] + [i for i in [5, 10, 15, 20, 25, 30, 40, 50] if i <= max_words],
+                        index=0,
+                        key="admin_quiz_count"
+                    )
+                    include_answers = st.checkbox("Skapa facit-sida också (separat sida)", value=True, key="admin_quiz_include_answers")
                     
-                    st.session_state.quiz_test_words = test_words
-                    st.session_state.quiz_title_val = quiz_title
-                    st.session_state.quiz_include_answers = include_answers
-                    st.session_state.quiz_target_lang = selected_list_lang
+                if st.button("📄 Generera utskriftsklart förhör", type="primary", use_container_width=True):
+                    if not selected_list_words:
+                        st.error("Det finns inga glosor i den valda listan att generera prov av!")
+                    else:
+                        test_words = [w.copy() for w in selected_list_words]
+                        random.shuffle(test_words)
+                        if quiz_count != "Alla":
+                            test_words = test_words[:int(quiz_count)]
+                            
+                        for w in test_words:
+                            if quiz_direction == "Svenska ➔ Målspråk":
+                                w["prompt_word"] = w["svenska"]
+                                w["answer_word"] = w["utlandska"]
+                            elif quiz_direction == "Målspråk ➔ Svenska":
+                                w["prompt_word"] = w["utlandska"]
+                                w["answer_word"] = w["svenska"]
+                            else:
+                                if random.choice([True, False]):
+                                    w["prompt_word"] = w["svenska"] + f" (➔ {selected_list_lang})"
+                                    w["answer_word"] = w["utlandska"]
+                                else:
+                                    w["prompt_word"] = w["utlandska"] + " (➔ Svenska)"
+                                    w["answer_word"] = w["svenska"]
+                        
+                        st.session_state.quiz_test_words = test_words
+                        st.session_state.quiz_title_val = quiz_title
+                        st.session_state.quiz_include_answers = include_answers
+                        st.session_state.quiz_target_lang = selected_list_lang
                     
                     test_html = ""
                     facit_html = ""
@@ -1999,11 +2234,15 @@ def render_teacher_panel():
                             st.stop()
                             
                 if parsed_words:
-                    st.session_state.library[new_list_title] = {
-                        "language": new_list_lang,
-                        "category": new_list_category.strip() if new_list_category.strip() else "Övriga listor",
-                        "words": parsed_words
+                    new_list_item = {
+                        new_list_title: {
+                            "language": new_list_lang,
+                            "category": new_list_category.strip() if new_list_category.strip() else "Övriga listor",
+                            "words": parsed_words
+                        }
                     }
+                    # Prepend new list so it always appears at the top for students
+                    st.session_state.library = {**new_list_item, **st.session_state.library}
                     st.session_state.current_list_name = new_list_title
                     st.session_state.words = parsed_words
                     st.session_state.target_language = new_list_lang
@@ -2061,7 +2300,7 @@ if teacher_view == "👩‍🏫 Lärarpanel":
     st.stop()
 
 # Navigeringsrad längst upp på huvudsidan
-col_back_nav, col_curr_list = st.columns([1, 4])
+col_back_nav, col_curr_list, col_print_nav = st.columns([1.2, 2.6, 1.2])
 with col_back_nav:
     if st.button("📚 Gloslistor", use_container_width=True, help="Gå tillbaka till biblioteket och välj en annan lista"):
         st.session_state.current_list_name = None
@@ -2069,6 +2308,49 @@ with col_back_nav:
         st.rerun()
 with col_curr_list:
     st.info(f"👉 Aktiv lista: **{st.session_state.current_list_name}** ({target_lang_name})")
+with col_print_nav:
+    if st.button("🖨️ Skriv ut / PDF", use_container_width=True, help="Skriv ut eller ladda ner denna gloslista som pappersark för att öva analogt"):
+        st.session_state.show_student_print_sheet = not st.session_state.get("show_student_print_sheet", False)
+        st.rerun()
+
+if st.session_state.get("show_student_print_sheet"):
+    st.markdown("---")
+    st.markdown(f"### 🖨️ Pappersark & Studieark: {st.session_state.current_list_name}")
+    st.markdown("Här kan du ladda ner din valda gloslista som en färdig PDF eller visa studiearket i webbläsaren för att skriva ut på papper.")
+    
+    col_p_dl, col_p_view, col_p_close = st.columns([2, 2, 1])
+    with col_p_dl:
+        student_pdf_bytes = generate_study_list_pdf_bytes(
+            st.session_state.words,
+            st.session_state.current_list_name,
+            target_lang_name
+        )
+        st.download_button(
+            label="📥 Ladda ner studieark som PDF",
+            data=bytes(student_pdf_bytes),
+            file_name=f"Gloslista_{st.session_state.current_list_name.replace(' ', '_')}.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
+    with col_p_view:
+        if st.button("👁️ Förhandsgranska & Skriv ut studieark", use_container_width=True):
+            st.session_state.student_printable_study_html = generate_study_list_html(
+                st.session_state.words,
+                st.session_state.current_list_name,
+                target_lang_name
+            )
+            st.rerun()
+    with col_p_close:
+        if st.button("❌ Stäng", use_container_width=True):
+            st.session_state.show_student_print_sheet = False
+            if "student_printable_study_html" in st.session_state:
+                del st.session_state.student_printable_study_html
+            st.rerun()
+            
+    if "student_printable_study_html" in st.session_state:
+        st.markdown(clean_html(st.session_state.student_printable_study_html), unsafe_allow_html=True)
+        st.caption("💡 *Tips: Klicka på Ctrl+P (eller Skriv ut i din webbläsarmeny) för att skriva ut studiearket på papper.*")
+    st.markdown("---")
 
 # Snabbval för träningsriktning direkt vid övningen (om eleven missat den i sidomenyn)
 st.markdown("---")
