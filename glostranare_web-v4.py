@@ -32,7 +32,20 @@ def get_strategy_tip(word_obj, language):
         "jueves": "**Etymologitips:** *jueves* är uppkallat efter dunder- och blixtguden Jupiter [30]. På svenska är torsdag Tors dag (vår egen dunder- och blixtgud) – en klockren koppling!",
         "viernes": "**Etymologitips:** *viernes* är uppkallat efter kärleksgudinnan Venus [30]. På svenska är fredag Frejas dag (vår kärleksgudinna) – båda hyllar kärleken!",
         "sábado": "**Associationstips:** *sábado* är nära besläktat med ordet *sabbat* (vilodag) [30]. Det är lördag och dags för vila!",
-        "domingo": "**Associationstips:** *domingo* kommer från latinets *dominus* (herre) och betyder 'herrens dag' [30]. Tänk på ordet *dominera* – herren dominerar på söndagar!",
+                "domingo": "**Associationstips:** *domingo* kommer från latinets *dominus* (herre) och betyder 'herrens dag' [30]. Tänk på ordet *dominera* – herren dominerar på söndagar!",
+
+        "att ha": "**Grammatiktips:** *tener* är grundformen för 'att ha' på spanska.",
+        "jag har": "**Grammatiktips:** *yo tengo* = jag har. Slutar på *-o* som nästan alla 'jag'-former på spanska!",
+        "du har": "**Grammatiktips:** *tú tienes* = du har. Slutar på *-s* precis som de flesta 'du'-former.",
+        "han/hon, den, har": "**Grammatiktips:** *él/ella tiene* = han/hon/den har.",
+        "vi har": "**Orddelstips:** *tenemos* slutar på *-mos*, vilket alltid betyder 'vi' på spanska!",
+        "ni har": "**Grammatiktips:** *tenéis* slutar på *-ís* med accent, vilket visar att det gäller 'ni' (vosotros).",
+        "de, ni, har": "**Grammatiktips:** *tienen* slutar på *-n*, vilket markerar att det gäller 'de' (ellos/ellas).",
+        "telefonnummer": "**Kognat-tips:** *número de teléfono* låter nästan exakt som nummer och telefon på svenska!",
+        "fråga": "**Associationstips:** *pregunta* – tänk på att 'pruta' eller ställa frågor inför ett köp.",
+        "svara": "**Associationstips:** *contesta* låter som engelskans *contestant* (en tävlande som svarar på frågor).",
+        "att behöva": "**Kognat-tips:** *necesitar* hänger ihop med engelskans *necessary* och svenska *nödvändig*.",
+        "att ringa": "**Associationstips:** *llamar* – tänk på att kalla på någon (*llamarse* = att heta/kalla sig)!",
 
         "bok": "**Nyckelordstips:** *libro* låter lite som engelskans *library* (bibliotek) eller spanskans *libre* (fri) [30, 1104]. Föreställ dig en fri bok som flyger ut genom klassrumsfönstret! [247]",
         "blyertspenna": "**Nyckelordstips:** *lápiz* låter som *lapis* (blå sten) eller som att 'lappa' [15]. Föreställ dig att du ritar röda lappar på din skoldator med en gigantisk blyertspenna! [247]",
@@ -133,15 +146,8 @@ def generate_study_list_pdf_bytes(words_list, list_title, target_lang_name):
     pdf.line(15, pdf.get_y(), 195, pdf.get_y())
     pdf.ln(6)
     
-    # Header fields for student name & class
-    pdf.set_text_color(51, 65, 85)
-    pdf.set_font("helvetica", size=10)
-    pdf.cell(w=20, h=7, text=safe_pdf_str("Namn:"))
-    pdf.cell(w=70, h=7, border="B", text="")
-    pdf.cell(w=10, h=7, text="")
-    pdf.cell(w=25, h=7, text=safe_pdf_str("Klass/Grupp:"))
-    pdf.cell(w=55, h=7, border="B", text="")
-    pdf.ln(12)
+    # Excluded name & class for study list
+    pdf.ln(4)
     
     # Table headers
     pdf.set_draw_color(226, 232, 240)
@@ -278,13 +284,7 @@ def generate_study_list_html(words_list, list_title, target_lang_name):
     html = style_block + "<div class='print-container'>"
     html += f"<div class='print-title'>📖 GLOSLISTA: {list_title}</div>"
     html += f"<div class='print-subtitle'>Språk: {target_lang_name} • Antal glosor: {len(words_list)}</div>"
-    html += """
-    <div class='print-student-info'>
-        <b>Elevens namn:</b> <span class='info-line'></span>
-        <b>Klass/Grupp:</b> <span class='info-line'></span>
-        <b>Datum:</b> <span class='info-line'></span>
-    </div>
-    """
+
     html += f"""
     <table class='study-table'>
         <thead>
@@ -514,6 +514,24 @@ ADMIN_PASSWORD = "skola123"
 # Du kan förbereda permanenta listor i biblioteket direkt i koden här!
 # Detta gör att de alltid ligger laddade för eleverna när hemsidan startas.
 PERMANENT_LIBRARY = {
+    "Glosor till v. 41": {
+        "language": "Spanska",
+        "category": "Spanska nybörjare",
+        "words": [
+            {"svenska": "att ha", "utlandska": "tener"},
+            {"svenska": "jag har", "utlandska": "tengo"},
+            {"svenska": "du har", "utlandska": "tienes"},
+            {"svenska": "han/hon, den, har", "utlandska": "tiene"},
+            {"svenska": "vi har", "utlandska": "tenemos"},
+            {"svenska": "ni har", "utlandska": "tenéis"},
+            {"svenska": "de, ni, har", "utlandska": "tienen"},
+            {"svenska": "telefonnummer", "utlandska": "número de telefono"},
+            {"svenska": "fråga", "utlandska": "pregunta"},
+            {"svenska": "svara", "utlandska": "contesta"},
+            {"svenska": "att behöva", "utlandska": "necesitar"},
+            {"svenska": "att ringa", "utlandska": "llamar"}
+        ]
+    },
     "Spanska nybörjare - v. 38": {
         "language": "Spanska",
         "category": "Spanska nybörjare",
@@ -691,7 +709,8 @@ if st.session_state.gsheets_url and not st.session_state.users_list:
 
 # Initiera aktiv ordlista och målspråk
 if "words" not in st.session_state:
-    st.session_state.words = st.session_state.library["Spanska nybörjare - v. 38"]["words"].copy()
+    first_key = list(st.session_state.library.keys())[0] if st.session_state.library else "Glosor till v. 41"
+    st.session_state.words = st.session_state.library[first_key]["words"].copy()
     st.session_state.target_language = "Spanska"
     st.session_state.current_list_name = None
 
