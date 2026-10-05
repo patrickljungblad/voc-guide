@@ -85,7 +85,18 @@ def get_strategy_tip(word_obj, language):
         "vår": "**Kognat-tips:** *primavera* – *prima* betyder första (som primör) och *vera* kommer från ett gammalt ord för vår. Våren är årets \'första grönska\'!",
         "höst": "**Nyckelordstips:** *otoño* låter lite som engelskans *autumn*. Samma startbokstav och väldigt lik känsla!",
         "årstid": "**Kognat-tips:** *estación* är väldigt likt engelskans *station* eller *season* (via franskans säsong). Tänk på årets fyra stationer som tåget stannar vid!",
-        "vad är det för väder?": "**Associationstips:** *¿qué tiempo hace?* betyder ordagrant \'vilket väder gör det?\' eftersom *tiempo* betyder både tid och väder, och *hace* betyder \'gör\'!" 
+        "vad är det för väder?": "**Associationstips:** *¿qué tiempo hace?* betyder ordagrant \'vilket väder gör det?\' eftersom *tiempo* betyder både tid och väder, och *hace* betyder \'gör\'!",
+        "¿qué?": "**Kognat/Associationstips:** *¿Qué?* låter som franskans *que* eller svenskans *va?*. Tänk på uttrycket *'¿Qué pasa?'* (Vad händer?).",
+        "¿cómo?": "**Associationstips:** *¿Cómo?* känner du igen från *'¿Cómo estás?'* (Hur mår du?). Tänk på engelskans *combo* eller *kom igen*!",
+        "¿dónde?": "**Associationstips:** *¿Dónde?* – tänk på *'var donar (ställer) du detta?'*. Var finns det?",
+        "¿cuándo?": "**Kognat-tips:** *¿Cuándo?* är släkt med engelskans *when* och latinets *quando*. När händer det?",
+        "¿de dónde?": "**Orddelstips:** *De* betyder *från* och *dónde* betyder *var*. *De dónde* = varifrån!",
+        "¿adónde?": "**Orddelstips:** *A* betyder *till* och *dónde* betyder *var*. *Adónde* = vart (till var)!",
+        "¿por qué?": "**Orddelstips:** *Por* betyder *för/på grund av* och *qué* betyder *vad*. *Por qué* = varför (på grund av vad)!",
+        "¿cuánto?": "**Associationstips:** *¿Cuánto?* hänger ihop med engelskans *quantity* (kvantitet/mängd). Hur mycket?",
+        "¿cuántos?, ¿cuántas?": "**Associationstips:** *¿Cuántos/as?* är pluralformen av *cuánto*. Används för 'hur många' när man räknar sakerna!",
+        "¿quién?, quiénes?": "**Associationstips:** *¿Quién?* låter lite som franskans *qui* eller svenskans *vem*. *Quiénes* är plural (vilka personer).",
+        "¿cuál?, ¿cuáles?": "**Associationstips:** *¿Cuál?* handlar om urval – vilket av alternativen? Plural är *cuáles*.",
     }
     
     # Custom engelska nyckelordstips (Top 50)
@@ -112,8 +123,11 @@ def get_strategy_tip(word_obj, language):
         "system": "**Kognat-tips:** *system* stavas och betyder exakt samma sak på engelska! [30]"
     }
     
-    if language.lower() == "spanska" and sv in spanish_tips:
-        return spanish_tips[sv]
+    if language.lower() == "spanska":
+        if sv in spanish_tips:
+            return spanish_tips[sv]
+        if ut in spanish_tips:
+            return spanish_tips[ut]
     elif language.lower() == "engelska" and sv in english_tips:
         return english_tips[sv]
     
@@ -518,6 +532,23 @@ ADMIN_PASSWORD = "skola123"
 # Detta gör att de alltid ligger laddade för eleverna när hemsidan startas.
 PERMANENT_LIBRARY = {
     "Glosor till v. 41": {
+        "language": "Spanska",
+        "category": "Spanska fortsättning",
+        "words": [
+            {"svenska": "Vad?, Vilken?, Vilka?", "utlandska": "¿Qué?"},
+            {"svenska": "Hur?", "utlandska": "¿Cómo?"},
+            {"svenska": "Var?", "utlandska": "¿Dónde?"},
+            {"svenska": "När?", "utlandska": "¿Cuándo?"},
+            {"svenska": "Varifrån?", "utlandska": "¿De dónde?"},
+            {"svenska": "Vart?", "utlandska": "¿Adónde?"},
+            {"svenska": "Varför?", "utlandska": "¿Por qué?"},
+            {"svenska": "Hur mycket?", "utlandska": "¿Cuánto?"},
+            {"svenska": "Hur många?", "utlandska": "¿Cuántos?, ¿Cuántas?"},
+            {"svenska": "Vem?, Vilka? (endast om personer)", "utlandska": "¿Quién?, Quiénes?"},
+            {"svenska": "Vilken?, Vem/vilka? (används vid urval)", "utlandska": "¿Cuál?, ¿Cuáles?"}
+        ]
+    },
+    "Spanska nybörjare - v. 41": {
         "language": "Spanska",
         "category": "Spanska nybörjare",
         "words": [
