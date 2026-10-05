@@ -2230,87 +2230,250 @@ def render_teacher_panel():
             st.markdown("---")
             
             # ================= SEKTION: LÄGG TILL NY LISTA =================
-            st.markdown("#### ➕ Lägg till en ny gloslista i biblioteket")
-            new_list_title = st.text_input("Vad ska denna gloslista heta i biblioteket?", placeholder="t.ex. Spanska - Kapitel 1", key="add_list_title")
-            new_list_lang = st.text_input("Vilket språk övar eleverna på i denna lista?", placeholder="t.ex. Spanska", key="add_list_lang")
-            new_list_category = st.text_input("Vilken mapp/kategori ska listan tillhöra?", placeholder="t.ex. Spanska nybörjare, Spanska fortsättning...", key="add_list_category")
-            
-            st.markdown("**Hur vill du läsa in glosorna?**")
-            uploaded_file = st.file_uploader("Metod A: Ladda upp en fil (.txt eller .json)", type=["txt", "json"], key="add_list_file")
-            import_text = st.text_area("Metod B: Klistra in fritext direkt", height=120, placeholder="svenska - översättning\nhund - perro\nkatt - gato", key="add_list_text")
-            
-            if st.button("📥 Lägg till listan i biblioteket", type="primary", use_container_width=True, key="add_list_btn"):
-                if not new_list_title.strip():
-                    st.error("Du måste ange ett namn för gloslistan!")
-                    st.stop()
-                if not new_list_lang.strip():
-                    st.error("Du måste ange vilket språk listan gäller!")
-                    st.stop()
-                    
-                parsed_words = []
+            st.markdown("#### Lägg till ny gloslista i biblioteket")
+            st.markdown("Välj hur du vill lägga till din nya gloslista:")
+
+            import_tab1, import_tab2, import_tab3 = st.tabs([
+                "🔗 Importera från glosor.eu", 
+                "✍️ Bygg glosa för glosa", 
+                "📄 Klistra in text / Fil"
+            ])
+
+            # --- FLIK 1: IMPORTERA FRÅN GLOSOR.EU ---
+            with import_tab1:
+                st.markdown("Klistra in en webbadress till en glosor.eu-övning så hämtar appen alla ord automatiskt!")
+                glosor_url = st.text_input("Länk från glosor.eu:", placeholder="https://glosor.eu/ovning/...", key="glosor_url_input")
                 
-                if uploaded_file is not None:
-                    try:
-                        if uploaded_file.name.endswith(".json"):
-                            file_data = json.load(uploaded_file)
-                            if isinstance(file_data, list) and all("svenska" in w and "utlandska" in w for w in file_data):
-                                parsed_words = file_data
-                            else:
-                                st.error("Felaktigt format i JSON-filen!")
-                        elif uploaded_file.name.endswith(".txt"):
-                            string_data = uploaded_file.read().decode("utf-8")
-                            lines = string_data.strip().split("\n")
-                            for line_no, line in enumerate(lines, 1):
-                                if not line.strip():
-                                    continue
-                                parts = None
-                                for sep in ["-", ":", "="]:
-                                    if sep in line:
-                                        parts = line.split(sep, 1)
-                                        break
-                                if parts and len(parts) == 2:
-                                    parsed_words.append({"svenska": parts[0].strip(), "utlandska": parts[1].strip()})
+                col_g1, col_g2 = st.columns(2)
+                with col_g1:
+                    glosor_cat = st.text_input("Mapp / Kategori:", value="Spanska nybörjare", key="glosor_cat_input")
+                with col_g2:
+                    glosor_lang = st.selectbox("Språk:", ["Spanska", "Engelska", "Tyska", "Franska", "Övrigt"], key="glosor_lang_input")
+
+                if st.button("Hämta glosor från glosor.eu ➔", type="primary", use_container_width=True, key="btn_fetch_glosor"):
+                    if not glosor_url.strip():
+                        st.error("Klistra in en giltig webbadress från glosor.eu!")
+                    else:
+                        with st.spinner("Hämtar och tolkar glosor från glosor.eu..."):
+                            try:
+                                import urllib.request
+                                import re
+                                req = urllib.request.Request(
+                                    glosor_url.strip(), 
+                                    headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+                                )
+                                with urllib.request.urlopen(req, timeout=10) as resp:
+                                    html = resp.read().decode('utf-8', errors='ignore')
+
+                                parsed = []
+                                title = "Glosor till v. XX"
+
+                                # Använd BeautifulSoup om tillgängligt
+                                try:
+                                    from bs4 import BeautifulSoup
+                                    soup = BeautifulSoup(html, 'html.parser')
+                                    h1 = soup.find('h1')
+                                    if h1:
+                                        title = h1.get_text(strip=True)
+                                    elif soup.title:
+                                        title = soup.title.get_text(strip=True).split('-')[0].strip()
+
+                                    for table in soup.find_all('table'):
+                                        for tr in table.find_all('tr'):
+                                            tds = [td.get_text(strip=True) for td in tr.find_all(['td', 'th'])]
+                                            if len(tds) >= 2:
+                                                c1, c2 = tds[0], tds[1]
+                                                if c1 and c2 and c1.lower() not in ['svenska', 'ord', 'nr', '#', 'fråga'] and c2.lower() not in ['spanska', 'utländska', 'översättning', 'svar']:
+                                                    parsed.append({"svenska": c1, "utlandska": c2})
+                                except Exception:
+                                    # Fallback med regex om bs4 saknas/feilar
+                                    t_match = re.search(r'<title>(.*?)</title>', html, re.IGNORECASE)
+                                    if t_match:
+                                        title = t_match.group(1).split('-')[0].strip()
+                                    rows = re.findall(r'<tr[^>]*>(.*?)</tr>', html, re.DOTALL | re.IGNORECASE)
+                                    for r in rows:
+                                        cols = re.findall(r'<t[dh][^>]*>(.*?)</t[dh]>', r, re.DOTALL | re.IGNORECASE)
+                                        cols = [re.sub(r'<[^>]+>', '', c).strip() for c in cols]
+                                        if len(cols) >= 2 and cols[0] and cols[1]:
+                                            c1, c2 = cols[0], cols[1]
+                                            if c1.lower() not in ['svenska', 'ord', 'nr', '#'] and c2.lower() not in ['spanska', 'utländska']:
+                                                parsed.append({"svenska": c1, "utlandska": c2})
+
+                                if parsed:
+                                    st.session_state.glosor_fetched_title = title
+                                    st.session_state.glosor_fetched_words = parsed
+                                    st.session_state.glosor_fetched_cat = glosor_cat
+                                    st.session_state.glosor_fetched_lang = glosor_lang
+                                    st.success(f"Hämtade {len(parsed)} glosor från glosor.eu!")
                                 else:
-                                    st.error(f"Kunde inte tolka rad {line_no} i filen.")
-                                    st.stop()
-                    except Exception as e:
-                        st.error(f"Kunde inte läsa uppladdad fil: {str(e)}")
-                        st.stop()
-                elif import_text.strip():
-                    lines = import_text.strip().split("\n")
-                    for line_no, line in enumerate(lines, 1):
-                        if not line.strip():
-                            continue
-                        parts = None
-                        for sep in ["-", ":", "="]:
-                            if sep in line:
-                                parts = line.split(sep, 1)
-                                break
-                        if parts and len(parts) == 2:
-                            parsed_words.append({"svenska": parts[0].strip(), "utlandska": parts[1].strip()})
+                                    st.error("Kunde inte hitta några glosor på den angivna länken. Kontrollera att det är en övningssida på glosor.eu.")
+                            except Exception as e:
+                                st.error(f"Kunde inte ansluta till länken: {str(e)}")
+
+                if "glosor_fetched_words" in st.session_state and st.session_state.glosor_fetched_words:
+                    st.markdown("---")
+                    st.markdown("##### Förhandsgranskning av hämtad lista")
+                    custom_title = st.text_input("Titel i biblioteket:", value=st.session_state.get("glosor_fetched_title", "Glosor"), key="glosor_custom_title")
+                    
+                    # Visa orden i en fin tabell
+                    df_preview = pd.DataFrame(st.session_state.glosor_fetched_words)
+                    st.dataframe(df_preview, use_container_width=True)
+
+                    if st.button("Spara importerad lista i biblioteket", type="primary", use_container_width=True, key="save_fetched_glosor"):
+                        list_name = custom_title.strip()
+                        cat = st.session_state.get("glosor_fetched_cat", "Övriga listor")
+                        lang = st.session_state.get("glosor_fetched_lang", "Spanska")
+
+                        st.session_state.library[list_name] = {
+                            "language": lang,
+                            "category": cat,
+                            "words": st.session_state.glosor_fetched_words.copy()
+                        }
+                        st.session_state.current_list_name = list_name
+                        st.session_state.words = st.session_state.glosor_fetched_words.copy()
+                        st.session_state.target_language = lang
+                        
+                        # Rensa hämtade temporära data
+                        del st.session_state.glosor_fetched_words
+                        reset_progress()
+                        st.success(f"Listan '{list_name}' med {len(df_preview)} glosor har sparats i biblioteket!")
+                        st.rerun()
+
+            # --- FLIK 2: BYGG GLOSA FÖR GLOSA ---
+            with import_tab2:
+                st.markdown("Mata in ett ord i taget. Orden läggs till i din lista direkt nedanför.")
+                
+                if "builder_words" not in st.session_state:
+                    st.session_state.builder_words = []
+
+                col_b1, col_b2 = st.columns(2)
+                with col_b1:
+                    b_sv = st.text_input("Svenskt ord / fras:", key="builder_input_sv")
+                with col_b2:
+                    b_ut = st.text_input("Målspråkets ord (t.ex. spanska):", key="builder_input_ut")
+
+                if st.button("Lägg till glosa", use_container_width=True, key="btn_add_single_word"):
+                    if b_sv.strip() and b_ut.strip():
+                        st.session_state.builder_words.append({
+                            "svenska": b_sv.strip(),
+                            "utlandska": b_ut.strip()
+                        })
+                        st.toast(f"Lade till: {b_sv.strip()} = {b_ut.strip()}")
+                        st.rerun()
+                    else:
+                        st.warning("Skriv in både det svenska ordet och översättningen!")
+
+                if st.session_state.builder_words:
+                    st.markdown(f"**Inskrivna glosor ({len(st.session_state.builder_words)} st):**")
+                    for idx_w, w_item in enumerate(st.session_state.builder_words):
+                        c_a, c_b, c_c = st.columns([3, 3, 1])
+                        c_a.write(f"**{w_item['svenska']}**")
+                        c_b.write(w_item['utlandska'])
+                        if c_c.button("Ta bort", key=f"del_bw_{idx_w}"):
+                            st.session_state.builder_words.pop(idx_w)
+                            st.rerun()
+
+                    st.markdown("---")
+                    b_title = st.text_input("Titel på gloslistan:", placeholder="t.ex. Spanska - Vecka 42", key="builder_title_input")
+                    b_cat = st.text_input("Mapp / Kategori:", value="Spanska nybörjare", key="builder_cat_input")
+                    b_lang = st.selectbox("Språk:", ["Spanska", "Engelska", "Tyska", "Franska", "Övrigt"], key="builder_lang_input")
+
+                    if st.button("Spara hela gloslistan i biblioteket", type="primary", use_container_width=True, key="btn_save_builder_list"):
+                        if not b_title.strip():
+                            st.error("Ange ett namn för gloslistan!")
                         else:
-                            st.error(f"Kunde inte tolka rad {line_no} i textrutan.")
+                            b_list_name = b_title.strip()
+                            st.session_state.library[b_list_name] = {
+                                "language": b_lang,
+                                "category": b_cat.strip() if b_cat.strip() else "Övriga listor",
+                                "words": st.session_state.builder_words.copy()
+                            }
+                            st.session_state.current_list_name = b_list_name
+                            st.session_state.words = st.session_state.builder_words.copy()
+                            st.session_state.target_language = b_lang
+                            st.session_state.builder_words = []
+                            reset_progress()
+                            st.success(f"Listan '{b_list_name}' har sparats i biblioteket!")
+                            st.rerun()
+
+            # --- FLIK 3: KLISTRA IN TEXT / FIL ---
+            with import_tab3:
+                st.markdown("Klistra in färdig text eller ladda upp en fil för snabb inläsning.")
+                new_list_title = st.text_input("Vad ska denna gloslista heta i biblioteket?", placeholder="t.ex. Spanska - Kapitel 1", key="add_list_title")
+                new_list_lang = st.text_input("Vilket språk övar eleverna på i denna lista?", placeholder="t.ex. Spanska", key="add_list_lang")
+                new_list_category = st.text_input("Vilken mapp/kategori ska listan tillhöra?", placeholder="t.ex. Spanska nybörjare, Spanska fortsättning...", key="add_list_category")
+
+                uploaded_file = st.file_uploader("Metod A: Ladda upp en fil (.txt eller .json)", type=["txt", "json"], key="add_list_file")
+                import_text = st.text_area("Metod B: Klistra in fritext direkt", height=120, placeholder="svenska - översättning\nhund - perro\nkatt - gato", key="add_list_text")
+
+                if st.button("Lägg till listan i biblioteket", type="primary", use_container_width=True, key="add_list_btn"):
+                    if not new_list_title.strip():
+                        st.error("Du måste ange ett namn för gloslistan!")
+                        st.stop()
+                    if not new_list_lang.strip():
+                        st.error("Du måste ange vilket språk listan gäller!")
+                        st.stop()
+
+                    parsed_words = []
+
+                    if uploaded_file is not None:
+                        try:
+                            if uploaded_file.name.endswith(".json"):
+                                file_data = json.load(uploaded_file)
+                                if isinstance(file_data, list) and all("svenska" in w and "utlandska" in w for w in file_data):
+                                    parsed_words = file_data
+                                else:
+                                    st.error("Felaktigt format i JSON-filen!")
+                            elif uploaded_file.name.endswith(".txt"):
+                                string_data = uploaded_file.read().decode("utf-8")
+                                lines = string_data.strip().split("\n")
+                                for line_no, line in enumerate(lines, 1):
+                                    if not line.strip():
+                                        continue
+                                    parts = None
+                                    for sep in ["-", ":", "="]:
+                                        if sep in line:
+                                            parts = line.split(sep, 1)
+                                            break
+                                    if parts and len(parts) == 2:
+                                        parsed_words.append({"svenska": parts[0].strip(), "utlandska": parts[1].strip()})
+                                    else:
+                                        st.error(f"Kunde inte tolka rad {line_no} i filen.")
+                                        st.stop()
+                        except Exception as e:
+                            st.error(f"Kunde inte läsa uppladdad fil: {str(e)}")
                             st.stop()
-                            
-                if parsed_words:
-                    new_list_item = {
-                        new_list_title: {
+                    elif import_text.strip():
+                        lines = import_text.strip().split("\n")
+                        for line_no, line in enumerate(lines, 1):
+                            if not line.strip():
+                                continue
+                            parts = None
+                            for sep in ["-", ":", "="]:
+                                if sep in line:
+                                    parts = line.split(sep, 1)
+                                    break
+                            if parts and len(parts) == 2:
+                                parsed_words.append({"svenska": parts[0].strip(), "utlandska": parts[1].strip()})
+                            else:
+                                st.error(f"Kunde inte tolka rad {line_no} i textrutan.")
+                                st.stop()
+
+                    if parsed_words:
+                        st.session_state.library[new_list_title] = {
                             "language": new_list_lang,
                             "category": new_list_category.strip() if new_list_category.strip() else "Övriga listor",
                             "words": parsed_words
                         }
-                    }
-                    # Prepend new list so it always appears at the top for students
-                    st.session_state.library = {**new_list_item, **st.session_state.library}
-                    st.session_state.current_list_name = new_list_title
-                    st.session_state.words = parsed_words
-                    st.session_state.target_language = new_list_lang
-                    reset_progress()
-                    st.success(f"🎉 Lyckades! Listan '{new_list_title}' med {len(parsed_words)} glosor har lagts till i biblioteket!")
-                    st.rerun()
-                else:
-                    st.warning("Hittade inga giltiga glosor att läsa in.")
-            
+                        st.session_state.current_list_name = new_list_title
+                        st.session_state.words = parsed_words
+                        st.session_state.target_language = new_list_lang
+                        reset_progress()
+                        st.success(f"Listan '{new_list_title}' med {len(parsed_words)} glosor har lagts till i biblioteket!")
+                        st.rerun()
+                    else:
+                        st.warning("Hittade inga giltiga glosor att läsa in.")
+
             st.markdown("---")
             st.markdown("#### Ta bort gloslistor från biblioteket")
             all_lists = list(st.session_state.library.keys())
