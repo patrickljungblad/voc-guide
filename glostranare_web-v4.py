@@ -1020,7 +1020,7 @@ else:
 
 # Färgtema inställningar
 st.sidebar.markdown("---")
-with st.sidebar.expander("🔐 Lärarpanel (för lärare)"):
+with st.sidebar.expander("Lärarpanel (för lärare)"):
     if not st.session_state.get("admin_authenticated"):
         entered_sidebar_pw = st.text_input("Lärarlösenord:", type="password", key="sidebar_admin_pw")
         if st.button("Lås upp Lärarpanel", key="sidebar_unlock_btn", use_container_width=True):
@@ -1579,7 +1579,7 @@ if st.session_state.current_list_name is None and st.session_state.logged_in_use
                 list_count = len(list_names)
                 suffix = "lista" if list_count == 1 else "listor"
                 st.markdown('<div class="folder-card-anchor"></div>', unsafe_allow_html=True)
-                if st.button(f"📁 {cat_name}  ({list_count} {suffix}) ➔", key=f"select_cat_{cat_name}", use_container_width=True):
+                if st.button(f"{cat_name}  ({list_count} {suffix}) ➔", key=f"select_cat_{cat_name}", use_container_width=True):
                     st.session_state.selected_category = cat_name
                     st.rerun()
     else:
@@ -1587,7 +1587,7 @@ if st.session_state.current_list_name is None and st.session_state.logged_in_use
         cat_name = st.session_state.selected_category
         st.markdown(f"""
         <div style="background: linear-gradient(135deg, #1e3a8a, #0d9488); padding: 25px; border-radius: 12px; color: white; text-align: center; margin-bottom: 25px;">
-            <h2 style="margin: 0; font-size: 2rem; font-family: sans-serif;">📁 {cat_name}</h2>
+            <h2 style="margin: 0; font-size: 2rem; font-family: sans-serif;">{cat_name}</h2>
             <p style="margin: 10px 0 0 0; font-size: 1rem; opacity: 0.9;">Välj den gloslista du vill träna på.</p>
         </div>
         """, unsafe_allow_html=True)
@@ -1696,13 +1696,13 @@ def render_teacher_panel():
         if st.button("Lås upp lärarpanelen", type="primary"):
             if entered_password == ADMIN_PASSWORD:
                 st.session_state.admin_authenticated = True
-                st.success("🔓 Lärarpanelen har låsts upp!")
+                st.success("Lärarpanelen har låsts upp.")
                 st.rerun()
             else:
                 st.error("❌ Felaktigt lösenord! Försök igen.")
     else:
-        st.info("🔓 Du är inloggad som lärare.")
-        if st.button("🔒 Logga ut (Lås panelen)"):
+        st.info("Du är inloggad som lärare.")
+        if st.button("Logga ut (Lås panelen)"):
             st.session_state.admin_authenticated = False
             if "printable_test" in st.session_state:
                 del st.session_state.printable_test
@@ -1712,14 +1712,14 @@ def render_teacher_panel():
         
         # ================= NY RESTRUKTURERAD LÄRARPANEL =================
         # Dela upp lärarpanelen i två renodlade flikar för bättre översikt
-        sub_tab1, sub_tab2 = st.tabs(["📊 Elevstatistik & Progression", "⚙️ Kursadministration & Hantering"])
+        sub_tab1, sub_tab2 = st.tabs(["Elevstatistik & Progression", "Kursadministration & Hantering"])
         
         with sub_tab1:
-            st.markdown("### 📊 Elevstatistik & Progression")
+            st.markdown("### Elevstatistik & Progression")
             st.markdown("Följ dina elevers framsteg, aktivitet och precision i realtid. Statistiken uppdateras automatiskt.")
             
             if not st.session_state.gsheets_url:
-                st.warning("⚠️ Ingen molndatabas ansluten. Gå till fliken 'Kursadministration & Hantering' för att ansluta kalkylarket.")
+                st.warning("Ingen molndatabas ansluten. Gå till fliken 'Kursadministration & Hantering' för att ansluta kalkylarket.")
             else:
                 if st.session_state.users_list:
                     # Initiera aggregat
@@ -1900,7 +1900,7 @@ def render_teacher_panel():
                     st.markdown("---")
                     
                     # Detaljerad elevlista
-                    st.markdown("#### 📁 Detaljerad elevlista")
+                    st.markdown("#### Detaljerad elevlista")
                     st.caption("Elevlistan och statistiken synkroniseras automatiskt var 5:e sekund.")
                     df_students = pd.DataFrame(student_data)
                     st.dataframe(df_students, use_container_width=True)
@@ -1919,11 +1919,11 @@ def render_teacher_panel():
                     st.info("Inga elever registrerade än. Använd administrationsfliken för att lägga till din första elev!")
         
         with sub_tab2:
-            st.markdown("### ⚙️ Kursadministration & Hantering")
+            st.markdown("### Kursadministration & Hantering")
             st.markdown("Administrera elevkonton, lägg till/ta bort gloslistor, anslut kalkylark och generera prov.")
             
             # ================= SEKTION: ELEV- & KONTOHANTERING =================
-            st.markdown("#### 👥 Elev- & Kontohantering (Molndatabas)")
+            st.markdown("#### Elev- & Kontohantering")
             st.markdown("Skapa nya elevkonton här. Löpande resultat sparas automatiskt i kalkylarket.")
             
             col_u1, col_u2 = st.columns(2)
@@ -1933,11 +1933,11 @@ def render_teacher_panel():
             with col_u2:
                 new_student_pin = st.text_input("Välj 4-siffrig PIN-kod (endast siffror):", max_chars=4, placeholder="t.ex. 1234", key="admin_add_student_pin")
             
-            if st.button("👥 Skapa elevkonto", type="primary", use_container_width=True):
+            if st.button("Skapa elevkonto", type="primary", use_container_width=True):
                 if not new_student_name.strip() or not new_student_pin.strip() or not new_student_class.strip():
-                    st.error("⚠️ Alla fält (Namn, Klass och PIN-kod) måste fyllas i!")
+                    st.error("Alla fält (Namn, Klass och PIN-kod) måste fyllas i!")
                 elif not new_student_pin.strip().isdigit() or len(new_student_pin.strip()) != 4:
-                    st.error("⚠️ PIN-koden måste bestå av exakt 4 siffror!")
+                    st.error("PIN-koden måste bestå av exakt 4 siffror!")
                 else:
                     with st.spinner("Skapar konto i databasen..."):
                         success, msg = create_user_in_db(new_student_name, new_student_pin, new_student_class)
@@ -1953,12 +1953,12 @@ def render_teacher_panel():
             st.markdown("---")
             
             # ================= SEKTION: UTSKRIFTSBART PAPPERSMATERIAL =================
-            st.markdown("#### 🖨️ Skapa utskriftsbart pappersmaterial")
+            st.markdown("#### Skapa utskriftsbart pappersmaterial")
             st.markdown("Skapa pappersark för klassrummet – välj mellan ren gloslista (studieark) eller ett formellt glosförhör med facit.")
             
             doc_type = st.radio(
                 "Välj dokumenttyp för utskrift:",
-                ("📄 Ren Gloslista (Studieark med alla ord & bockrutor)", "✏️ Glosförhör (Provblad med tomma svarsrader + facit)"),
+                ("Ren Gloslista (Studieark med alla ord & bockrutor)", "Glosförhör (Provblad med tomma svarsrader + facit)"),
                 horizontal=True,
                 key="admin_print_doc_type"
             )
@@ -1974,7 +1974,7 @@ def render_teacher_panel():
             selected_list_words = selected_list_info.get("words", [])
             selected_list_lang = selected_list_info.get("language", "Spanska")
             
-            if doc_type == "📄 Ren Gloslista (Studieark med alla ord & bockrutor)":
+            if doc_type == "Ren Gloslista (Studieark med alla ord & bockrutor)":
                 col_sl1, col_sl2 = st.columns(2)
                 with col_sl1:
                     study_pdf = generate_study_list_pdf_bytes(
@@ -2312,14 +2312,14 @@ def render_teacher_panel():
                     st.warning("Hittade inga giltiga glosor att läsa in.")
             
             st.markdown("---")
-            st.markdown("#### 🗑️ Ta bort gloslistor från biblioteket")
+            st.markdown("#### Ta bort gloslistor från biblioteket")
             all_lists = list(st.session_state.library.keys())
             for list_name in all_lists:
                 col1, col2 = st.columns([5, 1])
                 with col1:
                     list_info = st.session_state.library[list_name]
                     cat = list_info.get("category", "Övriga listor")
-                    st.write(f"📁 {list_name} ({list_info['language']}) [Mapp: *{cat}*] — **{len(list_info['words'])}** ord")
+                    st.write(f"{list_name} ({list_info['language']}) [Mapp: *{cat}*] — **{len(list_info['words'])}** ord")
                 with col2:
                     if len(all_lists) > 1:
                         if st.button("Radera", key=f"del_list_{list_name}"):
@@ -2340,21 +2340,21 @@ def render_teacher_panel():
 if st.session_state.get("admin_authenticated"):
     col_tb1, col_tb2 = st.columns([3, 2])
     with col_tb1:
-        st.info("🔓 **Lärarläge aktivt** — Du har tillgång till elevstatistik och administration.")
+        st.info("**Lärarläge aktivt** — Du har tillgång till elevstatistik och administration.")
     with col_tb2:
         is_teacher_user = (st.session_state.get("logged_in_user") and st.session_state.logged_in_user.get("name") == "Lärare")
         default_idx = 0 if is_teacher_user else 1
         teacher_view = st.radio(
             "Välj sidasvy:",
-            ("👩‍🏫 Lärarpanel", "🎓 Elevvy (Övningar)"),
+            ("Lärarpanel", "Elevvy (Övningar)"),
             index=default_idx,
             horizontal=True,
             key="teacher_view_mode"
         )
 else:
-    teacher_view = "🎓 Elevvy (Övningar)"
+    teacher_view = "Elevvy (Övningar)"
 
-if teacher_view == "👩‍🏫 Lärarpanel":
+if teacher_view == "Lärarpanel":
     render_teacher_panel()
     st.stop()
 
@@ -2392,7 +2392,7 @@ if st.session_state.get("show_student_print_sheet"):
             use_container_width=True
         )
     with col_p_view:
-        if st.button("👁️ Förhandsgranska & Skriv ut studieark", use_container_width=True):
+        if st.button("Förhandsgranska & Skriv ut studieark", use_container_width=True):
             st.session_state.student_printable_study_html = generate_study_list_html(
                 st.session_state.words,
                 st.session_state.current_list_name,
