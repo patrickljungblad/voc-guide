@@ -296,7 +296,7 @@ def generate_study_list_html(words_list, list_title, target_lang_name):
     """
     
     html = style_block + "<div class='print-container'>"
-    html += f"<div class='print-title'>📖 GLOSLISTA: {list_title}</div>"
+    html += f"<div class='print-title'>GLOSLISTA: {list_title}</div>"
     html += f"<div class='print-subtitle'>Språk: {target_lang_name} • Antal glosor: {len(words_list)}</div>"
 
     html += f"""
@@ -347,7 +347,7 @@ def generate_pdf_bytes(test_words, quiz_title, target_lang_name, include_answers
     # Student Info box
     pdf.set_text_color(51, 65, 85) # Slate Dark Gray
     pdf.set_font("helvetica", size=11)
-    pdf.cell(w=30, h=8, text="Elevens namn:")
+    pdf.cell(w=20, h=8, text="Namn:")
     pdf.cell(w=60, h=8, border="B", text="")
     pdf.cell(w=10, h=8, text="")
     pdf.cell(w=25, h=8, text="Klass/Grupp:")
@@ -1699,7 +1699,7 @@ def render_teacher_panel():
                 st.success("Lärarpanelen har låsts upp.")
                 st.rerun()
             else:
-                st.error("❌ Felaktigt lösenord! Försök igen.")
+                st.error("Felaktigt lösenord! Försök igen.")
     else:
         st.info("Du är inloggad som lärare.")
         if st.button("Logga ut (Lås panelen)"):
@@ -1839,7 +1839,7 @@ def render_teacher_panel():
                         student_scores.append(score)
                         
                     # Klassrumssammanfattning
-                    st.markdown("#### 🎯 Klassrumssammanfattning")
+                    st.markdown("#### Klassrumssammanfattning")
                     col_m1, col_m2, col_m3 = st.columns(3)
                     with col_m1:
                         st.metric("Registrerade elever", len(st.session_state.users_list))
@@ -1851,7 +1851,7 @@ def render_teacher_panel():
                     st.markdown("---")
                     
                     # Grafiska diagram
-                    st.markdown("#### 📈 Grafisk Översikt")
+                    st.markdown("#### Grafisk Översikt")
                     col_chart1, col_chart2 = st.columns(2)
                     
                     with col_chart1:
@@ -1875,14 +1875,14 @@ def render_teacher_panel():
                     st.markdown("---")
                     
                     # Fördelning av övningsform
-                    st.markdown("#### 🔄 Aktivitet per övningsform")
+                    st.markdown("#### Aktivitet per övningsform")
                     col_ex_info, col_ex_chart = st.columns([1, 1])
                     
                     with col_ex_info:
                         st.markdown("**Sammanlagda svar per övning:**")
-                        st.markdown(f"- 🎴 **Flashcard-visningar:** `{total_fc}` st")
-                        st.markdown(f"- 🎯 **Flervalsquiz-svar:** `{total_qz}` st *(Rätt: {total_qz_corr} st)*")
-                        st.markdown(f"- ✍️ **Skrivtränings-svar:** `{total_wr}` st *(Rätt: {total_wr_corr} st)*")
+                        st.markdown(f"- **Flashcard-visningar:** `{total_fc}` st")
+                        st.markdown(f"- **Flervalsquiz-svar:** `{total_qz}` st *(Rätt: {total_qz_corr} st)*")
+                        st.markdown(f"- **Skrivtränings-svar:** `{total_wr}` st *(Rätt: {total_wr_corr} st)*")
                         
                         qz_overall_acc = f"{int((total_qz_corr / total_qz) * 100)}%" if total_qz > 0 else "-"
                         wr_overall_acc = f"{int((total_wr_corr / total_wr) * 100)}%" if total_wr > 0 else "-"
@@ -1906,11 +1906,11 @@ def render_teacher_panel():
                     st.dataframe(df_students, use_container_width=True)
                     
                     # Detaljerad övningsmetodslista
-                    st.markdown("#### 📊 Övningsmetoder per elev")
+                    st.markdown("#### Övningsmetoder per elev")
                     df_exercises = pd.DataFrame(exercise_data)
                     st.dataframe(df_exercises, use_container_width=True)
                     
-                    if st.button("🔄 Synkronisera elevlista", key="sync_user_list_btn"):
+                    if st.button("Synkronisera elevlista", key="sync_user_list_btn"):
                         fetch_users_from_db.clear()
                         st.session_state.users_list = fetch_users_from_db(st.session_state.gsheets_url)
                         st.success("Elevlistan har synkroniserats!")
@@ -1942,13 +1942,13 @@ def render_teacher_panel():
                     with st.spinner("Skapar konto i databasen..."):
                         success, msg = create_user_in_db(new_student_name, new_student_pin, new_student_class)
                         if success:
-                            st.success(f"🎉 {msg}")
+                            st.success(msg)
                             fetch_users_from_db.clear()
                             st.session_state.users_list = fetch_users_from_db(st.session_state.gsheets_url)
                             time.sleep(1)
                             st.rerun()
                         else:
-                            st.error(f"❌ {msg}")
+                            st.error(msg)
             
             st.markdown("---")
             
@@ -1983,14 +1983,14 @@ def render_teacher_panel():
                         selected_list_lang
                     )
                     st.download_button(
-                        label="📥 Ladda ner studieark som PDF",
+                        label="Ladda ner studieark som PDF",
                         data=bytes(study_pdf),
                         file_name=f"Gloslista_{selected_quiz_list.replace(' ', '_')}.pdf",
                         mime="application/pdf",
                         use_container_width=True
                     )
                 with col_sl2:
-                    if st.button("📄 Generera utskriftsklart studieark", type="primary", use_container_width=True):
+                    if st.button("Generera utskriftsklart studieark", type="primary", use_container_width=True):
                         st.session_state.printable_test = generate_study_list_html(
                             selected_list_words,
                             selected_quiz_list,
@@ -2017,7 +2017,7 @@ def render_teacher_panel():
                     )
                     include_answers = st.checkbox("Skapa facit-sida också (separat sida)", value=True, key="admin_quiz_include_answers")
                     
-                if st.button("📄 Generera utskriftsklart förhör", type="primary", use_container_width=True):
+                if st.button("Generera utskriftsklart förhör", type="primary", use_container_width=True):
                     if not selected_list_words:
                         st.error("Det finns inga glosor i den valda listan att generera prov av!")
                     else:
@@ -2159,7 +2159,7 @@ def render_teacher_panel():
                     test_html += f"<div class='print-title'>{quiz_title}</div>"
                     test_html += f"""
                     <div class='print-student-info'>
-                        Elevens namn: <span class='info-line'></span>
+                        Namn: <span class='info-line'></span>
                         Klass/Grupp:  <span class='info-line'></span>
                         Datum:        <span class='info-line'></span>
                         <br>
@@ -2202,7 +2202,7 @@ def render_teacher_panel():
                     
             # Visa förhandsgranskning om det finns skapat
             if "printable_test" in st.session_state:
-                st.success("📝 Utskriftsklart förhör finns redo nedan!")
+                st.success("Utskriftsklart förhör finns redo nedan!")
                 col_b1, col_b2 = st.columns(2)
                 with col_b1:
                     if "quiz_test_words" in st.session_state:
@@ -2213,14 +2213,14 @@ def render_teacher_panel():
                             st.session_state.quiz_include_answers
                         )
                         st.download_button(
-                            label="📥 Ladda ner förhör som PDF",
+                            label="Ladda ner förhör som PDF",
                             data=bytes(pdf_data),
                             file_name=f"{st.session_state.quiz_title_val.replace(' ', '_')}.pdf",
                             mime="application/pdf",
                             use_container_width=True
                         )
                 with col_b2:
-                    if st.button("❌ Radera genererat förhör", use_container_width=True, key="del_print_test"):
+                    if st.button("Radera genererat förhör", use_container_width=True, key="del_print_test"):
                         del st.session_state.printable_test
                         st.rerun()
                         
@@ -2234,9 +2234,9 @@ def render_teacher_panel():
             st.markdown("Välj hur du vill lägga till din nya gloslista:")
 
             import_tab1, import_tab2, import_tab3 = st.tabs([
-                "🔗 Importera från glosor.eu", 
-                "✍️ Bygg glosa för glosa", 
-                "📄 Klistra in text / Fil"
+                "Importera från glosor.eu", 
+                "Bygg glosa för glosa", 
+                "Klistra in text / Fil"
             ])
 
             # --- FLIK 1: IMPORTERA FRÅN GLOSOR.EU ---
@@ -2250,7 +2250,7 @@ def render_teacher_panel():
                 with col_g2:
                     glosor_lang = st.selectbox("Språk:", ["Spanska", "Engelska", "Tyska", "Franska", "Övrigt"], key="glosor_lang_input")
 
-                if st.button("Hämta glosor från glosor.eu ➔", type="primary", use_container_width=True, key="btn_fetch_glosor"):
+                if st.button("Hämta glosor från glosor.eu", type="primary", use_container_width=True, key="btn_fetch_glosor"):
                     if not glosor_url.strip():
                         st.error("Klistra in en giltig webbadress från glosor.eu!")
                     else:
@@ -2475,6 +2475,86 @@ def render_teacher_panel():
                         st.warning("Hittade inga giltiga glosor att läsa in.")
 
             st.markdown("---")
+            st.markdown("#### Redigera och lägg till glosor i existerande lista")
+            st.markdown("Välj en existerande gloslista för att lägga till nya glosor, ändra namn/kategori eller ta bort enstaka ord.")
+
+            all_existing_lists = list(st.session_state.library.keys())
+            if all_existing_lists:
+                edit_list_name = st.selectbox("Välj lista att redigera:", all_existing_lists, key="edit_list_selector")
+                
+                if edit_list_name:
+                    current_data = st.session_state.library[edit_list_name]
+                    
+                    col_m1, col_m2, col_m3 = st.columns(3)
+                    with col_m1:
+                        edited_title = st.text_input("Listnamn:", value=edit_list_name, key=f"edit_title_{edit_list_name}")
+                    with col_m2:
+                        edited_lang = st.text_input("Språk:", value=current_data.get("language", "Spanska"), key=f"edit_lang_{edit_list_name}")
+                    with col_m3:
+                        edited_cat = st.text_input("Mapp/Kategori:", value=current_data.get("category", "Spanska nybörjare"), key=f"edit_cat_{edit_list_name}")
+                        
+                    st.markdown("**Lägg till ny glosa i denna lista:**")
+                    col_nw1, col_nw2, col_nw3 = st.columns([2, 2, 1])
+                    with col_nw1:
+                        add_sv = st.text_input("Svenska:", key=f"add_sv_word_{edit_list_name}")
+                    with col_nw2:
+                        add_ut = st.text_input("Målspråk:", key=f"add_ut_word_{edit_list_name}")
+                    with col_nw3:
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        if st.button("Lägg till", key=f"add_pair_btn_{edit_list_name}", use_container_width=True):
+                            if add_sv.strip() and add_ut.strip():
+                                st.session_state.library[edit_list_name]["words"].append({
+                                    "svenska": add_sv.strip(),
+                                    "utlandska": add_ut.strip()
+                                })
+                                if st.session_state.get("current_list_name") == edit_list_name:
+                                    st.session_state.words = st.session_state.library[edit_list_name]["words"].copy()
+                                st.toast(f"Lade till '{add_sv.strip()}' i listan!")
+                                st.rerun()
+                            else:
+                                st.warning("Fyll i både svenska och utländska ordet!")
+
+                    st.markdown(f"**Befintliga glosor i listan ({len(current_data['words'])} st):**")
+                    words_to_delete = []
+                    for w_idx, w_obj in enumerate(current_data["words"]):
+                        c1, c2, c3 = st.columns([2, 2, 1])
+                        c1.write(f"**{w_obj['svenska']}**")
+                        c2.write(w_obj['utlandska'])
+                        if c3.button("Ta bort", key=f"del_w_{edit_list_name}_{w_idx}"):
+                            words_to_delete.append(w_idx)
+                    
+                    if words_to_delete:
+                        for d_idx in sorted(words_to_delete, reverse=True):
+                            current_data["words"].pop(d_idx)
+                        if st.session_state.get("current_list_name") == edit_list_name:
+                            st.session_state.words = current_data["words"].copy()
+                        st.toast("Ord borttaget!")
+                        st.rerun()
+                        
+                    if st.button("Spara inställningar och namnändring", key=f"save_meta_{edit_list_name}", type="primary"):
+                        new_title_clean = edited_title.strip()
+                        if not new_title_clean:
+                            st.error("Listnamnet kan inte vara tomt!")
+                        else:
+                            if new_title_clean != edit_list_name:
+                                st.session_state.library[new_title_clean] = {
+                                    "language": edited_lang.strip(),
+                                    "category": edited_cat.strip(),
+                                    "words": current_data["words"]
+                                }
+                                st.session_state.library.pop(edit_list_name)
+                                if st.session_state.get("current_list_name") == edit_list_name:
+                                    st.session_state.current_list_name = new_title_clean
+                                    st.session_state.target_language = edited_lang.strip()
+                            else:
+                                st.session_state.library[edit_list_name]["language"] = edited_lang.strip()
+                                st.session_state.library[edit_list_name]["category"] = edited_cat.strip()
+                                if st.session_state.get("current_list_name") == edit_list_name:
+                                    st.session_state.target_language = edited_lang.strip()
+                            st.toast("Ändringarna har sparats!")
+                            st.rerun()
+
+            st.markdown("---")
             st.markdown("#### Ta bort gloslistor från biblioteket")
             all_lists = list(st.session_state.library.keys())
             for list_name in all_lists:
@@ -2531,13 +2611,13 @@ with col_back_nav:
 with col_curr_list:
     st.info(f"👉 Aktiv lista: **{st.session_state.current_list_name}** ({target_lang_name})")
 with col_print_nav:
-    if st.button("🖨️ Skriv ut / PDF", use_container_width=True, help="Skriv ut eller ladda ner denna gloslista som pappersark för att öva analogt"):
+    if st.button("Skriv ut / PDF", use_container_width=True, help="Skriv ut eller ladda ner denna gloslista som pappersark för att öva analogt"):
         st.session_state.show_student_print_sheet = not st.session_state.get("show_student_print_sheet", False)
         st.rerun()
 
 if st.session_state.get("show_student_print_sheet"):
     st.markdown("---")
-    st.markdown(f"### 🖨️ Pappersark & Studieark: {st.session_state.current_list_name}")
+    st.markdown(f"### Pappersark & Studieark: {st.session_state.current_list_name}")
     st.markdown("Här kan du ladda ner din valda gloslista som en färdig PDF eller visa studiearket i webbläsaren för att skriva ut på papper.")
     
     col_p_dl, col_p_view, col_p_close = st.columns([2, 2, 1])
@@ -2548,7 +2628,7 @@ if st.session_state.get("show_student_print_sheet"):
             target_lang_name
         )
         st.download_button(
-            label="📥 Ladda ner studieark som PDF",
+            label="Ladda ner studieark som PDF",
             data=bytes(student_pdf_bytes),
             file_name=f"Gloslista_{st.session_state.current_list_name.replace(' ', '_')}.pdf",
             mime="application/pdf",
@@ -2563,7 +2643,7 @@ if st.session_state.get("show_student_print_sheet"):
             )
             st.rerun()
     with col_p_close:
-        if st.button("❌ Stäng", use_container_width=True):
+        if st.button("Stäng", use_container_width=True):
             st.session_state.show_student_print_sheet = False
             if "student_printable_study_html" in st.session_state:
                 del st.session_state.student_printable_study_html
