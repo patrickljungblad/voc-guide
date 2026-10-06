@@ -522,7 +522,7 @@ def create_user_in_db(name, pin, group):
 st.set_page_config(
     page_title="GlosFlow - Digitala Glostränaren",
     page_icon="G",
-    layout="centered"
+    layout="wide"
 )
 
 # --- LÄRARKONFIGURATION (VALFRITT) ---
@@ -1675,7 +1675,7 @@ if st.sidebar.button("Nollställ framsteg", use_container_width=True):
     st.toast("Framsteg nollställda!")
 
 def render_teacher_panel():
-    st.subheader("👩🏫 Lärarpanel (Hantera Glosbiblioteket)")
+    st.subheader("Lärarpanel (Hantera Glosbiblioteket)")
     
     # Automatisk synkronisering av elevstatistiken när läraren visar fliken
     if st.session_state.get("admin_authenticated"):
@@ -1855,15 +1855,15 @@ def render_teacher_panel():
                     col_chart1, col_chart2 = st.columns(2)
                     
                     with col_chart1:
-                        st.markdown("<p style='font-weight: bold; text-align: center; color: #1E3A8A;'>📦 Fördelning av gloslådor (Klätterstegen)</p>", unsafe_allow_html=True)
+                        st.markdown("<p style='font-weight: bold; text-align: center; color: #1E3A8A;'>Fördelning av gloslådor (Klätterstegen)</p>", unsafe_allow_html=True)
                         box_df = pd.DataFrame({
                             "Antal ord i klassen": [total_box1, total_box2, total_box3]
-                        }, index=["🔴 Låda 1 (Ska övas)", "🟡 Låda 2 (På väg)", "🟢 Låda 3 (Kan bra)"])
+                        }, index=["Låda 1 (Ska övas)", "Låda 2 (På väg)", "Låda 3 (Kan bra)"])
                         st.bar_chart(box_df, color="#3B82F6")
                         st.caption("Visar det sammanlagda antalet ord som eleverna har placerade i de olika lådorna.")
                         
                     with col_chart2:
-                        st.markdown("<p style='font-weight: bold; text-align: center; color: #1E3A8A;'>⚡ Elevaktivitet och Rätt svar</p>", unsafe_allow_html=True)
+                        st.markdown("<p style='font-weight: bold; text-align: center; color: #1E3A8A;'>Elevaktivitet och Rätt svar</p>", unsafe_allow_html=True)
                         if student_names:
                             chart_df = pd.DataFrame({
                                 "Svarade frågor": student_totals,
