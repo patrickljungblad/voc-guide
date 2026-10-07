@@ -1,0 +1,131 @@
+from copy import deepcopy
+import time
+from pathlib import Path
+from streamlit.testing.v1 import AppTest
+from core.leitner import initial, key
+from core.trainer import Session
+from data.vocabulary import builtin_lists
+from services.database import ServiceError
+
+APP = str(Path(__file__).parents[1] / 'glostranare_web-v4.py')
+
+
+def app(tmp_path, monkeypatch):
+    monkeypatch.setenv('DATABASE_PATH',str(tmp_path/'app.sqlite3'))
+    monkeypatch.setenv('BACKEND','sqlite')
+    monkeypatch.setenv('ADMIN_PASSWORD','a-long-test-password')
+    return AppTest.from_file(APP, default_timeout=10).run()
+
+
+def click(at,label):
+    return next(b for b in at.button if b.label == label).click().run()
+
+
+def guest(at):
+    click(at,'Prova som gäst')
+    click(at,'Öppna listan')
+    return at
+
+
+def test_guest_quiz_switch_lists_and_direction_preserve_progress(tmp_path,monkeypatch):
+    at = guest(app(tmp_path,monkeypatch))
+    assert not at.code  # HTML branding must render, not become an indented Markdown code block.
+    click(at,'▶ Fortsätt träna')
+    vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
+    word = next(w for w in vocab['words'] if w['id'] == at.session_state.session.current)
+    next(r for r in at.radio if r.label == 'Välj översättning').set_value(word['accepted_answers'][0]).run()
+    click(at,'Kontrollera svar')
+    assert not at.exception
+    saved = deepcopy(at.session_state.progress)
+    assert len(saved) == 1
+    at.run()
+    assert at.session_state.progress == saved  # no double scoring on rerun
+    click(at,'← Alla gloslistor')
+    click(at,'Öppna listan')
+    assert at.session_state.progress == saved
+    at.sidebar.selectbox[0].set_value('Målspråk till svenska').run()
+    assert at.session_state.progress == saved
+    assert at.session_state.session is None
+
+
+def test_write_near_answer_and_hint_do_not_promote(tmp_path,monkeypatch):
+    at = guest(app(tmp_path,monkeypatch))
+    vocab = next(v for v in builtin_lists() if any(w['accepted_answers'][0] == 'miércoles' for w in v['words']))
+    word = next(w for w in vocab['words'] if w['accepted_answers'][0] == 'miércoles')
+    at.session_state.list_id = vocab['id']
+    at.session_state.session = Session([word['id']],mode='write')
+    at.run()
+    next(t for t in at.text_input if t.label.startswith('Skriv på')).set_value('miercoles')
+    click(at,'Rätta mitt svar')
+    assert at.session_state.session.feedback['result'] == 'near'
+    assert at.session_state.progress[key(vocab['id'],word['id'],'forward')]['box'] == 1
+    at.session_state.session = Session([word['id']],mode='write')
+    at.session_state.progress = {}
+    at.run()
+    click(at,'💡 En bokstav')
+    next(t for t in at.text_input if t.label.startswith('Skriv på')).set_value('miércoles')
+    click(at,'Rätta mitt svar')
+    assert at.session_state.progress[key(vocab['id'],word['id'],'forward')]['box'] == 1
+    assert not at.exception
+
+
+def test_network_failure_keeps_response_and_blocks_next(tmp_path,monkeypatch):
+    at = guest(app(tmp_path,monkeypatch))
+    from services.database import LocalDatabase
+    def fail(*args,**kwargs):
+        raise ServiceError('Tillfälligt sparfel')
+    monkeypatch.setattr(LocalDatabase,'save_progress',fail)
+    at.session_state.user = {'name':'Test','role':'student','token':'fake'}
+    click(at,'▶ Fortsätt träna')
+    vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
+    word = next(w for w in vocab['words'] if w['id'] == at.session_state.session.current)
+    next(r for r in at.radio if r.label == 'Välj översättning').set_value(word['accepted_answers'][0])
+    click(at,'Kontrollera svar')
+    assert at.session_state.pending is not None
+    assert next(b for b in at.button if b.label == 'Nästa ord →').disabled
+    snapshot = deepcopy(at.session_state.progress)
+    monkeypatch.setattr(LocalDatabase,'save_progress',lambda *args,**kwargs:1)
+    click(at,'Försök spara igen')
+    assert at.session_state.pending is None and at.session_state.progress == snapshot
+    assert not at.exception
+
+
+def test_teacher_panel_can_create_user_and_list(tmp_path,monkeypatch):
+    at = app(tmp_path,monkeypatch)
+    next(t for t in at.text_input if t.label == 'Lärarlösenord').set_value('a-long-test-password')
+    click(at,'Öppna lärarpanelen')
+    assert not at.exception
+    next(t for t in at.text_input if t.label == 'Elevens namn').set_value('Test')
+    next(t for t in at.text_input if t.label == 'Klass').set_value('2A')
+    next(t for t in at.text_input if t.label.startswith('Ny PIN-kod')).set_value('0123')
+    click(at,'Skapa konto')
+    assert not at.exception
+    next(t for t in at.text_input if t.label == 'Listans namn').set_value('Ny lista')
+    at.text_area[0].set_value('hund\tperro\nkatt\tgato')
+    click(at,'Spara ny lista')
+    assert len(at.session_state.lists) == 9 and not at.exception
+
+
+def test_expired_login_can_save_pending_answer_without_reset(tmp_path,monkeypatch):
+    from services.database import LocalDatabase
+    at = app(tmp_path,monkeypatch)
+    db = LocalDatabase(tmp_path/'app.sqlite3','a-long-test-password')
+    teacher = db.teacher_login('a-long-test-password')['token']
+    db.create_user(teacher,'Test','2A','0123')
+    user = db.authenticate('Test','2A','0123')
+    at.session_state.user = user
+    at.run()
+    click(at,'Öppna listan')
+    click(at,'▶ Fortsätt träna')
+    vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
+    word = next(w for w in vocab['words'] if w['id'] == at.session_state.session.current)
+    db.logout(user['token'])
+    next(r for r in at.radio if r.label == 'Välj översättning').set_value(word['accepted_answers'][0])
+    click(at,'Kontrollera svar')
+    assert at.session_state.save_error[0] == 'auth'
+    snapshot = deepcopy(at.session_state.progress)
+    next(t for t in at.text_input if t.label == 'PIN-kod igen').set_value('0123')
+    click(at,'Logga in och spara svaret')
+    assert at.session_state.pending is None and at.session_state.progress == snapshot
+    assert db.load_progress(at.session_state.user['token'])['progress'] == snapshot
+    assert not at.exception

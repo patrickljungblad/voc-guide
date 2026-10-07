@@ -1,0 +1,1597 @@
+[
+  {
+    "id": "1e308f6b3d8153af873ebcc1921840ee",
+    "name": "Glosor till v. 41",
+    "language": "Spanska",
+    "category": "Spanska fortsättning",
+    "words": [
+      {
+        "id": "680d979bb5d953bab3a7b5f2cf87b315",
+        "svenska": "Vad?, Vilken?, Vilka?",
+        "accepted_answers": [
+          "¿Qué?"
+        ],
+        "swedish_answers": [
+          "vad",
+          "vilken",
+          "vilka"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Glosor till v. 41_Vad?, Vilken?, Vilka?"
+      },
+      {
+        "id": "10fbc44c11365e7fac2da3a8484447a4",
+        "svenska": "Hur?",
+        "accepted_answers": [
+          "¿Cómo?"
+        ],
+        "swedish_answers": [
+          "Hur?"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Glosor till v. 41_Hur?"
+      },
+      {
+        "id": "17dc84662d625075b5649baab28058dc",
+        "svenska": "Var?",
+        "accepted_answers": [
+          "¿Dónde?"
+        ],
+        "swedish_answers": [
+          "Var?"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Glosor till v. 41_Var?"
+      },
+      {
+        "id": "2389941b230955338fc1d1267f35bbce",
+        "svenska": "När?",
+        "accepted_answers": [
+          "¿Cuándo?"
+        ],
+        "swedish_answers": [
+          "När?"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Glosor till v. 41_När?"
+      },
+      {
+        "id": "a87d6f8f857658fabf2d93697c2568a7",
+        "svenska": "Varifrån?",
+        "accepted_answers": [
+          "¿De dónde?"
+        ],
+        "swedish_answers": [
+          "Varifrån?"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Glosor till v. 41_Varifrån?"
+      },
+      {
+        "id": "2b1e666386405899846d5b7bd9ad71ab",
+        "svenska": "Vart?",
+        "accepted_answers": [
+          "¿Adónde?"
+        ],
+        "swedish_answers": [
+          "Vart?"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Glosor till v. 41_Vart?"
+      },
+      {
+        "id": "89428ba9b65b51cca044195e9f525845",
+        "svenska": "Varför?",
+        "accepted_answers": [
+          "¿Por qué?"
+        ],
+        "swedish_answers": [
+          "Varför?"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Glosor till v. 41_Varför?"
+      },
+      {
+        "id": "bf8cc6ad39955085be4c99bad29352b6",
+        "svenska": "Hur mycket?",
+        "accepted_answers": [
+          "¿Cuánto?"
+        ],
+        "swedish_answers": [
+          "Hur mycket?"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Glosor till v. 41_Hur mycket?"
+      },
+      {
+        "id": "7adcda1bd1dc511aad01c9582cc378b3",
+        "svenska": "Hur många?",
+        "accepted_answers": [
+          "¿Cuántos?",
+          "¿Cuántas?"
+        ],
+        "swedish_answers": [
+          "hur många"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Glosor till v. 41_Hur många?"
+      },
+      {
+        "id": "bd3563d53b355f75b95dbdbb503345ba",
+        "svenska": "Vem?, Vilka? (endast om personer)",
+        "accepted_answers": [
+          "¿Quién?",
+          "Quiénes?"
+        ],
+        "swedish_answers": [
+          "vem",
+          "vilka"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Glosor till v. 41_Vem?, Vilka? (endast om personer)"
+      },
+      {
+        "id": "cd2932e4a6f859f6bec7aa7861b52c2a",
+        "svenska": "Vilken?, Vem/vilka? (används vid urval)",
+        "accepted_answers": [
+          "¿Cuál?",
+          "¿Cuáles?"
+        ],
+        "swedish_answers": [
+          "vilken",
+          "vem",
+          "vilka"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Glosor till v. 41_Vilken?, Vem/vilka? (används vid urval)"
+      }
+    ]
+  },
+  {
+    "id": "9744fe44c96b5e91a22eab9aacde517b",
+    "name": "Spanska nybörjare - v. 41",
+    "language": "Spanska",
+    "category": "Spanska nybörjare",
+    "words": [
+      {
+        "id": "1027be932359587c9941bc46952c9646",
+        "svenska": "att ha",
+        "accepted_answers": [
+          "tener"
+        ],
+        "swedish_answers": [
+          "att ha"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 41_att ha"
+      },
+      {
+        "id": "4223ea1d4fb058a58ce492a3fe2fc3a0",
+        "svenska": "jag har",
+        "accepted_answers": [
+          "tengo"
+        ],
+        "swedish_answers": [
+          "jag har"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 41_jag har"
+      },
+      {
+        "id": "7cc8e9fecd9f5ad594950cb5b1ee2160",
+        "svenska": "du har",
+        "accepted_answers": [
+          "tienes"
+        ],
+        "swedish_answers": [
+          "du har"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 41_du har"
+      },
+      {
+        "id": "3b56b0e5bce15f4dbffd2a61d301d4d6",
+        "svenska": "han/hon, den, har",
+        "accepted_answers": [
+          "tiene"
+        ],
+        "swedish_answers": [
+          "han har",
+          "hon har",
+          "den har"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 41_han/hon, den, har"
+      },
+      {
+        "id": "dc5bcf972a675e389b741ef555d6faa7",
+        "svenska": "vi har",
+        "accepted_answers": [
+          "tenemos"
+        ],
+        "swedish_answers": [
+          "vi har"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 41_vi har"
+      },
+      {
+        "id": "1461726e031f5f7b8b9bc9599ccca2d1",
+        "svenska": "ni har",
+        "accepted_answers": [
+          "tenéis"
+        ],
+        "swedish_answers": [
+          "ni har"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 41_ni har"
+      },
+      {
+        "id": "e63a785f464551a38bec25dc8f92f261",
+        "svenska": "de, ni, har",
+        "accepted_answers": [
+          "tienen"
+        ],
+        "swedish_answers": [
+          "de har",
+          "ni har"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 41_de, ni, har"
+      },
+      {
+        "id": "79c5049fa0385db4b745b2de0a194ade",
+        "svenska": "telefonnummer",
+        "accepted_answers": [
+          "número de teléfono"
+        ],
+        "swedish_answers": [
+          "telefonnummer"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 41_telefonnummer"
+      },
+      {
+        "id": "da71617b7b9555b8b126f50ad647a793",
+        "svenska": "fråga",
+        "accepted_answers": [
+          "pregunta"
+        ],
+        "swedish_answers": [
+          "fråga"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 41_fråga"
+      },
+      {
+        "id": "2eb0680ea09c5601beae6cdd4a7c9f8a",
+        "svenska": "svara",
+        "accepted_answers": [
+          "contesta"
+        ],
+        "swedish_answers": [
+          "svara"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 41_svara"
+      },
+      {
+        "id": "849d9eeb87f659118913643a89b30b05",
+        "svenska": "att behöva",
+        "accepted_answers": [
+          "necesitar"
+        ],
+        "swedish_answers": [
+          "att behöva"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 41_att behöva"
+      },
+      {
+        "id": "2b900ee6748d5a878c9d743864dc727b",
+        "svenska": "att ringa",
+        "accepted_answers": [
+          "llamar"
+        ],
+        "swedish_answers": [
+          "att ringa"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 41_att ringa"
+      }
+    ]
+  },
+  {
+    "id": "d1e60aba527c58838094564ea5b026e3",
+    "name": "Spanska nybörjare - v. 38",
+    "language": "Spanska",
+    "category": "Spanska nybörjare",
+    "words": [
+      {
+        "id": "61ab1df7c422591180970a5bb7b14a32",
+        "svenska": "noll",
+        "accepted_answers": [
+          "cero"
+        ],
+        "swedish_answers": [
+          "noll"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 38_noll"
+      },
+      {
+        "id": "8d559fa90a915f96bb8540d24f1bcc66",
+        "svenska": "ett",
+        "accepted_answers": [
+          "uno"
+        ],
+        "swedish_answers": [
+          "ett"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 38_ett"
+      },
+      {
+        "id": "fc24b73711e35312ad002670b64d6da6",
+        "svenska": "två",
+        "accepted_answers": [
+          "dos"
+        ],
+        "swedish_answers": [
+          "två"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 38_två"
+      },
+      {
+        "id": "8de47b87ab705e56b402734075a165fa",
+        "svenska": "tre",
+        "accepted_answers": [
+          "tres"
+        ],
+        "swedish_answers": [
+          "tre"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 38_tre"
+      },
+      {
+        "id": "56d9ab2fa3d555818a2e6fd44fa0506d",
+        "svenska": "fyra",
+        "accepted_answers": [
+          "cuatro"
+        ],
+        "swedish_answers": [
+          "fyra"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 38_fyra"
+      },
+      {
+        "id": "89bfab1c45235ab4ba2b559fee02f000",
+        "svenska": "fem",
+        "accepted_answers": [
+          "cinco"
+        ],
+        "swedish_answers": [
+          "fem"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 38_fem"
+      },
+      {
+        "id": "13d457f3e51854ebbc2e2b7cac1980ec",
+        "svenska": "sex",
+        "accepted_answers": [
+          "seis"
+        ],
+        "swedish_answers": [
+          "sex"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 38_sex"
+      },
+      {
+        "id": "a3670558b31b5ddfb12e0e3281ece3c1",
+        "svenska": "sju",
+        "accepted_answers": [
+          "siete"
+        ],
+        "swedish_answers": [
+          "sju"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 38_sju"
+      },
+      {
+        "id": "1016ecb6d4a65b75a6ba7d2544bf3f6e",
+        "svenska": "åtta",
+        "accepted_answers": [
+          "ocho"
+        ],
+        "swedish_answers": [
+          "åtta"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 38_åtta"
+      },
+      {
+        "id": "a1f6c4f14eb35ccea2894b7dc7cdee58",
+        "svenska": "nio",
+        "accepted_answers": [
+          "nueve"
+        ],
+        "swedish_answers": [
+          "nio"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 38_nio"
+      },
+      {
+        "id": "f30b6823b09b52169bdb68b4a2ff399c",
+        "svenska": "tio",
+        "accepted_answers": [
+          "diez"
+        ],
+        "swedish_answers": [
+          "tio"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 38_tio"
+      },
+      {
+        "id": "4c36bf5a7fd35ea9bdbf66d4243d7f26",
+        "svenska": "hur mår du?",
+        "accepted_answers": [
+          "¿cómo estás?"
+        ],
+        "swedish_answers": [
+          "hur mår du?"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 38_hur mår du?"
+      },
+      {
+        "id": "0b482c057c07560d92c626aef7306acc",
+        "svenska": "hur är läget?",
+        "accepted_answers": [
+          "¿qué tal?"
+        ],
+        "swedish_answers": [
+          "hur är läget?"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 38_hur är läget?"
+      },
+      {
+        "id": "b0d153a0e0bc504584ace61822495de3",
+        "svenska": "mycket bra, tack",
+        "accepted_answers": [
+          "muy bien",
+          "gracias"
+        ],
+        "swedish_answers": [
+          "mycket bra",
+          "tack"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 38_mycket bra, tack"
+      },
+      {
+        "id": "9889b888a1875ff2995119336665b101",
+        "svenska": "och du?",
+        "accepted_answers": [
+          "¿y tú?"
+        ],
+        "swedish_answers": [
+          "och du?"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 38_och du?"
+      }
+    ]
+  },
+  {
+    "id": "a6b0797b1a1857e5930b4b1e0562b6ff",
+    "name": "Spanska fortsättning - v. 38",
+    "language": "Spanska",
+    "category": "Spanska fortsättning",
+    "words": [
+      {
+        "id": "c759e3452f225228827a016748cf59e1",
+        "svenska": "det är...",
+        "accepted_answers": [
+          "hace..."
+        ],
+        "swedish_answers": [
+          "det är..."
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 38_det är..."
+      },
+      {
+        "id": "141c545170a45d2f9d0aa7e0f2b8f446",
+        "svenska": "det blåser",
+        "accepted_answers": [
+          "hace viento"
+        ],
+        "swedish_answers": [
+          "det blåser"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 38_det blåser"
+      },
+      {
+        "id": "b5051747ab5d567dbd84c8e501c40bd8",
+        "svenska": "det är kallt",
+        "accepted_answers": [
+          "hace frío"
+        ],
+        "swedish_answers": [
+          "det är kallt"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 38_det är kallt"
+      },
+      {
+        "id": "983af66b2e7851128e0365eaa9403f60",
+        "svenska": "det är varmt",
+        "accepted_answers": [
+          "hace calor"
+        ],
+        "swedish_answers": [
+          "det är varmt"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 38_det är varmt"
+      },
+      {
+        "id": "489966a534b75644bd45c6a977b25038",
+        "svenska": "det är dåligt väder",
+        "accepted_answers": [
+          "hace mal tiempo"
+        ],
+        "swedish_answers": [
+          "det är dåligt väder"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 38_det är dåligt väder"
+      },
+      {
+        "id": "3e75baacb5c85f26a1b25fca27183f9f",
+        "svenska": "det är bra väder",
+        "accepted_answers": [
+          "hace buen tiempo"
+        ],
+        "swedish_answers": [
+          "det är bra väder"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 38_det är bra väder"
+      },
+      {
+        "id": "83c8cd41526d58df8aa53d244ceb2509",
+        "svenska": "det är soligt",
+        "accepted_answers": [
+          "hace sol"
+        ],
+        "swedish_answers": [
+          "det är soligt"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 38_det är soligt"
+      },
+      {
+        "id": "f228e364f21d5905bf90ae77ec35396c",
+        "svenska": "det är molnigt",
+        "accepted_answers": [
+          "está nublado"
+        ],
+        "swedish_answers": [
+          "det är molnigt"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 38_det är molnigt"
+      },
+      {
+        "id": "2bd69a062ec055cd80563f80a3ab6b0d",
+        "svenska": "det regnar",
+        "accepted_answers": [
+          "llueve"
+        ],
+        "swedish_answers": [
+          "det regnar"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 38_det regnar"
+      },
+      {
+        "id": "452fd0cf3b805b86b89c31a7569bcc9d",
+        "svenska": "det snöar",
+        "accepted_answers": [
+          "nieva"
+        ],
+        "swedish_answers": [
+          "det snöar"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 38_det snöar"
+      },
+      {
+        "id": "747af575f47151129066f5176f2e16f6",
+        "svenska": "vinter",
+        "accepted_answers": [
+          "invierno"
+        ],
+        "swedish_answers": [
+          "vinter"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 38_vinter"
+      },
+      {
+        "id": "e35e0c7174bc582891823d824e6595fc",
+        "svenska": "sommar",
+        "accepted_answers": [
+          "verano"
+        ],
+        "swedish_answers": [
+          "sommar"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 38_sommar"
+      },
+      {
+        "id": "ccf254c815e25858b8c41e1763ba3b44",
+        "svenska": "vår",
+        "accepted_answers": [
+          "primavera"
+        ],
+        "swedish_answers": [
+          "vår"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 38_vår"
+      },
+      {
+        "id": "ba462bcb31b15cd7bf516db59eee3625",
+        "svenska": "höst",
+        "accepted_answers": [
+          "otoño"
+        ],
+        "swedish_answers": [
+          "höst"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 38_höst"
+      },
+      {
+        "id": "64fe5368bd6053d3acac8eef73f2fab5",
+        "svenska": "årstid",
+        "accepted_answers": [
+          "estación"
+        ],
+        "swedish_answers": [
+          "årstid"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 38_årstid"
+      },
+      {
+        "id": "58f524a349d755bca3a7d830a6f22d54",
+        "svenska": "vad är det för väder?",
+        "accepted_answers": [
+          "¿qué tiempo hace?"
+        ],
+        "swedish_answers": [
+          "vad är det för väder?"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 38_vad är det för väder?"
+      }
+    ]
+  },
+  {
+    "id": "52785c71b8695a748dac66e1d22d6087",
+    "name": "Spanska nybörjare - till v. 37",
+    "language": "Spanska",
+    "category": "Spanska nybörjare",
+    "words": [
+      {
+        "id": "5f228c582ce9521abae74636067f0e40",
+        "svenska": "att vara",
+        "accepted_answers": [
+          "ser"
+        ],
+        "swedish_answers": [
+          "att vara"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - till v. 37_att vara"
+      },
+      {
+        "id": "bdac76b9e8205bb8807f6e08cd386321",
+        "svenska": "jag är",
+        "accepted_answers": [
+          "yo soy",
+          "soy"
+        ],
+        "swedish_answers": [
+          "jag är"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - till v. 37_jag är"
+      },
+      {
+        "id": "82ebf39b43375ab9b77fe528992290f8",
+        "svenska": "du är",
+        "accepted_answers": [
+          "tú eres",
+          "eres"
+        ],
+        "swedish_answers": [
+          "du är"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - till v. 37_du är"
+      },
+      {
+        "id": "a3429ec190505121815073e0878dad88",
+        "svenska": "han/hon är",
+        "accepted_answers": [
+          "él es",
+          "ella es",
+          "él/ella es"
+        ],
+        "swedish_answers": [
+          "han är",
+          "hon är"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - till v. 37_han/hon är"
+      },
+      {
+        "id": "194c17092b1b5640af03edc021707815",
+        "svenska": "vad heter du?",
+        "accepted_answers": [
+          "¿Cómo te llamas?"
+        ],
+        "swedish_answers": [
+          "vad heter du?"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - till v. 37_vad heter du?"
+      },
+      {
+        "id": "ce510bc57853513cbb2864566070ba1d",
+        "svenska": "Jag heter...",
+        "accepted_answers": [
+          "Me llamo..."
+        ],
+        "swedish_answers": [
+          "Jag heter..."
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - till v. 37_Jag heter..."
+      },
+      {
+        "id": "ee355447d407541896405e1775a081e6",
+        "svenska": "Jag är från...",
+        "accepted_answers": [
+          "Soy de"
+        ],
+        "swedish_answers": [
+          "Jag är från..."
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - till v. 37_Jag är från..."
+      },
+      {
+        "id": "97b6b340bbe55ac799b4b1971b304ead",
+        "svenska": "Han/hon är från...",
+        "accepted_answers": [
+          "Es de..."
+        ],
+        "swedish_answers": [
+          "han är från",
+          "hon är från"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - till v. 37_Han/hon är från..."
+      },
+      {
+        "id": "e5d4014aa45857c49c71e42df2e0d57c",
+        "svenska": "Sverige",
+        "accepted_answers": [
+          "Suecia"
+        ],
+        "swedish_answers": [
+          "Sverige"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - till v. 37_Sverige"
+      },
+      {
+        "id": "4d91746b1e1e5861befd96ebb3c844d7",
+        "svenska": "jag pratar/talar",
+        "accepted_answers": [
+          "hablo"
+        ],
+        "swedish_answers": [
+          "jag pratar",
+          "jag talar"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - till v. 37_jag pratar/talar"
+      },
+      {
+        "id": "6474033c866752bc8de8a9c085d4689a",
+        "svenska": "svenska",
+        "accepted_answers": [
+          "sueco"
+        ],
+        "swedish_answers": [
+          "svenska"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - till v. 37_svenska"
+      },
+      {
+        "id": "cd79460376185194bd8fd5cd75f2c72c",
+        "svenska": "spanska",
+        "accepted_answers": [
+          "español"
+        ],
+        "swedish_answers": [
+          "spanska"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - till v. 37_spanska"
+      },
+      {
+        "id": "5895fcb29ef8573f88182dd628c209a9",
+        "svenska": "engelska",
+        "accepted_answers": [
+          "inglés"
+        ],
+        "swedish_answers": [
+          "engelska"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - till v. 37_engelska"
+      },
+      {
+        "id": "428521ffbb7157dfaed2bb32a2758c9c",
+        "svenska": "Var är du från?",
+        "accepted_answers": [
+          "¿De dónde eres?"
+        ],
+        "swedish_answers": [
+          "Var är du från?"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - till v. 37_Var är du från?"
+      },
+      {
+        "id": "dbdd74698e8b5336871ce8f6175470cb",
+        "svenska": "Vilka språk talar du?",
+        "accepted_answers": [
+          "¿Qué lenguas hablas?"
+        ],
+        "swedish_answers": [
+          "Vilka språk talar du?"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - till v. 37_Vilka språk talar du?"
+      }
+    ]
+  },
+  {
+    "id": "4e3674bbd68d56488344052b0a334102",
+    "name": "Spanska fortsättning - v. 37",
+    "language": "Spanska",
+    "category": "Spanska fortsättning",
+    "words": [
+      {
+        "id": "2d6f75100e3d5e8d84a8f78500f820c4",
+        "svenska": "vilket datum är det idag?",
+        "accepted_answers": [
+          "¿qué fecha es hoy?"
+        ],
+        "swedish_answers": [
+          "vilket datum är det idag?"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_vilket datum är det idag?"
+      },
+      {
+        "id": "cc4191c1d9ea5210bfdffc6f0e250d81",
+        "svenska": "måndag",
+        "accepted_answers": [
+          "lunes"
+        ],
+        "swedish_answers": [
+          "måndag"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_måndag"
+      },
+      {
+        "id": "6f28234171ce52168c0c636e564a7b07",
+        "svenska": "tisdag",
+        "accepted_answers": [
+          "martes"
+        ],
+        "swedish_answers": [
+          "tisdag"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_tisdag"
+      },
+      {
+        "id": "e077cd7223bb5c6f9314136accec8f3e",
+        "svenska": "onsdag",
+        "accepted_answers": [
+          "miércoles"
+        ],
+        "swedish_answers": [
+          "onsdag"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_onsdag"
+      },
+      {
+        "id": "72fde45da15f586d8b187502e74c0a86",
+        "svenska": "torsdag",
+        "accepted_answers": [
+          "jueves"
+        ],
+        "swedish_answers": [
+          "torsdag"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_torsdag"
+      },
+      {
+        "id": "d1f0e6b08022533a9bc06b3e535aff5c",
+        "svenska": "fredag",
+        "accepted_answers": [
+          "viernes"
+        ],
+        "swedish_answers": [
+          "fredag"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_fredag"
+      },
+      {
+        "id": "0cd82f389ce150d1abc18f42fc243ea8",
+        "svenska": "lördag",
+        "accepted_answers": [
+          "sábado"
+        ],
+        "swedish_answers": [
+          "lördag"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_lördag"
+      },
+      {
+        "id": "ce91859db59659acbe5be4cea466d3e7",
+        "svenska": "söndag",
+        "accepted_answers": [
+          "domingo"
+        ],
+        "swedish_answers": [
+          "söndag"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_söndag"
+      },
+      {
+        "id": "b0554d2cbc7e5dbfb4fb9f7b719bf1d7",
+        "svenska": "januari",
+        "accepted_answers": [
+          "enero"
+        ],
+        "swedish_answers": [
+          "januari"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_januari"
+      },
+      {
+        "id": "3ec92fec716a54c29c379f7d4ecd31b8",
+        "svenska": "februari",
+        "accepted_answers": [
+          "febrero"
+        ],
+        "swedish_answers": [
+          "februari"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_februari"
+      },
+      {
+        "id": "708fff91d4ce58a99912186ea2d97776",
+        "svenska": "mars",
+        "accepted_answers": [
+          "marzo"
+        ],
+        "swedish_answers": [
+          "mars"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_mars"
+      },
+      {
+        "id": "08c9c0689f6d5af39b64587d0644c880",
+        "svenska": "april",
+        "accepted_answers": [
+          "abril"
+        ],
+        "swedish_answers": [
+          "april"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_april"
+      },
+      {
+        "id": "bd0d296291ca50299da3a0c08c12aa25",
+        "svenska": "maj",
+        "accepted_answers": [
+          "mayo"
+        ],
+        "swedish_answers": [
+          "maj"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_maj"
+      },
+      {
+        "id": "18e3071b5a6753abbebe9c2ab769f4e3",
+        "svenska": "juni",
+        "accepted_answers": [
+          "junio"
+        ],
+        "swedish_answers": [
+          "juni"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_juni"
+      },
+      {
+        "id": "7ee1606d75b758c1aa22084e7af41424",
+        "svenska": "juli",
+        "accepted_answers": [
+          "julio"
+        ],
+        "swedish_answers": [
+          "juli"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_juli"
+      },
+      {
+        "id": "e29823bd034b555b9cab01d99bfcc41e",
+        "svenska": "augusti",
+        "accepted_answers": [
+          "agosto"
+        ],
+        "swedish_answers": [
+          "augusti"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_augusti"
+      },
+      {
+        "id": "efbd61f400ef5e99bc816b6d9bb98cad",
+        "svenska": "september",
+        "accepted_answers": [
+          "septiembre"
+        ],
+        "swedish_answers": [
+          "september"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_september"
+      },
+      {
+        "id": "bbf3c759b23f50a49f621f3ca0cc08d3",
+        "svenska": "oktober",
+        "accepted_answers": [
+          "octubre"
+        ],
+        "swedish_answers": [
+          "oktober"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_oktober"
+      },
+      {
+        "id": "e1ea243d212d57d8a4915f0fde24b0b2",
+        "svenska": "november",
+        "accepted_answers": [
+          "noviembre"
+        ],
+        "swedish_answers": [
+          "november"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_november"
+      },
+      {
+        "id": "027340cef40052f79cb9168b151c5c0a",
+        "svenska": "december",
+        "accepted_answers": [
+          "diciembre"
+        ],
+        "swedish_answers": [
+          "december"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 37_december"
+      }
+    ]
+  },
+  {
+    "id": "d36849a293265e509d2305b843345df0",
+    "name": "Spanska nybörjare - v. 36",
+    "language": "Spanska",
+    "category": "Spanska nybörjare",
+    "words": [
+      {
+        "id": "e7aabb23c30a56209ed0370bb55349e8",
+        "svenska": "bok",
+        "accepted_answers": [
+          "libro"
+        ],
+        "swedish_answers": [
+          "bok"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 36_bok"
+      },
+      {
+        "id": "cde3b5466723564e88f3733d1c49f9a1",
+        "svenska": "blyertspenna",
+        "accepted_answers": [
+          "lápiz"
+        ],
+        "swedish_answers": [
+          "blyertspenna"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 36_blyertspenna"
+      },
+      {
+        "id": "ed1076139f1c56e296fa9e0a55642e64",
+        "svenska": "bläckpenna",
+        "accepted_answers": [
+          "bolígrafo"
+        ],
+        "swedish_answers": [
+          "bläckpenna"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 36_bläckpenna"
+      },
+      {
+        "id": "0669f2dc0b7354b98bf538841c57215c",
+        "svenska": "skrivhäfte",
+        "accepted_answers": [
+          "cuaderno"
+        ],
+        "swedish_answers": [
+          "skrivhäfte"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 36_skrivhäfte"
+      },
+      {
+        "id": "aacdb812cb495be6871f5c5d56430498",
+        "svenska": "ett papper (pappersark)",
+        "accepted_answers": [
+          "hoja de papel"
+        ],
+        "swedish_answers": [
+          "ett papper",
+          "papper",
+          "pappersark"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 36_ett papper (pappersark)"
+      },
+      {
+        "id": "722d2e0ecb3a552796bebc5850e69eed",
+        "svenska": "ryggsäck",
+        "accepted_answers": [
+          "mochila"
+        ],
+        "swedish_answers": [
+          "ryggsäck"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 36_ryggsäck"
+      },
+      {
+        "id": "e805578b338552da89f04a5885a864cd",
+        "svenska": "skåp",
+        "accepted_answers": [
+          "casilla"
+        ],
+        "swedish_answers": [
+          "skåp"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 36_skåp"
+      },
+      {
+        "id": "f7ac4c1c78d3582dab4e1e4f7319b32d",
+        "svenska": "dator",
+        "accepted_answers": [
+          "computadora",
+          "ordenador"
+        ],
+        "swedish_answers": [
+          "dator"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 36_dator"
+      },
+      {
+        "id": "31e6ed11eccf5f12ae2fd5a8b5bc3419",
+        "svenska": "laddare",
+        "accepted_answers": [
+          "cargador"
+        ],
+        "swedish_answers": [
+          "laddare"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 36_laddare"
+      },
+      {
+        "id": "df73f013d7a55afea7f2176e4ab7894b",
+        "svenska": "sudd",
+        "accepted_answers": [
+          "goma"
+        ],
+        "swedish_answers": [
+          "sudd"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 36_sudd"
+      },
+      {
+        "id": "42e701805ff55431b584e75ed599a340",
+        "svenska": "surfplatta",
+        "accepted_answers": [
+          "tableta"
+        ],
+        "swedish_answers": [
+          "surfplatta"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 36_surfplatta"
+      },
+      {
+        "id": "3da825c589e95595b77f93b20e03af75",
+        "svenska": "tavla",
+        "accepted_answers": [
+          "pizarra"
+        ],
+        "swedish_answers": [
+          "tavla"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 36_tavla"
+      },
+      {
+        "id": "d12364ee4b515f86859120f2cf89ff91",
+        "svenska": "god morgon/god dag",
+        "accepted_answers": [
+          "buenos días"
+        ],
+        "swedish_answers": [
+          "god morgon",
+          "god dag"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 36_god morgon/god dag"
+      },
+      {
+        "id": "2ca227d1eb735282a6502e7d7a9994a1",
+        "svenska": "hej då, farväl",
+        "accepted_answers": [
+          "adiós"
+        ],
+        "swedish_answers": [
+          "hej då",
+          "farväl"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 36_hej då, farväl"
+      },
+      {
+        "id": "02f5a034b58c548488f4ad64e8af0fc9",
+        "svenska": "jag är här",
+        "accepted_answers": [
+          "estoy aquí"
+        ],
+        "swedish_answers": [
+          "jag är här"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 36_jag är här"
+      },
+      {
+        "id": "7c4a12a9556d558bb6dc40ec0dcd76e3",
+        "svenska": "elever",
+        "accepted_answers": [
+          "alumnos"
+        ],
+        "swedish_answers": [
+          "elever"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska nybörjare - v. 36_elever"
+      }
+    ]
+  },
+  {
+    "id": "95a6bd2a2eb158a285cbd19c17d3af84",
+    "name": "Spanska fortsättning - v. 36",
+    "language": "Spanska",
+    "category": "Spanska fortsättning",
+    "words": [
+      {
+        "id": "6636c05258ef59d1a2008e9f58aefe66",
+        "svenska": "på min fritid brukar jag...",
+        "accepted_answers": [
+          "en mi tiempo libre suelo..."
+        ],
+        "swedish_answers": [
+          "på min fritid brukar jag..."
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_på min fritid brukar jag..."
+      },
+      {
+        "id": "2c1d397eb7ff53e39733a580a2c45597",
+        "svenska": "vara med mina vänner",
+        "accepted_answers": [
+          "estar con mis amigos"
+        ],
+        "swedish_answers": [
+          "vara med mina vänner"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_vara med mina vänner"
+      },
+      {
+        "id": "1dbff306c9ed58fda3012efefa9bdbb3",
+        "svenska": "spela ett instrument",
+        "accepted_answers": [
+          "tocar un instrumento"
+        ],
+        "swedish_answers": [
+          "spela ett instrument"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_spela ett instrument"
+      },
+      {
+        "id": "200d8d2f7c67588193882823ce77a9a3",
+        "svenska": "spela tv-spel",
+        "accepted_answers": [
+          "jugar a videojuegos"
+        ],
+        "swedish_answers": [
+          "spela tv-spel"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_spela tv-spel"
+      },
+      {
+        "id": "e7e6b7b4cf805c09870f67efd9f44818",
+        "svenska": "surfa på nätet, surfa på internet",
+        "accepted_answers": [
+          "navegar por la red",
+          "navegar por internet"
+        ],
+        "swedish_answers": [
+          "surfa på nätet",
+          "surfa på internet"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_surfa på nätet, surfa på internet"
+      },
+      {
+        "id": "019e41514f7c54b88a441cd553ea4d6e",
+        "svenska": "rida",
+        "accepted_answers": [
+          "montar a caballo"
+        ],
+        "swedish_answers": [
+          "rida"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_rida"
+      },
+      {
+        "id": "73fe048cb1e45c5280dab91f54ec75cd",
+        "svenska": "gå ut med hunden",
+        "accepted_answers": [
+          "salir con el perro"
+        ],
+        "swedish_answers": [
+          "gå ut med hunden"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_gå ut med hunden"
+      },
+      {
+        "id": "46c9cf6299975b6da06522c91c1c30e9",
+        "svenska": "åka till centrum, gå till centrum",
+        "accepted_answers": [
+          "ir al centro"
+        ],
+        "swedish_answers": [
+          "åka till centrum",
+          "gå till centrum"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_åka till centrum, gå till centrum"
+      },
+      {
+        "id": "ed0d2e3a23ac560db86b1804573884b9",
+        "svenska": "läsa böcker",
+        "accepted_answers": [
+          "leer libros"
+        ],
+        "swedish_answers": [
+          "läsa böcker"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_läsa böcker"
+      },
+      {
+        "id": "1c872582e6f65472b2e48e0f58645eac",
+        "svenska": "rita, teckna",
+        "accepted_answers": [
+          "dibujar"
+        ],
+        "swedish_answers": [
+          "rita",
+          "teckna"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_rita, teckna"
+      },
+      {
+        "id": "0b7e1e9c7b8a53d496135623db881108",
+        "svenska": "plugga, studera",
+        "accepted_answers": [
+          "estudiar"
+        ],
+        "swedish_answers": [
+          "plugga",
+          "studera"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_plugga, studera"
+      },
+      {
+        "id": "646d08711618511884e9fccf5ebc2077",
+        "svenska": "chatta",
+        "accepted_answers": [
+          "chatear"
+        ],
+        "swedish_answers": [
+          "chatta"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_chatta"
+      },
+      {
+        "id": "6f6c7df05894532daf295f046ecc04ca",
+        "svenska": "arbeta, jobba",
+        "accepted_answers": [
+          "trabajar"
+        ],
+        "swedish_answers": [
+          "arbeta",
+          "jobba"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_arbeta, jobba"
+      },
+      {
+        "id": "8f01f48e5a7355e4b7a4965251051560",
+        "svenska": "sova",
+        "accepted_answers": [
+          "dormir"
+        ],
+        "swedish_answers": [
+          "sova"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_sova"
+      },
+      {
+        "id": "3650691e5f445de1a2d75fffb1c34366",
+        "svenska": "vila",
+        "accepted_answers": [
+          "descansar"
+        ],
+        "swedish_answers": [
+          "vila"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_vila"
+      },
+      {
+        "id": "446167764fb751fc90b0c5dad5203d4b",
+        "svenska": "laga mat",
+        "accepted_answers": [
+          "cocinar"
+        ],
+        "swedish_answers": [
+          "laga mat"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_laga mat"
+      },
+      {
+        "id": "a7126646f10652678d33063b4f1f0f60",
+        "svenska": "dansa",
+        "accepted_answers": [
+          "bailar"
+        ],
+        "swedish_answers": [
+          "dansa"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_dansa"
+      },
+      {
+        "id": "ef8af9197e625a94b953c70edfb57fd5",
+        "svenska": "träna",
+        "accepted_answers": [
+          "entrenar"
+        ],
+        "swedish_answers": [
+          "träna"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_träna"
+      },
+      {
+        "id": "03b67177369f5a7e9a174d7862e0cc30",
+        "svenska": "titta på film",
+        "accepted_answers": [
+          "mirar películas"
+        ],
+        "swedish_answers": [
+          "titta på film"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_titta på film"
+      },
+      {
+        "id": "9b8ce0c359415fbea407cc740cb06a78",
+        "svenska": "spela fotboll",
+        "accepted_answers": [
+          "jugar al fútbol"
+        ],
+        "swedish_answers": [
+          "spela fotboll"
+        ],
+        "memory_tip": "",
+        "legacy_key": "Spanska fortsättning - v. 36_spela fotboll"
+      }
+    ]
+  }
+]
