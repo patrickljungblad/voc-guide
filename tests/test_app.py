@@ -14,7 +14,9 @@ def app(tmp_path, monkeypatch):
     monkeypatch.setenv('DATABASE_PATH',str(tmp_path/'app.sqlite3'))
     monkeypatch.setenv('BACKEND','sqlite')
     monkeypatch.setenv('ADMIN_PASSWORD','a-long-test-password')
-    return AppTest.from_file(APP, default_timeout=10).run()
+    at = AppTest.from_file(APP, default_timeout=10).run()
+    next(s for s in at.selectbox if s.label == 'Välj kurs').set_value('Spanska fortsättning').run()
+    return at
 
 
 def click(at,label):
@@ -236,4 +238,32 @@ def test_feedback_is_rendered_before_remote_save(tmp_path,monkeypatch):
     assert events.count('save') == 1
     assert at.session_state.pending is None
     assert at.session_state.session.answered == 1
+    assert not at.exception
+
+
+def test_course_is_required_first_and_kept_when_returning(tmp_path, monkeypatch):
+    monkeypatch.setenv('DATABASE_PATH', str(tmp_path / 'course.sqlite3'))
+    monkeypatch.setenv('BACKEND', 'sqlite')
+    at = AppTest.from_file(APP).run()
+    course = next(s for s in at.selectbox if s.label == 'Välj kurs')
+    assert course.value is None and not any(b.label == 'Öppna listan' for b in at.button)
+    course.set_value('Spanska nybörjare').run()
+    click(at, 'Öppna listan')
+    click(at, '← Alla gloslistor')
+    assert next(s for s in at.selectbox if s.label == 'Välj kurs').value == 'Spanska nybörjare'
+    assert any(b.label == 'Öppna listan' for b in at.button) and not at.exception
+
+
+def test_teacher_creates_ab_pdfs_and_hides_old_results_after_option_change(tmp_path, monkeypatch):
+    at = app(tmp_path, monkeypatch)
+    click(at, 'Logga in')
+    next(t for t in at.text_input if t.label == 'Lärarlösenord').set_value('a-long-test-password')
+    click(at, 'Öppna lärarpanelen')
+    next(c for c in at.checkbox if c.label == 'Skapa A- och B-version').check().run()
+    click(at, 'Skapa PDF')
+    assert at.session_state.print_result[1].startswith(b'%PDF')
+    assert at.session_state.print_result[2].startswith(b'%PDF')
+    assert any('Förhöret och facit är klara' in s.value for s in at.success)
+    next(r for r in at.radio if r.label == 'Språkriktning för förhöret').set_value('reverse').run()
+    assert not any('Förhöret och facit är klara' in s.value for s in at.success)
     assert not at.exception
