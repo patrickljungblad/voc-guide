@@ -1,9 +1,10 @@
 """Start: streamlit run glostranare_web-v4.py"""
 import streamlit as st
+from html import escape
 from data.vocabulary import builtin_lists, validate_lists
 from services.config import database
 from services.database import ServiceError, SessionExpired
-from ui.style import apply_style
+from ui.style import apply_style, html
 from ui.login import login
 from ui.library import library
 from ui.training import training
@@ -11,7 +12,6 @@ from ui.teacher import teacher
 from ui.list_page import list_page
 
 st.set_page_config(page_title="GlosFlow – öva och minns", page_icon="🌱", layout="centered", initial_sidebar_state="collapsed")
-apply_style()
 
 for name, default in {"user": None, "progress": {}, "revision": 0, "list_id": None,
                       "session": None, "direction": "forward", "pending": None,
@@ -37,13 +37,21 @@ if st.session_state.user is None:
     st.session_state.user = {"name": "Gäst", "role": "guest"}
 
 user = st.session_state.user
+with st.container(key="app_header"):
+    brand, account = st.columns([3, 1.1], vertical_alignment="center")
+    with brand:
+        apply_style()
+    with account, st.container(key="account_nav"):
+        if user["role"] == "guest" and not st.session_state.show_login:
+            if st.button("Logga in", key="open_login"):
+                st.session_state.show_login = True
+                st.rerun()
+        else:
+            label = "Lärarkonto" if user["role"] == "teacher" else user["name"]
+            html(f'<div class="account-label">{escape(label)}</div>')
 st.sidebar.write(f"**{user['name']}**")
 if user["role"] == "guest":
     st.sidebar.caption("Gästläge · framsteg sparas bara under besöket")
-    list_view = st.session_state.list_id is not None and st.session_state.view == "list" and not st.session_state.show_login
-    if not list_view and st.button("Logga in för att spara framsteg", disabled=bool(st.session_state.pending)):
-        st.session_state.show_login = True
-        st.rerun()
     if st.sidebar.button("Elev- eller lärarinloggning"):
         st.session_state.show_login = True
         st.rerun()
