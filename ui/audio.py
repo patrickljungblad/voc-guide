@@ -2,8 +2,9 @@
 import json
 import re
 from pathlib import Path
+import streamlit as st
 import streamlit.components.v1 as components
-from services.speech import load_bank, audio_for
+from services.speech import load_bank, audio_for, valid_clip
 
 LANGUAGES = {"spanska": "es-MX", "spanish": "es-MX", "español": "es-MX",
              "engelska": "en-GB", "english": "en-GB", "svenska": "sv-SE",
@@ -21,8 +22,21 @@ def language_tag(language):
     return None
 
 
-def speech_html(rows, language, table=False):
+@st.cache_data(ttl=3600, show_spinner=False)
+def saved_clips():
+    """AI-röster som läraren sparat i databasen. Hämtas en gång i timmen och delas av alla elever."""
+    try:
+        from services.config import database
+        clips = database().get_audio() or {}
+    except Exception:
+        # Uppläsningen får aldrig stoppa övningen; då används enhetens röst.
+        return {}
+    return {k: c for k, c in clips.items() if valid_clip(k, c)}
+
+
+def speech_html(rows, language, table=False, extra_clips=None):
     bank = load_bank()
+    bank["clips"].update(extra_clips or {})
     clips = {}
     tag = language_tag(language)
     for row in rows:
@@ -42,11 +56,11 @@ def speech_html(rows, language, table=False):
 
 
 def listen(text, language):
-    components.html(speech_html([{"target": [text]}], language),
+    components.html(speech_html([{"target": [text]}], language, extra_clips=saved_clips()),
                     height=min(420, 160 + (len(text) // 30) * 24), scrolling=True)
 
 
 def word_table(words, language):
     rows = [{"svenska": w["svenska"], "target": w["accepted_answers"]} for w in words]
-    components.html(speech_html(rows, language, table=True),
+    components.html(speech_html(rows, language, table=True, extra_clips=saved_clips()),
                     height=min(660, 190 + 92 * len(rows)), scrolling=True)

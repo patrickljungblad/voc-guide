@@ -5,6 +5,7 @@ import json
 import os
 import re
 import threading
+import time
 import unicodedata
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -58,6 +59,28 @@ def load_bank():
     return {"version": 1, "clips": clips, "preferred": preferred}
 
 
+def valid_clip(key, clip):
+    """Samma kontroll för ljud från fil och från databasen: rätt nyckel, rimlig storlek, giltig base64."""
+    if not isinstance(clip, dict) or not all(isinstance(clip.get(k), str) for k in ("text", "language", "voice", "mp3")):
+        return False
+    if key != clip_key(clip["text"], clip["language"]) or not 1 <= len(clip["mp3"]) <= 700_000:
+        return False
+    try:
+        base64.b64decode(clip["mp3"], validate=True)
+    except ValueError:
+        return False
+    return True
+
+
+def make_clip(text, language, voice, api_key, region):
+    """Skapar ett nytt ljud hos Azure och returnerar (nyckel, ljud) att spara i databasen."""
+    if voice not in VOICES.get(language, {}):
+        raise ServiceError("Rösten matchar inte det valda språket.")
+    audio = synthesize(text, voice, api_key, region)
+    return clip_key(text, language), {"text": text.strip(), "language": language, "voice": voice,
+                                      "mp3": base64.b64encode(audio).decode("ascii")}
+
+
 def store_clips(clips, preferred=None):
     with LOCK:
         bank = load_bank()
@@ -73,6 +96,10 @@ def store_clips(clips, preferred=None):
         finally:
             temp.unlink(missing_ok=True)
     return bank
+
+
+class RateLimited(ServiceError):
+    """Azure tillåter ett begränsat antal ljud per minut (gratisnivån: 20). Vänta och försök igen."""
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -102,7 +129,7 @@ def synthesize(text, voice, api_key, region):
     except HTTPError as error:
         message = {401: "Kontrollera ljudtjänstens nyckel och region.", 403: "Ljudtjänsten nekade åtkomst. Kontrollera abonnemang och region.",
                    429: "Ljudtjänstens gräns har nåtts. Vänta en stund och försök igen."}.get(error.code, "Ljudtjänsten kunde inte skapa ljudet. Försök igen.")
-        raise ServiceError(message) from None
+        raise (RateLimited if error.code == 429 else ServiceError)(message) from None
     except (URLError, TimeoutError, OSError):
         raise ServiceError("Ljudtjänsten kunde inte nås. Redan skapade ljud finns kvar; försök igen senare.") from None
 
@@ -129,3 +156,36 @@ def audio_for(text, language, bank):
         if clip:
             return {"src": "data:audio/mpeg;base64," + clip["mp3"], "voice": clip["voice"]}
     return None
+
+
+def generate(missing, api_key, region, save, on_progress=None, pause=3.1, sleep=time.sleep):
+    """Skapar saknade ljud i lugn takt och sparar dem i omgångar.
+
+    Azures gratisnivå tillåter 20 ljud per minut, därför en kort paus mellan varje ljud och
+    längre väntan om tjänsten ändå säger stopp. Det som hunnit skapas sparas alltid, även vid fel.
+    """
+    batch, done = {}, 0
+    try:
+        for index, (text, language, voice) in enumerate(missing):
+            for attempt in range(4):
+                try:
+                    clip_id, clip = make_clip(text, language, voice, api_key, region)
+                    break
+                except RateLimited:
+                    if attempt == 3:
+                        raise
+                    sleep(20 * (attempt + 1))
+            batch[clip_id] = clip
+            done += 1
+            # Databasen tar emot högst ca 1 MB per anrop.
+            if len(batch) >= 15 or sum(len(c["mp3"]) for c in batch.values()) > 600_000:
+                save(batch)
+                batch = {}
+            if on_progress:
+                on_progress(done, len(missing))
+            if index < len(missing) - 1:
+                sleep(pause)
+    finally:
+        if batch:
+            save(batch)
+    return done

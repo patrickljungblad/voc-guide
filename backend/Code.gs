@@ -3,6 +3,7 @@ const USER_HEADERS = ['id', 'name', 'group', 'salt', 'digest', 'revision', 'oper
 const SESSION_HEADERS = ['digest', 'user_id', 'role', 'expires'];
 const FAILURE_HEADERS = ['identity', 'count', 'started'];
 const LIST_HEADERS = ['id', ...Array.from({length: 10}, (_, i) => 'json_' + i)];
+const AUDIO_HEADERS = ['key', 'text', 'language', 'voice', ...Array.from({length: 5}, (_, i) => 'mp3_' + i)];
 
 function properties() { return PropertiesService.getScriptProperties(); }
 function fail(message, code) { const e = new Error(message); e.code = code || 'error'; throw e; }
@@ -72,6 +73,36 @@ function validLists(lists) {
   });
   return lists;
 }
+// Ljud från Azure Speech som läraren har skapat. Ett ljud per rad, mp3 som base64 i upp till fem celler.
+function validClip(key, c) {
+  if (!/^[0-9a-f]{64}$/.test(key) || !c || typeof c !== 'object') fail('Ogiltigt ljud.');
+  if (typeof c.text !== 'string' || !c.text.trim() || c.text.length > 300 || c.text.startsWith('=')) fail('Ogiltigt ljud.');
+  if (typeof c.language !== 'string' || !/^[a-z]{2}-[A-Z]{2}$/.test(c.language)) fail('Ogiltigt ljud.');
+  if (typeof c.voice !== 'string' || !/^[a-z]{2}-[A-Z]{2}-[A-Za-z]+Neural$/.test(c.voice)) fail('Ogiltigt ljud.');
+  if (typeof c.mp3 !== 'string' || c.mp3.length > 200000 || !/^[A-Za-z0-9+/]+=*$/.test(c.mp3)) fail('Ogiltigt ljud.');
+  return [key, c.text, c.language, c.voice, ...Array.from({length: 5}, (_, i) => c.mp3.slice(i*40000, (i+1)*40000))];
+}
+function audioClips() {
+  const clips = {};
+  rows(sheet('Audio_v2', AUDIO_HEADERS)).forEach(r => {
+    clips[r[0]] = {text: String(r[1]), language: String(r[2]), voice: String(r[3]), mp3: r.slice(4, 9).join('')};
+  });
+  return clips;
+}
+function saveAudio(clips) {
+  if (!clips || typeof clips !== 'object' || Array.isArray(clips) || Object.keys(clips).length > 60) fail('Ogiltigt ljud.');
+  const s = sheet('Audio_v2', AUDIO_HEADERS);
+  const existing = rows(s).map(r => r[0]);
+  Object.entries(clips).forEach(([key, clip]) => {
+    const row = validClip(key, clip);
+    const i = existing.indexOf(key);
+    const at = i >= 0 ? i+2 : s.getLastRow()+1;
+    // Texten lagras som text, aldrig som kalkylbladsformel.
+    s.getRange(at, 1, 1, AUDIO_HEADERS.length).setNumberFormat('@').setValues([row]);
+    if (i < 0) existing.push(key);
+  });
+  return Object.keys(clips).length;
+}
 function login(identity, valid, userId, role, name) {
   const f = sheet('Failures_v2', FAILURE_HEADERS);
   const data = rows(f);
@@ -113,6 +144,7 @@ function writeProgress(users, index, row, progress, expected, operation) {
 function dispatch(p) {
   const action = p.action;
   if (action === 'get_lists') return rows(sheet('Lists_v2', LIST_HEADERS)).map(r => JSON.parse(r.slice(1).join('')));
+  if (action === 'get_audio') return audioClips();
   if (action === 'teacher_login') {
     const configured = properties().getProperty('ADMIN_PASSWORD');
     if (!configured || configured.length < 12) fail('Lärarlösenord är inte konfigurerat (minst 12 tecken).');
@@ -164,6 +196,7 @@ function dispatch(p) {
     if (i < 0) fail('Kontot saknas.');
     return writeProgress(users, i, data[i], p.progress, p.expected_revision, '');
   }
+  if (action === 'save_audio') return saveAudio(p.clips);
   if (action === 'save_lists') {
     const values = validLists(p.lists).map(v => [v.id, ...chunks(v,10)]);
     const s = sheet('Lists_v2', LIST_HEADERS);
