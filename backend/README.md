@@ -2,7 +2,13 @@
 
 V2 har en ny backend. **Byt inte ut din gamla backend innan du har säkerhetskopierat och verifierat den nya versionen.** Använd ett separat kalkylblad och ett separat Apps Script-projekt.
 
-## Installation
+## Uppdatering av en befintlig GlosFlow 2-backend
+
+För namn/PIN-inloggning: ersätt Code.gs i det befintliga Apps Script-projektet och välj Distribuera → Hantera distributioner → aktiv distribution → pennan → Version: Ny version → Distribuera. Behåll samma kalkylblad och Script Properties, inklusive PIN_PEPPER. Se ../UPPDATERING.md för hela arbetsgången. Detta kräver inget nytt kalkylblad när du redan använder v2-tabellerna.
+
+`authenticate_student` tar namn och PIN, söker exakt en matchning och returnerar samma elev-ID, klass och tokenformat som tidigare. `authenticate` med klass finns kvar för förnyelse av en redan identifierad session. Båda anropen delar spärren per elevnamn. Nya konton kan inte dela både namn och PIN-kod; äldre dubbla kombinationer avvisas vid namn/PIN-inloggning.
+
+## Installation från en äldre version
 
 1. Skapa ett nytt, privat Google-kalkylblad. Kopiera kalkylbladets ID från adressen mellan `/d/` och `/edit`.
 2. Öppna Tillägg → Apps Script. Ersätt innehållet i `Code.gs` med projektets [Code.gs](Code.gs).
@@ -39,7 +45,7 @@ Vid kodändringar i Apps Script: uppdatera distributionen till en ny version, an
 
 ## Säkerhet och sparning
 
-API-nyckeln skickas från Streamlit-servern i POST-kroppen, aldrig i adressen eller till elevens webbläsare. Eleven får bara sin egen sessionstoken och progression. PIN-koder lagras som en saltad HMAC-SHA256 med separat serverhemlighet; enbart kalkylbladsinnehållet räcker inte för att pröva PIN-koder offline. Kalkylblad och Script Properties ska vara privata. Sessioner lagras som hashade tokens och löper ut efter åtta timmar. Inloggning spärras efter fem fel i 15 minuter per konto.
+API-nyckeln skickas från Streamlit-servern i POST-kroppen, aldrig i adressen eller till elevens webbläsare. Eleven får bara sin egen sessionstoken och progression. PIN-koder lagras som en saltad HMAC-SHA256 med separat serverhemlighet; enbart kalkylbladsinnehållet räcker inte för att pröva PIN-koder offline. Kalkylblad och Script Properties ska vara privata. Sessioner lagras som hashade tokens och löper ut efter åtta timmar. Inloggning spärras efter fem fel i 15 minuter per elevnamn (lärarinloggningen har en separat spärr).
 
 Fyra siffror är ett enkelt klassrumsinlogg, inte stark autentisering för känslig information. Använd endast namn/alias, klass och övningsdata som behövs för verktyget. Undvik annan elevinformation. Dela inte kalkylbladet med elever. Exportfiler med elevprogression hanteras som privata säkerhetskopior.
 

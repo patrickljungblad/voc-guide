@@ -120,13 +120,16 @@ function dispatch(p) {
   }
   const users = sheet('Users_v2', USER_HEADERS);
   const data = rows(users);
-  if (action === 'authenticate') {
+  if (action === 'authenticate' || action === 'authenticate_student') {
     const name = String(p.name || '').trim(), group = String(p.group || '').trim();
-    if (name.length > 100 || group.length > 100 || String(p.pin || '').length > 4) fail('Felaktiga inloggningsuppgifter.');
-    const row = data.find(r => r[1] === name && r[2] === group);
-    const digest = pinDigest(String(p.pin || ''), row ? row[3] : 'unknown');
-    const result = login('student:' + name + '\0' + group, !!row && equal(digest, row[4]), row ? row[0] : '', 'student', name);
-    return {...result, group, id:row[0]};
+    const pin = String(p.pin || '');
+    if (!name || name.length > 100 || group.length > 100 || !/^\d{4}$/.test(pin)) fail('Ange namn och exakt fyra siffror i PIN-koden.');
+    const candidates = data.filter(r => r[1] === name && (action === 'authenticate_student' || r[2] === group));
+    const matches = candidates.filter(r => equal(pinDigest(pin, r[3]), r[4]));
+    if (!candidates.length) pinDigest(pin, 'unknown');
+    const row = matches.length === 1 ? matches[0] : null;
+    const result = login('student:' + name, !!row, row ? row[0] : '', 'student', name);
+    return {...result, group:row[2], id:row[0]};
   }
   if (action === 'logout') {
     session(p.token, false);
@@ -148,6 +151,7 @@ function dispatch(p) {
     const name = String(p.name || '').trim(), group = String(p.group || '').trim(), pin = String(p.pin || '');
     if (!name || !group || name.startsWith('=') || group.startsWith('=') || name.length > 100 || group.length > 100 || !/^\d{4}$/.test(pin)) fail('Ange namn, klass och fyra siffror i PIN-koden. Namn och klass får inte börja med =.');
     if (data.some(r => r[1] === name && r[2] === group)) fail('Det namnet finns redan i klassen.');
+    if (data.some(r => r[1] === name && equal(pinDigest(pin, r[3]), r[4]))) fail('Samma namn och PIN-kod används redan. Välj en annan PIN-kod eller ett tydligare elevnamn.');
     const salt = Utilities.getUuid();
     const row = [Utilities.getUuid(), name, group, salt, pinDigest(pin, salt), 0, '', ...chunks({}, 20)];
     // Namn/klass från användare lagras som text, aldrig som kalkylbladsformler.
