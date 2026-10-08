@@ -2,7 +2,19 @@
 
 **För ditt befintliga repository `patrickljungblad/voc-guide`: börja med [BORJA_HAR.md](BORJA_HAR.md). Paketet använder startfilen `glostranare_web-v4.py`.**
 
-Ett lugnt, webbaserat glosverktyg för elever: öva, använd ett minnestips och se hur orden flyttar mellan tre Leitner-lådor. Byggt med Streamlit och Python 3.12.
+**Har du redan installerat GlosFlow 2? Följ [UPPDATERING.md](UPPDATERING.md) för delbara listor, träning utan konto och uppläsning.**
+
+Ett lugnt, webbaserat glosverktyg för elever: öppna en delad gloslista, lyssna, öva och se hur orden flyttar mellan tre Leitner-lådor. Byggt med Streamlit och Python 3.12. Inget konto behövs för att se glosor eller öva. Befintliga elevkonton används för beständig sparning.
+
+Logotypen i `ui/glosflow-logo.svg` är en skalbar blå–grön G-symbol med ett blad och en GlosFlow-text. Sidhuvudet läser in den som en data-URI, så ingen separat bildserver behövs. Behåll SVG-filen tillsammans med `ui/style.py` vid uppladdning.
+
+## Gloslistor och uppläsning
+
+Varje lista har en delbar adress med sitt stabila ID: `?lista=LIST_ID`. Öppna listan och kopiera adressen under **Dela gloslistan**, eller använd länken i lärarpanelen. Eleven ser glosorna direkt och väljer **Öva denna lista**. Alla listor är synliga för den som kommer åt appen; elevdata kräver inloggning. Appens eventuella åtkomstbegränsning i Streamlit gäller även delade länkar.
+
+Glosor på svenska och målspråket kan läsas upp i normal eller långsam takt. Rösterna hämtas av webbläsarens Speech Synthesis API; en latinamerikansk spansk röst prioriteras när den finns. Tillgänglighet och röst varierar mellan enheter. Det finns inget nytt ljudabonnemang eller anrop till appens databas vid uppspelning. Webbläsarens röstleverantör kan använda sin egen onlinetjänst.
+
+Det går att lyssna efter rättning, på vända ordkort och som uttrycklig hjälp under en fråga. Hjälp genom uppläsning ger inget avancemang och ordet upprepas i omgången. Gästträning bevaras i webbsessionen. Vid inloggning hämtas kontots sparade framsteg och aktuell gästomgång avslutas; gästframsteg förs inte över. Egen kontoregistrering och inspelad uttalsövning ingår ännu inte.
 
 ## Kom igång på din dator
 
@@ -78,7 +90,7 @@ De två översättningsriktningarna har **separata framsteg**. Svenska → spans
 
 Alla åtta ursprungliga listor med totalt 125 glosor följer med. List- och ord-ID är stabila och lagrade i JSON. Att byta namn på en lista raderar inte framstegen. Några tydliga stavfel är rättade (`teléfono`, `adiós`) och alternativ som `computadora`/`ordenador` godkänns var för sig. Den ursprungliga formen `tenéis` finns kvar.
 
-Läraren kan skapa listor genom att klistra in två tabbseparerade kolumner från ett kalkylblad. Använd `|` mellan alternativa svar. En tredje kolumn kan innehålla ett minnestips. Listor kan ändras i en tabell, exporteras och importeras som JSON. Elever som redan har biblioteket öppet hämtar ändringar när de loggar ut och in igen.
+Läraren kan skapa listor genom att klistra in två tabbseparerade kolumner från ett kalkylblad. Använd `|` mellan alternativa svar. En tredje kolumn kan innehålla ett minnestips. Listor kan ändras i en tabell, exporteras och importeras som JSON. En redan öppen webbsession behåller sin listkopia; öppna ett nytt besök eller logga ut för att hämta senaste versionen.
 
 Ändra befintliga ord för att rätta stavning eller lägga till en alternativ översättning. Om betydelsen ändras: skapa en ny rad och ta bort den gamla så att glosan får ett nytt ID. Försök inte återanvända ett gammalt ID för ett annat ord.
 
@@ -94,7 +106,7 @@ Ingen kod i detta projekt skriver till din tidigare databas eller flyttar verkli
 
 ## Sparning och återhämtning
 
-Ett bedömt svar ändrar progressionen en gång och sparas innan eleven går vidare. Varje snapshot har en förväntad revision och ett operations-ID. Backend serialiserar skrivningar och avvisar en för gammal revision. Ett nytt försök att spara samma operation är säkert även om nätverksanropet hann slutföras innan svaret försvann.
+Ett bedömt svar ändrar progressionen en gång. Rättningen visas före nätverksanropet till databasen, så eleven får återkoppling medan framstegen sparas. Nästa ord öppnas när sparningen är klar. Varje snapshot har en förväntad revision och ett operations-ID. Backend serialiserar skrivningar och avvisar en för gammal revision. Ett nytt försök att spara samma operation är säkert även om nätverksanropet hann slutföras innan svaret försvann.
 
 Vid nätverksfel behålls svaret i sessionen. Eleven kan försöka spara igen eller hämta en JSON-kopia. Vid konflikt behöver eleven hämta den sparade versionen; en lokal kopia erbjuds först. Utgången inloggning kan förnyas med PIN utan att det osparade svaret raderas. Om hela webbsessionen försvinner innan sparning eller export går osparade svar förlorade.
 

@@ -4,6 +4,8 @@ Detta paket är anpassat till `patrickljungblad/voc-guide` och startfilen `glost
 
 Du kan göra uppladdningen helt i webbläsaren. Streamlit installerar programmets paket på sin server; du behöver inte installera Python på datorn.
 
+**Om din GlosFlow 2-app redan fungerar med Google Sheets: använd i stället `UPPDATERING.md`. Ingen ny backendkoppling behövs för delbara listor och lyssna.**
+
 ## 1. Packa upp
 
 1. Ladda ner den uppdaterade ZIP-filen och dubbelklicka på den.
@@ -26,7 +28,7 @@ GitHub ersätter filerna med samma namn och lägger till de nya mapparna. Din be
 
 Öppna din vanliga Streamlit-adress efter att ändringen har sparats. Den nya versionen ska starta från samma `glostranare_web-v4.py`. Första omstarten kan ta lite tid medan paketen installeras.
 
-Välj **Prova som gäst** för att kontrollera gränssnitt och glosträning.
+Glosbiblioteket visas direkt. Öppna en lista och välj **Öva denna lista** för att kontrollera glosträningen utan konto.
 
 Om appen visar ett fel: kopiera felmeddelandet eller skicka en bild av det. Felmeddelandet hjälper till att avgöra om det gäller uppladdning, Python-version eller konfiguration.
 
