@@ -31,6 +31,12 @@ class SheetsDatabase:
     def authenticate(self, name, group, pin):
         return self.request("authenticate", name=name.strip(), group=group.strip(), pin=pin)
 
+    def authenticate_student(self, name, pin):
+        try:
+            return self.request("authenticate_student", name=name.strip(), pin=pin)
+        except SessionExpired:
+            raise ServiceError("Elevinloggningen behöver den nya Google Apps Script-versionen. Be läraren följa UPPDATERING.md.") from None
+
     def teacher_login(self, password):
         return self.request("teacher_login", password=password)
 

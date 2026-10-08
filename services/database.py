@@ -94,7 +94,8 @@ class LocalDatabase:
                 raise ServiceError("Felaktiga inloggningsuppgifter.")
             db.execute("DELETE FROM failures WHERE identity=?", (identity,))
             token = secrets.token_urlsafe(32)
-            db.execute("INSERT INTO sessions VALUES(?,?,?,?)", (token_hash(token), user_id, role, now + 28800))
+            resolved_id = user_id() if callable(user_id) else user_id
+            db.execute("INSERT INTO sessions VALUES(?,?,?,?)", (token_hash(token), resolved_id, role, now + 28800))
         return {"token": token, "name": name, "role": role}
 
     def authenticate(self, name, group, pin):
@@ -102,10 +103,30 @@ class LocalDatabase:
         with self.connection() as db:
             user = db.execute("SELECT * FROM users WHERE name=? AND class_name=?", (name, group)).fetchone()
         salt = user["salt"] if user else "00" * 16
-        result = self._login("student:" + name + "\0" + group,
+        result = self._login("student:" + name,
             lambda: hmac.compare_digest(pin_hash(pin, salt), user["pin_hash"] if user else "0" * 128),
             user["id"] if user else "", "student", name)
         return {**result, "group": group, "id": user["id"]}
+
+    def authenticate_student(self, name, pin):
+        name = name.strip()
+        if not name or len(name) > 100 or not pin.isascii() or not pin.isdigit() or len(pin) != 4:
+            raise ServiceError("Ange namn och exakt fyra siffror i PIN-koden.")
+        with self.connection() as db:
+            candidates = db.execute("SELECT * FROM users WHERE name=?", (name,)).fetchall()
+        matches = []
+        def check():
+            for candidate in candidates:
+                if hmac.compare_digest(pin_hash(pin, candidate["salt"]), candidate["pin_hash"]):
+                    matches.append(candidate)
+            if not candidates:
+                pin_hash(pin, "00" * 16)
+            return len(matches) == 1
+        # Choose exactly one account before issuing a session under the login lock.
+        result = self._login("student:" + name, check,
+                             lambda: matches[0]["id"], "student", name)
+        user = matches[0]
+        return {**result, "group": user["class_name"], "id": user["id"]}
 
     def teacher_login(self, password):
         if not self.admin_password:
@@ -131,7 +152,11 @@ class LocalDatabase:
         digest = pin_hash(pin, salt)
         try:
             with self.connection() as db:
+                db.execute("BEGIN IMMEDIATE")
                 self._session(db, token, teacher=True)
+                existing = db.execute("SELECT salt,pin_hash FROM users WHERE name=?", (name.strip(),)).fetchall()
+                if any(hmac.compare_digest(pin_hash(pin, row["salt"]), row["pin_hash"]) for row in existing):
+                    raise ServiceError("Samma namn och PIN-kod används redan. Välj en annan PIN-kod eller ett tydligare elevnamn.")
                 db.execute("INSERT INTO users(id,name,class_name,salt,pin_hash) VALUES(?,?,?,?,?)", (uuid4().hex, name.strip(), group.strip(), salt, digest))
         except sqlite3.IntegrityError:
             raise ServiceError("Det namnet finns redan i klassen.") from None
