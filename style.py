@@ -1,14 +1,14 @@
+import base64
+from pathlib import Path
 import streamlit as st
 
 
 def apply_style():
+    logo = base64.b64encode(Path(__file__).with_name("glosflow-logo.svg").read_bytes()).decode("ascii")
     markup = '''<style>
     .block-container {max-width: 1040px; padding-top: 5rem;}
-    .brand {display:flex; gap:12px; align-items:center; margin-bottom:20px;}
-    .brand-mark {background:linear-gradient(135deg,#2563eb,#059669); color:white;
-        border-radius:14px; padding:8px 17px; font-size:28px; font-weight:800;}
-    .brand-name {font-size:32px; font-weight:800; color:#164e63;}
-    .brand-note {font-size:14px; color:#475569;}
+    .brand {margin-bottom:20px; max-width:420px;}
+    .brand img {display:block; width:100%; height:auto;}
     .word-card {background:linear-gradient(135deg,#eff6ff,#f0fdfa); color:#164e63;
         padding:36px 24px; border:1px solid #cbd5e1; border-radius:20px;
         text-align:center; margin:20px 0; font-size:32px; font-weight:700; overflow-wrap:anywhere;}
@@ -20,9 +20,9 @@ def apply_style():
     .box.amber {border-bottom:5px solid #d97706;}
     .box.green {border-bottom:5px solid #059669;}
     @media(max-width:600px) {.box {font-size:13px;} .word-card {font-size:26px; padding:24px 14px;}}
-    </style>
-    <div class="brand"><div class="brand-mark">G</div><div>
-    <div class="brand-name">GlosFlow</div><div class="brand-note">Öva. Minns. Se dina framsteg.</div></div></div>'''
+    </style>'''
+    # Data-URI fungerar utan en separat webbserver för bildfiler.
+    markup += f'<div class="brand"><img src="data:image/svg+xml;base64,{logo}" width="420" height="100" alt="GlosFlow – Öva. Minns. Se dina framsteg."></div>'
     st.markdown("\n".join(line.strip() for line in markup.splitlines()), unsafe_allow_html=True)
 
 
