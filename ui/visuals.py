@@ -16,7 +16,7 @@ def symbol(name="book"):
 
 def library_hero():
     html('''<div class="hero"><div>
-    <div class="eyebrow">Små omgångar. Nya möjligheter.</div>
+    <div class="eyebrow">Öva. Minns. Se dina framsteg.</div>
     <h1 class="hero-title">Vad vill du<br><span>lära dig idag?</span></h1>
     <p class="hero-copy">Välj en gloslista, lyssna och hitta ditt flow.<br>En liten stund idag gör plats för nästa steg.</p>
     </div><svg class="hero-art" viewBox="0 0 260 200" aria-hidden="true">
@@ -53,6 +53,18 @@ def mini_progress(c, total):
     <i class="red" style="width:{c[1] / total * 100:.2f}%"></i>
     <i class="amber" style="width:{c[2] / total * 100:.2f}%"></i>
     <i class="green" style="width:{c[3] / total * 100:.2f}%"></i></div>''')
+
+
+def practice_progress(c, source, destination):
+    total = max(1, sum(c.values()))
+    html(f'''<div class="practice-progress" role="group" aria-label="Framsteg i hela gloslistan" aria-live="polite">
+    <p class="scope">Hela listan · {escape(source)} → {escape(destination)}</p>
+    <div class="metrics"><span><i class="dot red" aria-hidden="true"></i>Ska övas <b>{c[1]}</b></span>
+    <span><i class="dot amber" aria-hidden="true"></i>På väg <b>{c[2]}</b></span>
+    <span><i class="dot green" aria-hidden="true"></i>Kan bra <b>{c[3]}</b></span></div>
+    <div class="mini-meter" aria-hidden="true"><i class="red" style="width:{c[1] / total * 100:.2f}%"></i>
+    <i class="amber" style="width:{c[2] / total * 100:.2f}%"></i>
+    <i class="green" style="width:{c[3] / total * 100:.2f}%"></i></div></div>''')
 
 
 def word_card(prompt, destination, flipped=False):

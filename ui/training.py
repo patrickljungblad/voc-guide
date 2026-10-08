@@ -12,7 +12,7 @@ from core.trainer import Session, options_for
 from pedagogy.memory_strategies import memory_tip
 from services.database import Conflict, ServiceError, SessionExpired
 from ui.style import boxes, html
-from ui.visuals import word_card, feedback_signal, completion
+from ui.visuals import word_card, feedback_signal, completion, practice_progress
 from ui.audio import listen
 from ui.navigation import all_lists
 
@@ -60,7 +60,7 @@ def pending_notice(db):
     if error[0] == "auth":
         user = st.session_state.user
         with st.form("resume_login"):
-            st.caption(f"Bekräfta PIN-koden för {user['name']} i {user.get('group', '')}. Ditt osparade svar bevaras.")
+            st.caption(f"Bekräfta PIN-koden för {user['name']}. Ditt osparade svar bevaras.")
             pin = st.text_input("PIN-kod igen", type="password", max_chars=4)
             submit = st.form_submit_button("Logga in och spara svaret")
         if submit:
@@ -172,6 +172,10 @@ def training(db, vocab):
     progress = st.session_state.progress
     direction = st.session_state.direction
     session = st.session_state.session
+    if session is not None and not session.done:
+        destination_label = vocab["language"] if direction == "forward" else "svenska"
+        source_label = "svenska" if direction == "forward" else vocab["language"]
+        practice_progress(counts(vocab, progress, direction), source_label, destination_label)
     pending_notice(db)
     if session is None:
         due = due_words(vocab, progress, direction, time.time(), 300)

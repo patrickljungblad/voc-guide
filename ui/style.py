@@ -18,7 +18,7 @@ def apply_style():
     h1,h2,h3,.hero-title {font-family:system-ui,sans-serif; color:var(--gf-ink); letter-spacing:-.045em;}
     h3 {font-size:1.4rem; overflow-wrap:anywhere;}
     [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p {color:var(--gf-muted)!important;}
-    .brand {max-width:320px;}
+    .brand {max-width:340px;}
     .brand img {display:block; width:100%; height:auto;}
     .st-key-app_header {margin-bottom:12px;}
     .st-key-app_header [data-testid="stHorizontalBlock"] {flex-wrap:nowrap!important; align-items:center;}
@@ -88,6 +88,14 @@ def apply_style():
     .box.red {background:#fff7f6; border-color:#efdfdc;} .box.amber {background:#fffaf0; border-color:#eee4ca;}
     .box.green {background:#edf9f3; border-color:#d0eadd;}
     .exercise-meta {display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:13px; color:var(--gf-muted); margin:8px 0;}
+    .practice-progress {max-width:520px; margin:0 0 18px; color:var(--gf-muted);}
+    .practice-progress .scope {font-size:11px; margin:0 0 7px;}
+    .practice-progress .metrics {display:flex; flex-wrap:wrap; gap:6px 18px; font-size:12px; line-height:1.6;}
+    .practice-progress .metrics span {display:inline-flex; align-items:center; gap:5px; white-space:nowrap;}
+    .practice-progress .metrics b {color:var(--gf-ink); font-variant-numeric:tabular-nums;}
+    .practice-progress .dot {display:inline-block; width:7px; height:7px; border-radius:50%; flex-shrink:0;}
+    .practice-progress .red {background:#ce7973;} .practice-progress .amber {background:#c79b35;} .practice-progress .green {background:#299a76;}
+    .practice-progress .mini-meter {margin-top:8px; height:3px;}
     .mode-pill {padding:5px 10px; border-radius:999px; background:#e2f2ed; color:#06745e; font-size:10px; font-weight:750; letter-spacing:.1em;}
     .word-card {position:relative; padding:34px 24px; border:1px solid #cfe1eb; border-radius:25px;
         background:linear-gradient(130deg,#edf5ff,#f0faf5); color:var(--gf-ink); text-align:center; margin:8px 0 12px;
@@ -125,13 +133,14 @@ def apply_style():
         [class*="st-key-vocab_"] h3 {min-height:0;}
         .boxes {gap:7px;} .box {padding:12px 9px;} .box strong {font-size:11px;} .box span {font-size:11px;}
         .word-card {padding:27px 18px; border-radius:21px;}
+        .practice-progress .metrics {gap:6px 12px; font-size:11px;}
         .st-key-answer_quiz [data-testid="stRadio"] [role="radiogroup"] {grid-template-columns:1fr; gap:8px;}
         .st-key-answer_quiz [data-testid="stRadio"] label[data-baseweb="radio"] {padding:12px; min-height:48px;}
         .st-key-practice_start,.st-key-practice_modes,.st-key-list_launch {padding:18px;}
     }
     @media(prefers-reduced-motion:reduce) {*,*:before,*:after {animation:none!important; transition:none!important; scroll-behavior:auto!important;}}
     </style>''')
-    html(f'<div class="brand"><img src="data:image/svg+xml;base64,{logo}" width="420" height="100" alt="GlosFlow – Öva. Minns. Se dina framsteg."></div>')
+    html(f'<div class="brand"><img src="data:image/svg+xml;base64,{logo}" width="430" height="110" alt="GlosFlow"></div>')
 
 
 def boxes(counts):

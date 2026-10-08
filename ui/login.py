@@ -9,13 +9,12 @@ def login(db):
     student, teacher = st.tabs(["Elev", "Lärare"])
     with student:
         with st.form("student_login"):
-            group = st.text_input("Klass", key="login_group", max_chars=100)
             name = st.text_input("Namn", key="login_name", max_chars=100)
             pin = st.text_input("PIN-kod", type="password", max_chars=4)
             submit = st.form_submit_button("Logga in", type="primary", use_container_width=True)
         if submit:
             try:
-                user = db.authenticate(name, group, pin)
+                user = db.authenticate_student(name, pin)
                 saved = db.load_progress(user["token"])
                 st.session_state.user = user
                 st.session_state.progress = saved["progress"]

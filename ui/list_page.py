@@ -14,7 +14,7 @@ def list_page(vocab):
     st.subheader(vocab["name"])
     with st.container(key="list_launch"):
         html('<p class="start-title">Från första ordet till ditt eget flow.</p><p class="start-copy">Lyssna och bekanta dig med orden, eller börja öva direkt.</p>')
-        if st.button("▶ Öva denna lista", type="primary", use_container_width=True):
+        if st.button("▶ Öva på dessa glosor", type="primary", use_container_width=True):
             st.session_state.view = "training"
             st.session_state.session = None
             st.rerun()
