@@ -83,3 +83,17 @@ def completion(practiced, needs_work):
     follow_up = f"{needs_work} av dem ligger i Ska övas. Du får fler chanser att träna dem." if needs_work else "Nästa repetition hjälper dig att minnas längre."
     html(f'''<div class="completion">{symbol('check')}<h2>Snyggt jobbat.</h2>
     <p>Du har tränat <strong>{practiced} olika glosor</strong> i den här omgången.<br>{follow_up}</p></div>''')
+
+
+def box_move(old, new):
+    """Visar att ordet flyttade mellan lådorna, åt ena eller andra hållet."""
+    names = {1: ("red", "Ska övas"), 2: ("amber", "På väg"), 3: ("green", "Kan bra")}
+    lead = "🌱 Ordet flyttade" if new > old else "Ordet flyttade tillbaka"
+    html(f'''<div class="box-move" role="status">{lead}
+    <span class="pill {names[old][0]}">{names[old][1]}</span><span class="arrow" aria-hidden="true">→</span>
+    <span class="pill to {names[new][0]}">{names[new][1]}</span></div>''')
+
+
+def course_summary(known, total, practiced_today):
+    today = f" · {practiced_today} glosor övade i dag" if practiced_today else ""
+    html(f'''<div class="course-summary"><b>{known}</b><span>av {total} glosor i kursen kan du bra{today}</span></div>''')

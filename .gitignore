@@ -1,0 +1,22 @@
+# Hemligheter: lägg dem i Streamlit Cloud under Settings → Secrets
+.streamlit/secrets.toml
+
+# Lokal elevdata och databas
+runtime/
+*.sqlite
+*.sqlite3
+*.db
+mina-framsteg*.json
+elevexport*.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Mac och editorer
+.DS_Store
+.vscode/
+.idea/

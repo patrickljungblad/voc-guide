@@ -77,11 +77,17 @@ def apply_style():
         color:#05846f; display:flex; align-items:center; justify-content:center;}
     .list-heading-icon svg {width:28px; height:28px;}
     .list-meta {color:var(--gf-muted); font-size:13px; margin:0;}
-    .st-key-list_launch, .st-key-practice_start, .st-key-practice_modes {background:white; border:1px solid var(--gf-line); border-radius:22px; padding:22px; box-shadow:0 5px 20px rgba(24,57,76,.025);}
+    .st-key-list_launch, .st-key-practice_start {background:white; border:1px solid var(--gf-line); border-radius:22px; padding:22px; box-shadow:0 5px 20px rgba(24,57,76,.025);}
     .st-key-list_launch {background:linear-gradient(120deg,#f0f8ff,#eef9f4);}
     .start-title {font-size:25px; font-weight:750; color:var(--gf-ink); letter-spacing:-.035em; line-height:1.25; margin:0 0 6px;}
     .start-copy {font-size:14px; color:var(--gf-muted); line-height:1.6; margin:0;}
-    .boxes {display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:10px 0 16px;}
+    .boxes {display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:14px 0 16px;}
+    .box .stack {position:relative; height:34px; margin:2px 0 4px;}
+    .box .stack i {position:absolute; bottom:0; width:24px; height:30px; border-radius:5px; background:#fff;
+        border:1px solid currentColor; opacity:.9; box-shadow:0 2px 4px rgba(24,57,76,.08);}
+    .box.red .stack {color:#e3a6a0;} .box.amber .stack {color:#e0c37f;} .box.green .stack {color:#7cc7a9;}
+    .box .tray {height:9px; margin:0 -4px; border-radius:0 0 8px 8px; background:currentColor; opacity:.55;}
+    .box.red .tray {color:#e3a6a0;} .box.amber .tray {color:#e0c37f;} .box.green .tray {color:#7cc7a9;}
     .box {padding:16px; border-radius:17px; background:#fff; border:1px solid var(--gf-line); color:#496271;}
     .box b {display:block; font-size:27px; font-weight:750; color:var(--gf-ink); line-height:1.4;}
     .box span {font-size:12px;} .box strong {font-size:12px; font-weight:650;}
@@ -116,6 +122,19 @@ def apply_style():
     .feedback-signal {display:flex; align-items:center; gap:10px; font-size:13px; font-weight:650; color:#067760; margin:5px 0;}
     .feedback-signal svg {width:32px; height:32px; animation:feedback-pop .3s ease-out;}
     .feedback-signal.near {color:#91641b;} .feedback-signal.wrong {color:#356779;}
+    .box-move {display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:6px 0 10px; font-size:14px; color:var(--gf-ink);}
+    .box-move .pill {padding:4px 11px; border-radius:999px; font-size:12px; font-weight:700;}
+    .box-move .pill.red {background:#fbe6e4; color:#9c4a43;} .box-move .pill.amber {background:#fbf0d6; color:#80601a;}
+    .box-move .pill.green {background:#dcf3e8; color:#14694f;}
+    .box-move .to {animation:box-arrive .5s ease-out;}
+    .box-move .arrow {color:var(--gf-muted);}
+    .st-key-memory_panel {background:#fffaf0; border:1px solid #f0e2bd; border-radius:18px; padding:16px 18px; margin:8px 0;}
+    .st-key-memory_panel [data-testid="stExpander"] {background:rgba(255,255,255,.7);}
+    .memory-title {font-weight:700; color:var(--gf-ink); margin:0 0 4px; font-size:15px;}
+    .course-summary {display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; padding:14px 18px; margin:12px 0 4px;
+        background:#edf9f3; border:1px solid #d0eadd; border-radius:18px; color:var(--gf-ink);}
+    .course-summary b {font-size:26px; color:#087760; font-variant-numeric:tabular-nums;}
+    .course-summary span {color:var(--gf-muted); font-size:14px;}
     .completion {padding:28px; border:1px solid #cce8dd; border-radius:26px; background:linear-gradient(120deg,#eaf8f0,#edf5ff); text-align:center; margin:12px 0;}
     .completion svg {width:64px; height:64px; color:#05846f; animation:feedback-pop .35s ease-out;}
     .completion h2 {font-size:31px; margin:12px 0 8px; padding:0!important;}
@@ -123,6 +142,7 @@ def apply_style():
     [data-testid="stProgress"] [role="progressbar"] {border-radius:999px;}
     .sr-only {position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;}
     @keyframes feedback-pop {from {transform:scale(.8); opacity:.4;} to {transform:scale(1); opacity:1;}}
+    @keyframes box-arrive {from {transform:translateX(-14px) scale(.9); opacity:0;} to {transform:none; opacity:1;}}
     @keyframes card-reveal {from {transform:translateY(4px); opacity:.7;} to {transform:translateY(0); opacity:1;}}
     @media(max-width:640px) {
         .block-container {padding-top:3.6rem; padding-left:18px; padding-right:18px;}
@@ -136,7 +156,7 @@ def apply_style():
         .practice-progress .metrics {gap:6px 12px; font-size:11px;}
         .st-key-answer_quiz [data-testid="stRadio"] [role="radiogroup"] {grid-template-columns:1fr; gap:8px;}
         .st-key-answer_quiz [data-testid="stRadio"] label[data-baseweb="radio"] {padding:12px; min-height:48px;}
-        .st-key-practice_start,.st-key-practice_modes,.st-key-list_launch {padding:18px;}
+        .st-key-practice_start,.st-key-list_launch {padding:18px;}
     }
     @media(prefers-reduced-motion:reduce) {*,*:before,*:after {animation:none!important; transition:none!important; scroll-behavior:auto!important;}}
     </style>''')
@@ -144,8 +164,13 @@ def apply_style():
 
 
 def boxes(counts):
-    html(f'''<div class="boxes">
-    <div class="box red"><strong>Ska övas</strong><b>{counts[1]}</b><span>Lite oftare</span></div>
-    <div class="box amber"><strong>På väg</strong><b>{counts[2]}</b><span>Efter 3 dagar</span></div>
-    <div class="box green"><strong>Kan bra</strong><b>{counts[3]}</b><span>Efter 7 dagar</span></div>
-    </div>''')
+    """Tre lådor där korten syns som en hög: ju fler ord, desto högre hög (högst sex kort)."""
+    def stack(n):
+        return "".join(f'<i style="left:{4 + i * 7}px;transform:rotate({(-1) ** i * (2 + i % 3)}deg)"></i>'
+                       for i in range(min(n, 6)))
+    items = ((1, "red", "Ska övas", "Övas ofta"), (2, "amber", "På väg", "Var 3:e dag"),
+             (3, "green", "Kan bra", "Var 7:e dag"))
+    html('<div class="boxes" role="group" aria-label="Dina lådor">' + "".join(
+        f'<div class="box {color}"><strong>{label}</strong><div class="stack" aria-hidden="true">{stack(counts[n])}</div>'
+        f'<div class="tray" aria-hidden="true"></div><b>{counts[n]}</b><span>{hint}</span></div>'
+        for n, color, label, hint in items) + '</div>')

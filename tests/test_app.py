@@ -309,5 +309,6 @@ def test_live_progress_preserves_green_on_help_and_moves_wrong_answer_back(tmp_p
     next(t for t in at.text_input if t.label.startswith('Skriv på')).set_value('xxxxxx')
     click(at, 'Rätta mitt svar')
     markup = next(m.value for m in at.markdown if 'class="practice-progress"' in m.value)
-    assert 'Kan bra <b>0</b>' in markup
-    assert f"Ska övas <b>{len(vocab['words'])}</b>" in markup and not at.exception
+    # Ett fel svar flyttar ett grönt ord ett steg ner, till På väg.
+    assert 'Kan bra <b>0</b>' in markup and 'På väg <b>1</b>' in markup
+    assert f"Ska övas <b>{len(vocab['words']) - 1}</b>" in markup and not at.exception
