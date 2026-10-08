@@ -120,3 +120,30 @@ test('Teacher import is protected by role and revision',() => {
   assert.equal(b.call('import_progress',{...request,token:teacher}).data,1);
   assert.equal(b.call('import_progress',{...request,token:teacher}).code,'conflict');
 });
+
+test('Name/PIN login selects exactly one existing account and preserves progress',() => {
+  const b = backend(); const {teacher,student} = account(b);
+  assert.equal(b.call('create_user',{token:teacher,name:'Test',group:'2B',pin:'0456'}).ok,true);
+  assert.equal(b.call('create_user',{token:teacher,name:'Test',group:'2C',pin:'0123'}).ok,false);
+  const first=b.call('authenticate_student',{name:' Test ',pin:'0123'});
+  const second=b.call('authenticate_student',{name:'Test',pin:'0456'});
+  assert.equal(first.data.group,'2A'); assert.equal(second.data.group,'2B');
+  assert.notEqual(first.data.id,second.data.id);
+  const state={box:2,attempts:1,correct:1,last_reviewed:100,next_review:259300};
+  assert.equal(b.call('save_progress',{token:student,progress:{word:state},expected_revision:0,operation_id:'saved'}).ok,true);
+  assert.deepEqual(b.call('load_progress',{token:first.data.token}).data.progress,{word:state});
+  assert.deepEqual(b.call('load_progress',{token:second.data.token}).data.progress,{});
+  // Simulate a duplicate from the old backend without changing either user's ID.
+  b.sheets.Users_v2.data[2][3]=b.sheets.Users_v2.data[1][3];
+  b.sheets.Users_v2.data[2][4]=b.sheets.Users_v2.data[1][4];
+  const sessions=b.sheets.Sessions_v2.getLastRow();
+  assert.equal(b.call('authenticate_student',{name:'Test',pin:'0123'}).ok,false);
+  assert.equal(b.sheets.Sessions_v2.getLastRow(),sessions);
+});
+
+test('Name/PIN login lockout is shared with legacy login',() => {
+  const b = backend(); account(b);
+  for(let i=0;i<5;i++) assert.equal(b.call('authenticate_student',{name:'Test',pin:'9999'}).ok,false);
+  assert.match(b.call('authenticate_student',{name:'Test',pin:'0123'}).message,/15 minuter/);
+  assert.match(b.call('authenticate',{name:'Test',group:'2A',pin:'0123'}).message,/15 minuter/);
+});

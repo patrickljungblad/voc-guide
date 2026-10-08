@@ -79,3 +79,60 @@ def test_teacher_lists_and_import_preserve_revision_guard(db):
     assert db.load_progress(token)['revision'] == 1
     with pytest.raises(Conflict):
         db.import_progress(teacher,student['id'],{},0)
+
+
+def test_name_and_pin_choose_the_correct_account_and_keep_progress(db):
+    _, teacher = account(db, name='Alex', group='2A', pin='0123')
+    db.create_user(teacher, 'Alex', '2B', '0456')
+    first = db.authenticate_student(' Alex ', '0123')
+    second = db.authenticate_student('Alex', '0456')
+    assert first['group'] == '2A' and second['group'] == '2B'
+    assert first['id'] != second['id']
+    db.save_progress(first['token'], {'word': initial()}, 0, 'first')
+    assert db.load_progress(db.authenticate_student('Alex', '0123')['token'])['progress'] == {'word': initial()}
+    assert db.load_progress(second['token'])['progress'] == {}
+    with pytest.raises(ServiceError, match='Samma namn och PIN'):
+        db.create_user(teacher, 'Alex', '2C', '0123')
+
+
+def test_old_duplicate_name_and_pin_cannot_issue_a_session(db):
+    account(db, name='Alex', group='2A', pin='0123')
+    # Represent two existing accounts from before name-only login was introduced.
+    with db.connection() as conn:
+        row = conn.execute('SELECT * FROM users').fetchone()
+        conn.execute('INSERT INTO users(id,name,class_name,salt,pin_hash) VALUES(?,?,?,?,?)',
+                     ('legacy-duplicate', 'Alex', '2B', row['salt'], row['pin_hash']))
+        before = conn.execute('SELECT count(*) FROM sessions').fetchone()[0]
+    with pytest.raises(ServiceError, match='Felaktiga'):
+        db.authenticate_student('Alex', '0123')
+    with db.connection() as conn:
+        assert conn.execute('SELECT count(*) FROM sessions').fetchone()[0] == before
+
+
+def test_name_only_login_lockout_is_shared_with_legacy_login(db):
+    account(db)
+    for _ in range(5):
+        with pytest.raises(ServiceError, match='Felaktiga'):
+            db.authenticate_student('Test', '9999')
+    with pytest.raises(ServiceError, match='15 minuter'):
+        LocalDatabase(db.path).authenticate_student('Test', '0123')
+    with pytest.raises(ServiceError, match='15 minuter'):
+        db.authenticate('Test', '2A', '0123')
+
+
+def test_sheets_client_sends_only_name_and_pin_and_explains_old_backend(monkeypatch):
+    from services.database import SessionExpired
+    from services.gsheets import SheetsDatabase
+    db = SheetsDatabase('https://script.google.com/macros/s/test/exec', 'k' * 32)
+    calls = []
+    def request(action, **values):
+        calls.append((action, values))
+        return {'token':'test-token', 'id':'student-id', 'group':'2A'}
+    monkeypatch.setattr(db, 'request', request)
+    assert db.authenticate_student(' Alex ', '0123')['id'] == 'student-id'
+    assert calls == [('authenticate_student', {'name':'Alex', 'pin':'0123'})]
+    def old_backend(*args, **kwargs):
+        raise SessionExpired('Logga in igen')
+    monkeypatch.setattr(db, 'request', old_backend)
+    with pytest.raises(ServiceError, match='Google Apps Script-versionen'):
+        db.authenticate_student('Alex', '0123')

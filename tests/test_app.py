@@ -25,7 +25,7 @@ def click(at,label):
 
 def guest(at):
     click(at,'Öppna listan')
-    click(at,'▶ Öva denna lista')
+    click(at,'▶ Öva på dessa glosor')
     return at
 
 
@@ -119,7 +119,7 @@ def test_expired_login_can_save_pending_answer_without_reset(tmp_path,monkeypatc
     at.session_state.user = user
     at.run()
     click(at,'Öppna listan')
-    click(at,'▶ Öva denna lista')
+    click(at,'▶ Öva på dessa glosor')
     click(at,'▶ Fortsätt träna')
     vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
     word = next(w for w in vocab['words'] if w['id'] == at.session_state.session.current)
@@ -150,7 +150,7 @@ def test_direct_link_opens_custom_list_without_login_and_survives_rename(tmp_pat
     assert not any(t.label == 'PIN-kod' for t in at.text_input)
     assert any(s.value == 'Min delbara lista' for s in at.subheader)
     assert at.code[0].value.endswith('?lista=custom_shared')
-    click(at,'▶ Öva denna lista')
+    click(at,'▶ Öva på dessa glosor')
     click(at,'▶ Fortsätt träna')
     assert at.session_state.session is not None and not at.exception
     vocab['name'] = 'Nytt namn, samma länk'
@@ -186,7 +186,7 @@ def test_optional_login_keeps_list_and_loads_account_without_mixing_guest_progre
     db.save_progress(user['token'],saved,0,'test-login')
     at.session_state.progress = {'guest-word':initial()}
     click(at,'Logga in')
-    next(t for t in at.text_input if t.label == 'Klass').set_value('2A')
+    assert not any(t.label == 'Klass' for t in at.text_input)
     next(t for t in at.text_input if t.label == 'Namn').set_value('Test')
     next(t for t in at.text_input if t.label == 'PIN-kod').set_value('0123')
     click(at,'Logga in')
@@ -267,3 +267,47 @@ def test_teacher_creates_ab_pdfs_and_hides_old_results_after_option_change(tmp_p
     next(r for r in at.radio if r.label == 'Språkriktning för förhöret').set_value('reverse').run()
     assert not any('Förhöret och facit är klara' in s.value for s in at.success)
     assert not at.exception
+
+
+def test_live_progress_shows_whole_list_updates_once_and_follows_direction(tmp_path, monkeypatch):
+    at = guest(app(tmp_path, monkeypatch))
+    vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
+    def row():
+        return next(m.value for m in at.markdown if 'class="practice-progress"' in m.value)
+    click(at, '▶ Fortsätt träna')
+    total = len(vocab['words'])
+    assert f'Ska övas <b>{total}</b>' in row()
+    assert 'På väg <b>0</b>' in row() and 'Kan bra <b>0</b>' in row()
+    word = next(w for w in vocab['words'] if w['id'] == at.session_state.session.current)
+    next(r for r in at.radio if r.label == 'Välj översättning').set_value(word['accepted_answers'][0])
+    click(at, 'Kontrollera svar')
+    assert f'Ska övas <b>{total-1}</b>' in row() and 'På väg <b>1</b>' in row()
+    assert at.session_state.session.answered == 1
+    at.run()
+    assert 'På väg <b>1</b>' in row() and at.session_state.session.answered == 1
+    at.sidebar.selectbox[0].set_value('Målspråk till svenska').run()
+    click(at, '▶ Fortsätt träna')
+    assert f'Ska övas <b>{total}</b>' in row() and 'På väg <b>0</b>' in row()
+    assert '→ svenska' in row() and not at.exception
+
+
+def test_live_progress_preserves_green_on_help_and_moves_wrong_answer_back(tmp_path, monkeypatch):
+    at = guest(app(tmp_path, monkeypatch))
+    vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
+    word = vocab['words'][0]
+    state = {**initial(), 'box': 3, 'next_review': 0}
+    at.session_state.progress = {key(vocab['id'], word['id'], 'forward'):state}
+    at.session_state.session = Session([word['id']], mode='write')
+    at.run()
+    click(at, '💡 En bokstav')
+    next(t for t in at.text_input if t.label.startswith('Skriv på')).set_value(word['accepted_answers'][0])
+    click(at, 'Rätta mitt svar')
+    markup = next(m.value for m in at.markdown if 'class="practice-progress"' in m.value)
+    assert 'Kan bra <b>1</b>' in markup
+    at.session_state.session = Session([word['id']], mode='write')
+    at.run()
+    next(t for t in at.text_input if t.label.startswith('Skriv på')).set_value('xxxxxx')
+    click(at, 'Rätta mitt svar')
+    markup = next(m.value for m in at.markdown if 'class="practice-progress"' in m.value)
+    assert 'Kan bra <b>0</b>' in markup
+    assert f"Ska övas <b>{len(vocab['words'])}</b>" in markup and not at.exception
