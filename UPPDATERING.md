@@ -1,45 +1,75 @@
-# Delbara gloslistor och lyssna
+# Flow-logga, tydliga framsteg och enklare inloggning
 
-## Senaste tillägget: ny GlosFlow-logga
+Detta kompletta paket innehåller även tidigare förbättringar: delbara listor, träning utan konto, temabilder, PDF-förhör och stöd för sparade ljud.
 
-Loggan använder samma blå–gröna färger som tidigare, med ett stiliserat G och ett blad. Den anpassar sig till skärmens bredd och finns i `ui/glosflow-logo.svg`.
+## Vad som ändrats
 
-**Har du redan lagt in uppdateringen med delbara listor och lyssna?** Då räcker det att ladda upp hela mappen `ui` från detta paket via **Add file → Upload files** i repositoryts rot. Klicka **Commit changes**. Det är `ui/style.py` och `ui/glosflow-logo.svg` som behövs för loggbytet, och båda måste följa med. Ladda inte upp ZIP-filen direkt.
+- Ny Flow-logga med böljande blågröna band och ett blad, som i det valda förslaget 1. Loggan är en SVG och håller sig skarp på både dator och mobil.
+- **Öva. Minns. Se dina framsteg.** står i välkomstrutan. Slogantexten har tagits bort från loggan.
+- Knappen heter **Öva på dessa glosor**.
+- Under övningens rubrik finns en liten framstegsrad: **Ska övas · På väg · Kan bra**, med antal och en tunn färgmätare. Den gäller hela gloslistan i den riktning eleven tränar och uppdateras direkt efter rättning. **Fråga X av Y** beskriver fortfarande själva omgången.
+- Elevinloggningen har endast **Namn** och **PIN-kod**. Klass används fortfarande i lärarens konto- och elevöversikt, men eleven behöver inte fylla i den.
 
-Om du ännu inte lagt in förra uppdateringen, följ hela uppladdningen nedan.
+## 1. Uppdatera Google Apps Script först
 
-Den här uppdateringen använder din befintliga Streamlit-app och Google Sheets-koppling. Du behöver inte installera något på din dator eller ändra Secrets eller Apps Script.
+Detta steg behövs för inloggning utan klass. Att ladda upp Code.gs på GitHub ändrar inte koden som Google kör.
 
-## Ladda upp ändringen
+1. Öppna ditt **befintliga** Google-kalkylblad för GlosFlow och välj **Tillägg → Apps Script**.
+2. Öppna **Code.gs** i det projekt som din app redan använder. Kopiera gärna den nuvarande koden till en lokal textfil före bytet.
+3. Öppna paketets **backend/Code.gs** i en textredigerare. Kopiera hela innehållet och ersätt innehållet i Apps Scripts **Code.gs**. Spara.
+4. Välj **Distribuera → Hantera distributioner** (*Deploy → Manage deployments*).
+5. Välj den aktiva webbappdistributionen och klicka på **pennan** (*Edit*).
+6. Under **Version** väljer du **Ny version** (*New version*). Klicka på **Distribuera** (*Deploy*).
 
-1. Packa upp `GlosFlow-2.zip`.
-2. Öppna https://github.com/patrickljungblad/voc-guide på grenen `main`.
-3. Välj **Add file → Upload files** från repositoryts rot.
-4. Dra in dessa tre saker från den uppackade mappen:
-   - filen `glostranare_web-v4.py`
-   - hela mappen `ui`
-   - hela mappen `core`
-5. Kontrollera att uppladdningen visar exempelvis `ui/speech.html` och `core/trainer.py`. Det ska inte stå en extra yttersta mapp före filnamnen.
-6. Skriv `Delbara gloslistor och lyssna` och klicka **Commit changes**.
-7. Öppna din vanliga appadress när Streamlit har läst in ändringen.
+Behåll samma kalkylblad, distribution, åtkomstinställningar och Script Properties. Den uppdaterade befintliga distributionen behåller samma /exec-adress, så Streamlit Secrets behöver inte ändras. Konton, elev-ID, sparade framsteg och gloslistor använder samma tabeller som tidigare.
 
-De tre delarna behöver laddas upp tillsammans. Mappen `ui` innehåller nya filer som behövs för uppläsning och listvisning. Om du arbetar med Git i stället kan du uppdatera hela paketets innehåll, inklusive tester och dokumentation.
+Googles instruktioner: https://developers.google.com/apps-script/concepts/deployments#edit_a_versioned_deployment
 
-## Kontrollera
+## 2. Ladda upp uppdaterade filer på GitHub
 
-- Öppna appen i ett privat webbläsarfönster. Glosbiblioteket ska visas direkt utan inloggning.
-- Öppna en lista. Alla glosor finns under övningsknappen, med uppläsning på svenska och målspråket.
-- Under **Dela gloslistan** finns en länk med `?lista=...`. Kopiera den och öppna den i ett nytt privat fönster: samma lista ska visas.
-- Tryck **Öva denna lista** och därefter **Fortsätt träna**. Quiz, skrivträning och ordkort fungerar utan konto.
-- Välj **Logga in för att spara framsteg** när du vill använda ett befintligt elevkonto. Det hämtar kontots sparade framsteg; tidigare gästträning förs inte över. Läraren skapar fortfarande konton.
-- Logga in som lärare via samma knapp. Länken för vald lista finns även i lärarpanelen.
+Packa upp ZIP-filen i en **ny mapp** på din Mac. Öppna först rätt mapp på GitHub. Välj **Add file → Upload files → choose your files**, markera filerna med **⌘ Command** och spara med **Commit changes** på **main**.
 
-## Lyssna
+| Öppna på GitHub | Filer att välja i paketet |
+| --- | --- |
+| `services` | `database.py`, `gsheets.py` |
+| `ui` | `glosflow-logo.svg`, `style.py`, `visuals.py`, `training.py`, `login.py`, `list_page.py` |
+| `backend` | `Code.gs`, `README.md` |
+| `tests` | `test_app.py`, `test_database.py`, `backend.test.cjs` |
+| Repositoryts startsida | `requirements.txt`, `requirements-dev.txt`, `UPPDATERING.md`, `README.md`, `BORJA_HAR.md` |
 
-Välj Normalt eller Långsamt och tryck 🔊 vid ordet. Det går även att lyssna efter rättning och när ett ordkort är vänt. Under en fråga kan eleven välja **Lyssna på svaret som hjälp**. Då markeras svaret som hjälpt och flyttar inte ordet framåt.
+Direktlänkar:
 
-Uppläsningen använder röster på elevens enhet. En latinamerikansk spansk röst prioriteras om en sådan finns. Annars används en annan tillgänglig spansk röst. Om rätt språk saknas visas en förklaring, medan glosträningen fortfarande fungerar. Prova en annan webbläsare eller aktivera en röst för språket på enheten. På mobilen: kontrollera ljudvolymen.
+- https://github.com/patrickljungblad/voc-guide/tree/main/services
+- https://github.com/patrickljungblad/voc-guide/tree/main/ui
+- https://github.com/patrickljungblad/voc-guide/tree/main/backend
+- https://github.com/patrickljungblad/voc-guide/tree/main/tests
+- https://github.com/patrickljungblad/voc-guide
 
-Ingen inspelning, automatisk uttalsbedömning eller egen kontoregistrering ingår i denna uppdatering.
+Ladda upp services före ui, så att det nya inloggningsanropet finns innan formuläret används. Du behöver inte ladda upp startfilen eller dolda mappar för den här uppdateringen.
 
-Alla gloslistor kan läsas av den som kommer åt appen. Elevkonton och sparade framsteg kräver fortfarande inloggning. Om själva Streamlit-appen har begränsad åtkomst gäller den även för delade länkar.
+`requirements.txt` innehåller fortfarande `reportlab>=4.2,<5`, som PDF-förhören kräver. Ladda upp den så att även den tidigare saknade PDF-installationen är med.
+
+## 3. Starta om och kontrollera
+
+Välj **Reboot** för appen på https://share.streamlit.io och öppna sedan appen igen.
+
+1. Startsidan visar Flow-loggan utan slogan bredvid. Välkomstrutan visar den flyttade sloganen.
+2. Välj kurs och öppna en lista. Knappen heter **Öva på dessa glosor**.
+3. Starta en omgång. Den lilla raden under rubriken visar alla ord i listan, inte bara orden i omgången.
+4. Svara rätt utan hjälp på ett nytt ord. Det flyttas från **Ska övas** till **På väg**, och raden ändras direkt. Att gå vidare eller ladda om frågan räknar inte svaret en gång till.
+5. Logga in med ett befintligt testkontos **namn och PIN-kod**, utan klass. Kontrollera att kontots tidigare framsteg hämtas och att nya svar finns kvar efter ut- och inloggning.
+6. Kontrollera gärna PDF-förhör och en delad gloslistelänk också.
+
+Om elevinloggningen säger att Google Apps Script behöver uppdateras kör /exec fortfarande den gamla versionen. Kontrollera steg 1, särskilt **Ny version** i den befintliga distributionen.
+
+## Konton med samma namn
+
+Elever får ha samma namn i olika klasser om de har **olika PIN-koder**. Inloggningen väljer endast när precis ett konto matchar både namn och PIN-kod. Nya konton med en redan använd namn/PIN-kombination avvisas med en förklaring till läraren. Äldre dubbla kombinationer väljs inte på måfå; de behöver skiljas åt av läraren. Felaktiga försök spärras efter fem försök i 15 minuter per elevnamn.
+
+## Ljud och befintliga data
+
+Läs **LJUD.md** för den tidigare funktionen med naturligare röster. Den här uppdateringen genererar inga nya ljud. Behåll ett befintligt `data/audio_bank.json` som du själv fyllt med ljud; paketets tomma exempel ska inte ersätta det.
+
+## Testning
+
+Automatiska tester kontrollerar bland annat inloggning och kontoval, avvisning av dubbla namn/PIN-kombinationer, spärrade försök, sparade framsteg och den direkta framstegsvisningen. Google-backenden testas med ett Apps Script/Sheets-teststöd, inte mot ditt verkliga kalkylblad. Dator- och mobilvyn granskas i en lokal webbläsare.

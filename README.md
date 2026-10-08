@@ -2,17 +2,23 @@
 
 **För ditt befintliga repository `patrickljungblad/voc-guide`: börja med [BORJA_HAR.md](BORJA_HAR.md). Paketet använder startfilen `glostranare_web-v4.py`.**
 
-**Har du redan installerat GlosFlow 2? Följ [UPPDATERING.md](UPPDATERING.md) för delbara listor, träning utan konto och uppläsning.**
+**Har du redan installerat GlosFlow 2? Följ [UPPDATERING.md](UPPDATERING.md) för tydligare kursval, temabilder, PDF-glosförhör och stöd för bättre ljud. Guiden visar individuell filuppladdning på Mac.**
 
 Ett lugnt, webbaserat glosverktyg för elever: öppna en delad gloslista, lyssna, öva och se hur orden flyttar mellan tre Leitner-lådor. Byggt med Streamlit och Python 3.12. Inget konto behövs för att se glosor eller öva. Befintliga elevkonton används för beständig sparning.
 
-Logotypen i `ui/glosflow-logo.svg` är en skalbar blå–grön G-symbol med ett blad och en GlosFlow-text. Sidhuvudet läser in den som en data-URI, så ingen separat bildserver behövs. Behåll SVG-filen tillsammans med `ui/style.py` vid uppladdning.
+Logotypen i `ui/glosflow-logo.svg` är den valda Flow-loggan: ett böljande blågrönt G med band, blad och GlosFlow-text. Slogantexten visas i startsidans välkomstruta. Sidhuvudet läser in den som en data-URI, så ingen separat bildserver behövs. Behåll SVG-filen tillsammans med `ui/style.py` vid uppladdning.
+
+Biblioteket har illustrerade gloskort, två kolumner på dator och en på mobil. Under en övning visas svarsalternativ som tydliga kort och repetitionsinformation och hjälp ligger i paneler. En avslutad omgång visar olika glosor som faktiskt tränats, antal rätt och hur många tränade ord som ligger i Ska övas. Korta animationer respekterar enhetens önskemål om minskad rörelse. Illustrationerna i `ui/visuals.py` är lokala SVG-former och gör inga externa bildanrop. Ingen ny poängmodell eller ändring av sparningsreglerna ingår.
 
 ## Gloslistor och uppläsning
 
-Varje lista har en delbar adress med sitt stabila ID: `?lista=LIST_ID`. Öppna listan och kopiera adressen under **Dela gloslistan**, eller använd länken i lärarpanelen. Eleven ser glosorna direkt och väljer **Öva denna lista**. Alla listor är synliga för den som kommer åt appen; elevdata kräver inloggning. Appens eventuella åtkomstbegränsning i Streamlit gäller även delade länkar.
+Varje lista har en delbar adress med sitt stabila ID: `?lista=LIST_ID`. Öppna listan och kopiera adressen under **Dela gloslistan**, eller använd länken i lärarpanelen. Eleven ser glosorna direkt och väljer **Öva på dessa glosor**. Alla listor är synliga för den som kommer åt appen; elevdata kräver inloggning. Appens eventuella åtkomstbegränsning i Streamlit gäller även delade länkar.
 
-Glosor på svenska och målspråket kan läsas upp i normal eller långsam takt. Rösterna hämtas av webbläsarens Speech Synthesis API; en latinamerikansk spansk röst prioriteras när den finns. Tillgänglighet och röst varierar mellan enheter. Det finns inget nytt ljudabonnemang eller anrop till appens databas vid uppspelning. Webbläsarens röstleverantör kan använda sin egen onlinetjänst.
+Glosor på svenska och målspråket kan läsas upp i normal eller långsam takt. Läraren kan provlyssna och skapa naturligare ljud med Azure Speech under **Röster och ljud**. Det kräver eget tjänstekonto och nyckel; se [LJUD.md](LJUD.md). Skapade ljud återanvänds utan API-anrop vid elevens uppspelning. Ladda ner audio_bank.json och spara i data-mappen på GitHub för beständig lagring. För ord utan sparat ljud används webbläsarens Speech Synthesis API; en latinamerikansk spansk röst prioriteras. Tillgänglighet och röst varierar mellan enheter.
+
+Biblioteket börjar med ett större **Välj kurs** utan förvalt alternativ. Valet behålls när eleven går tillbaka till biblioteket. Temabilder föreslås från listans namn och ord. Alla åtta ursprungliga listor har matchande motiv, och läraren kan välja en annan temabild vid redigering.
+
+Lärarpanelens **Glosförhör** skapar vanliga översättningsförhör som A4-PDF med separat facit. Välj riktning, alla glosor eller ett urval, blandad ordning och A/B-versioner med samma glosor i olika ordning. Facit visar listans godkända svarsalternativ och följer respektive version.
 
 Det går att lyssna efter rättning, på vända ordkort och som uttrycklig hjälp under en fråga. Hjälp genom uppläsning ger inget avancemang och ordet upprepas i omgången. Gästträning bevaras i webbsessionen. Vid inloggning hämtas kontots sparade framsteg och aktuell gästomgång avslutas; gästframsteg förs inte över. Egen kontoregistrering och inspelad uttalsövning ingår ännu inte.
 
@@ -136,3 +142,9 @@ Node 22 krävs bara för backendtesterna. Testerna kontrollerar lärandelogik, s
 PDF-prov, XP, topplistor och live-AI ingår inte i denna kärnversion.
 
 Dokumentation: [Streamlit AppTest](https://docs.streamlit.io/develop/api-reference/app-testing/st.testing.v1.apptest), [Google LockService](https://developers.google.com/apps-script/reference/lock/), [Script Properties](https://developers.google.com/apps-script/guides/properties).
+
+## Inloggning med namn och PIN-kod
+
+Eleven anger endast namn och PIN-kod. Klass finns kvar i lärarpanelen för att organisera konton. Samma namn kan finnas i flera klasser om PIN-koderna skiljer sig åt. Två konton med samma namn och PIN-kod får inte automatiskt väljas; nya sådana konton avvisas. Både nya och äldre inloggningsanrop delar spärren efter fem fel i 15 minuter per elevnamn. Befintliga konton och framsteg behåller sina ID. Uppdatera den befintliga Apps Script-distributionen enligt UPPDATERING.md för att aktivera elevinloggningen.
+
+Under en pågående övning visas en diskret framstegsrad för hela gloslistan i vald språkriktning. Antalen ändras direkt vid rättning, innan eventuell fjärrsparning är klar. Omgångens frågenummer och svarsräknare gäller fortfarande bara omgången.
