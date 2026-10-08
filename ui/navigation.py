@@ -33,3 +33,14 @@ def share_list(vocab):
         url = list_url(st.context.url or "", vocab["id"])
         st.code(url, language=None)
         st.caption("Länken fortsätter fungera om du ändrar listans namn.")
+
+
+def practice_list(list_id, start_now=True):
+    """Går direkt till övningen. Med start_now börjar omgången utan ett extra klick."""
+    st.query_params["lista"] = list_id
+    st.session_state.query_list = list_id
+    st.session_state.list_id = list_id
+    st.session_state.session = None
+    st.session_state.view = "training"
+    st.session_state.start_now = start_now
+    st.rerun()

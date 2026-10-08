@@ -1,70 +1,53 @@
-"""Små vektorillustrationer och tydliga statusytor, utan externa bildanrop."""
+"""Små byggblock i HTML: ordkort, stegad förloppsstapel, lådpanel och klar-vy. Inga externa bildanrop."""
 from html import escape
 from ui.style import html
 from ui.themes import theme_for, theme_svg
 
+ICONS = {
+    "book": '<path d="M4 6c5-2 8-1 12 2v20c-4-3-7-4-12-2V6Zm24 0c-5-2-8-1-12 2v20c4-3 7-4 12-2V6Z"/>',
+    "check": '<circle cx="16" cy="16" r="13"/><path d="m10 16 4 4 8-9"/>',
+    "flame": '<path d="M16 4c1.3 5.3 6.7 8 6.7 14.7a6.7 6.7 0 0 1-13.4 0c0-2.7 1.4-4 2.7-5.4 0 2.7 1.3 4 2.7 4 0-5.3-1.4-9.3 1.3-13.3Z"/>',
+    "bulb": '<path d="M12 24h8M13.3 28h5.4M16 4a8 8 0 0 0-5.3 14c.9.9 1.3 2 1.3 3.3h8c0-1.3.4-2.4 1.3-3.3A8 8 0 0 0 16 4Z"/>',
+}
+
 
 def symbol(name="book"):
-    paths = {
-        "book": '<path d="M4 6c5-2 8-1 12 2v20c-4-3-7-4-12-2V6Zm24 0c-5-2-8-1-12 2v20c4-3 7-4 12-2V6Z"/>',
-        "check": '<circle cx="16" cy="16" r="13"/><path d="m10 16 4 4 8-9"/>',
-        "retry": '<path d="M26 13a11 11 0 1 0 0 8M26 4v9h-9"/>',
-        "spark": '<path d="m16 3 4 9 9 4-9 4-4 9-4-9-9-4 9-4 4-9Z"/>',
-    }
-    return f'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{paths[name]}</svg>'
-
-
-def library_hero():
-    html('''<div class="hero"><div>
-    <div class="eyebrow">Öva. Minns. Se dina framsteg.</div>
-    <h1 class="hero-title">Vad vill du<br><span>lära dig idag?</span></h1>
-    <p class="hero-copy">Välj en gloslista, lyssna och hitta ditt flow.<br>En liten stund idag gör plats för nästa steg.</p>
-    </div><svg class="hero-art" viewBox="0 0 260 200" aria-hidden="true">
-    <circle cx="139" cy="97" r="86" fill="#d8eee7"/>
-    <circle cx="139" cy="97" r="98" fill="none" stroke="#bfded5" stroke-dasharray="3 8"/>
-    <g transform="rotate(-12 120 95)"><rect x="37" y="49" width="133" height="112" rx="17" fill="#d0e5f0"/><rect x="32" y="42" width="133" height="112" rx="17" fill="#fff" stroke="#c5dce7"/>
-    <text x="52" y="70" font-family="Arial,sans-serif" font-size="11" font-weight="700" fill="#3b749a">ETT ORD I TAGET</text>
-    <text x="53" y="115" font-family="Arial,sans-serif" font-size="32" font-weight="700" fill="#26649a">hola</text></g>
-    <g transform="rotate(9 174 134)"><rect x="112" y="94" width="118" height="81" rx="15" fill="#079575"/>
-    <text x="132" y="145" font-family="Arial,sans-serif" font-size="31" font-weight="700" fill="#fff">hej</text></g>
-    <circle cx="213" cy="48" r="22" fill="#fff" stroke="#d0e7dc"/><path d="m203 49 6 6 13-15" fill="none" stroke="#078d70" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M39 160c-16-1-22 6-22 18 13 0 23-5 22-18Z" fill="#67bba2"/>
-    </svg></div>''')
+    return (f'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" '
+            f'stroke-linejoin="round" aria-hidden="true">{ICONS[name]}</svg>')
 
 
 def card_art(index, language, vocab=None):
-    palette = ("blue", "mint", "sky")[index % 3]
-    if vocab is not None:
-        html(f'<div class="card-art palette-{palette}"><span class="language-pill">{escape(language.upper())}</span>{theme_svg(theme_for(vocab))}</div>')
-        return
-    html(f'''<div class="card-art palette-{palette}"><span class="language-pill">{escape(language.upper())}</span>
-    <svg viewBox="0 0 140 110" fill="none" aria-hidden="true">
-    <rect x="42" y="21" width="64" height="76" rx="12" fill="currentColor" opacity=".16" transform="rotate(12 74 59)"/>
-    <rect x="32" y="12" width="64" height="76" rx="12" fill="white" stroke="currentColor" stroke-opacity=".25" transform="rotate(-8 64 50)"/>
-    <text x="45" y="59" font-family="Arial,sans-serif" font-size="29" font-weight="700" fill="currentColor">Aa</text>
-    <path d="M95 61c12 0 19 7 19 17s-7 17-19 17H83l-9 7 1-13c-4-3-6-7-6-11 0-10 10-17 26-17Z" fill="currentColor"/>
-    <path d="m85 78 6 5 11-12" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg></div>''')
+    """Temabild för en lista. Används i lärarpanelen."""
+    art = theme_svg(theme_for(vocab)) if vocab is not None else symbol("book")
+    html(f'<div class="card-art"><span class="language-pill">{escape(language.upper())}</span>{art}</div>')
 
 
-def mini_progress(c, total):
-    label = f"{c[1]} Ska övas, {c[2]} På väg, {c[3]} Kan bra"
-    html(f'''<div class="mini-meter" role="img" aria-label="{label}">
-    <i class="red" style="width:{c[1] / total * 100:.2f}%"></i>
-    <i class="amber" style="width:{c[2] / total * 100:.2f}%"></i>
-    <i class="green" style="width:{c[3] / total * 100:.2f}%"></i></div>''')
+def chip(text, style="hot", icon="flame"):
+    html(f'<div class="streak-wrap"><span class="chip {style}">{symbol(icon)}{escape(text)}</span></div>')
+
+
+def steps(done, total):
+    """Förloppsstapel med ett steg per fråga, som i skissen."""
+    total = max(1, total)
+    cells = "".join(f'<i class="{"done" if i < done else ""}"></i>' for i in range(total))
+    html(f'<div class="steps" style="grid-template-columns:repeat({total},minmax(0,1fr))" role="progressbar" '
+         f'aria-valuemin="0" aria-valuemax="{total}" aria-valuenow="{done}" aria-label="{done} av {total} frågor klara">{cells}</div>')
+
+
+def meter(c):
+    total = max(1, sum(c.values()))
+    return (f'<div class="meter" aria-hidden="true"><i class="red" style="width:{c[1] / total * 100:.1f}%"></i>'
+            f'<i class="amber" style="width:{c[2] / total * 100:.1f}%"></i><i class="green" style="width:{c[3] / total * 100:.1f}%"></i></div>')
 
 
 def practice_progress(c, source, destination):
-    total = max(1, sum(c.values()))
+    """Listans lådor bredvid frågan. På mobil blir panelen en kompakt rad ovanför frågan."""
     html(f'''<div class="practice-progress" role="group" aria-label="Framsteg i hela gloslistan" aria-live="polite">
     <p class="scope">Hela listan · {escape(source)} → {escape(destination)}</p>
-    <div class="metrics"><span><i class="dot red" aria-hidden="true"></i>Ska övas <b>{c[1]}</b></span>
-    <span><i class="dot amber" aria-hidden="true"></i>På väg <b>{c[2]}</b></span>
-    <span><i class="dot green" aria-hidden="true"></i>Kan bra <b>{c[3]}</b></span></div>
-    <div class="mini-meter" aria-hidden="true"><i class="red" style="width:{c[1] / total * 100:.2f}%"></i>
-    <i class="amber" style="width:{c[2] / total * 100:.2f}%"></i>
-    <i class="green" style="width:{c[3] / total * 100:.2f}%"></i></div></div>''')
+    <div class="metrics"><span class="r"><i class="dot red" aria-hidden="true"></i>Ska övas <b>{c[1]}</b></span>
+    <span class="a"><i class="dot amber" aria-hidden="true"></i>På väg <b>{c[2]}</b></span>
+    <span class="g"><i class="dot green" aria-hidden="true"></i>Kan bra <b>{c[3]}</b></span></div>
+    <p class="rule">Rätt utan hjälp flyttar ordet ett steg framåt. Fel flyttar det ett steg bakåt.</p></div>''')
 
 
 def word_card(prompt, destination, flipped=False):
@@ -73,27 +56,22 @@ def word_card(prompt, destination, flipped=False):
     <div class="prompt">{escape(prompt)}</div></div>''')
 
 
-def feedback_signal(result):
-    name, label = {"correct": ("check", "Ett steg vidare"), "near": ("spark", "Du är nära"),
-                   "wrong": ("retry", "Vi övar vidare")}[result]
-    html(f'<div class="feedback-signal {result}">{symbol(name)}<span>{label}</span></div>')
+def answer_card(prompt, answer, result, given=None, after="", given_label="Du skrev"):
+    """Ordkortet efter svaret: frågan som liten rubrik, rätt svar stort, elevens svar överstruket vid fel."""
+    given_line = f'<div class="given">{given_label} <s>{escape(given)}</s></div>' if given and result != "correct" else ""
+    after_line = f'<div class="after">{escape(after)}</div>' if after else ""
+    html(f'''<div class="word-card {'correct' if result == 'correct' else ''}" role="status">
+    <div class="eyebrow">{escape(prompt)}</div>{given_line}
+    <div class="prompt">{escape(answer)}</div>{after_line}</div>''')
 
 
-def completion(practiced, needs_work):
-    follow_up = f"{needs_work} av dem ligger i Ska övas. Du får fler chanser att träna dem." if needs_work else "Nästa repetition hjälper dig att minnas längre."
-    html(f'''<div class="completion">{symbol('check')}<h2>Snyggt jobbat.</h2>
-    <p>Du har tränat <strong>{practiced} olika glosor</strong> i den här omgången.<br>{follow_up}</p></div>''')
+def memory_title():
+    html(f'<p class="memory-title"><span class="ic">{symbol("bulb")}</span>Så kan du minnas det</p>')
 
 
-def box_move(old, new):
-    """Visar att ordet flyttade mellan lådorna, åt ena eller andra hållet."""
-    names = {1: ("red", "Ska övas"), 2: ("amber", "På väg"), 3: ("green", "Kan bra")}
-    lead = "🌱 Ordet flyttade" if new > old else "Ordet flyttade tillbaka"
-    html(f'''<div class="box-move" role="status">{lead}
-    <span class="pill {names[old][0]}">{names[old][1]}</span><span class="arrow" aria-hidden="true">→</span>
-    <span class="pill to {names[new][0]}">{names[new][1]}</span></div>''')
-
-
-def course_summary(known, total, practiced_today):
-    today = f" · {practiced_today} glosor övade i dag" if practiced_today else ""
-    html(f'''<div class="course-summary"><b>{known}</b><span>av {total} glosor i kursen kan du bra{today}</span></div>''')
+def completion(correct, answered, practiced, needs_work):
+    follow_up = (f"{needs_work} av orden ligger i Ska övas och kommer tillbaka snart."
+                 if needs_work else "Nästa repetition hjälper dig att minnas ännu längre.")
+    html(f'''<div class="completion">{symbol('check')}<h2>Snyggt jobbat!</h2>
+    <div class="score">{correct} rätt av {answered}</div>
+    <p>Du har tränat <strong>{practiced} olika glosor</strong>. {follow_up}</p></div>''')
