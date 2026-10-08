@@ -25,24 +25,24 @@ def click(at,label):
 
 def guest(at):
     click(at,'Öppna listan')
-    click(at,'▶ Öva på dessa glosor')
+    click(at,'Öva på listan')
     return at
 
 
 def test_guest_quiz_switch_lists_and_direction_preserve_progress(tmp_path,monkeypatch):
     at = guest(app(tmp_path,monkeypatch))
     assert not at.code  # HTML branding must render, not become an indented Markdown code block.
-    click(at,'▶ Fortsätt träna')
+    click(at,'Kör igång')
     vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
     word = next(w for w in vocab['words'] if w['id'] == at.session_state.session.current)
     next(r for r in at.radio if r.label == 'Välj översättning').set_value(word['accepted_answers'][0]).run()
-    click(at,'Kontrollera svar')
+    click(at,'Kontrollera')
     assert not at.exception
     saved = deepcopy(at.session_state.progress)
     assert len(saved) == 1
     at.run()
     assert at.session_state.progress == saved  # no double scoring on rerun
-    click(at,'← Alla gloslistor')
+    click(at,'Avsluta')
     click(at,'Öppna listan')
     assert at.session_state.progress == saved
     at.sidebar.selectbox[0].set_value('Målspråk till svenska').run()
@@ -58,15 +58,15 @@ def test_write_near_answer_and_hint_do_not_promote(tmp_path,monkeypatch):
     at.session_state.session = Session([word['id']],mode='write')
     at.run()
     next(t for t in at.text_input if t.label.startswith('Skriv på')).set_value('miercoles')
-    click(at,'Rätta mitt svar')
+    click(at,'Kontrollera')
     assert at.session_state.session.feedback['result'] == 'near'
     assert at.session_state.progress[key(vocab['id'],word['id'],'forward')]['box'] == 1
     at.session_state.session = Session([word['id']],mode='write')
     at.session_state.progress = {}
     at.run()
-    click(at,'💡 En bokstav')
+    click(at,'En bokstav')
     next(t for t in at.text_input if t.label.startswith('Skriv på')).set_value('miércoles')
-    click(at,'Rätta mitt svar')
+    click(at,'Kontrollera')
     assert at.session_state.progress[key(vocab['id'],word['id'],'forward')]['box'] == 1
     assert not at.exception
 
@@ -78,13 +78,13 @@ def test_network_failure_keeps_response_and_blocks_next(tmp_path,monkeypatch):
         raise ServiceError('Tillfälligt sparfel')
     monkeypatch.setattr(LocalDatabase,'save_progress',fail)
     at.session_state.user = {'name':'Test','role':'student','token':'fake'}
-    click(at,'▶ Fortsätt träna')
+    click(at,'Kör igång')
     vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
     word = next(w for w in vocab['words'] if w['id'] == at.session_state.session.current)
     next(r for r in at.radio if r.label == 'Välj översättning').set_value(word['accepted_answers'][0])
-    click(at,'Kontrollera svar')
+    click(at,'Kontrollera')
     assert at.session_state.pending is not None
-    assert next(b for b in at.button if b.label == 'Nästa ord →').disabled
+    assert next(b for b in at.button if b.label == 'Nästa').disabled
     snapshot = deepcopy(at.session_state.progress)
     monkeypatch.setattr(LocalDatabase,'save_progress',lambda *args,**kwargs:1)
     click(at,'Försök spara igen')
@@ -119,13 +119,13 @@ def test_expired_login_can_save_pending_answer_without_reset(tmp_path,monkeypatc
     at.session_state.user = user
     at.run()
     click(at,'Öppna listan')
-    click(at,'▶ Öva på dessa glosor')
-    click(at,'▶ Fortsätt träna')
+    click(at,'Öva på listan')
+    click(at,'Kör igång')
     vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
     word = next(w for w in vocab['words'] if w['id'] == at.session_state.session.current)
     db.logout(user['token'])
     next(r for r in at.radio if r.label == 'Välj översättning').set_value(word['accepted_answers'][0])
-    click(at,'Kontrollera svar')
+    click(at,'Kontrollera')
     assert at.session_state.save_error[0] == 'auth'
     snapshot = deepcopy(at.session_state.progress)
     next(t for t in at.text_input if t.label == 'PIN-kod igen').set_value('0123')
@@ -150,8 +150,8 @@ def test_direct_link_opens_custom_list_without_login_and_survives_rename(tmp_pat
     assert not any(t.label == 'PIN-kod' for t in at.text_input)
     assert any(s.value == 'Min delbara lista' for s in at.subheader)
     assert at.code[0].value.endswith('?lista=custom_shared')
-    click(at,'▶ Öva på dessa glosor')
-    click(at,'▶ Fortsätt träna')
+    click(at,'Öva på listan')
+    click(at,'Kör igång')
     assert at.session_state.session is not None and not at.exception
     vocab['name'] = 'Nytt namn, samma länk'
     db.save_lists(token,[vocab])
@@ -170,7 +170,7 @@ def test_invalid_link_and_return_to_library_clear_query(tmp_path,monkeypatch):
     assert 'lista' not in at.query_params and at.session_state.list_id is None
     click(at,'Öppna listan')
     assert at.query_params['lista'] == [at.session_state.list_id]
-    click(at,'← Alla gloslistor')
+    click(at,'Alla listor')
     assert 'lista' not in at.query_params and not at.exception
 
 
@@ -201,12 +201,12 @@ def test_optional_login_keeps_list_and_loads_account_without_mixing_guest_progre
 
 def test_listening_to_answer_prevents_promotion(tmp_path,monkeypatch):
     at = guest(app(tmp_path,monkeypatch))
-    click(at,'▶ Fortsätt träna')
+    click(at,'Kör igång')
     vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
     word = next(w for w in vocab['words'] if w['id'] == at.session_state.session.current)
-    click(at,'🔊 Lyssna på svaret som hjälp')
+    click(at,'Lyssna på svaret')
     next(r for r in at.radio if r.label == 'Välj översättning').set_value(word['accepted_answers'][0])
-    click(at,'Kontrollera svar')
+    click(at,'Kontrollera')
     assert at.session_state.session.feedback['assisted']
     assert at.session_state.progress[key(vocab['id'],word['id'],'forward')]['box'] == 1
     assert not at.exception
@@ -229,11 +229,11 @@ def test_feedback_is_rendered_before_remote_save(tmp_path,monkeypatch):
         events.append('save')
         return 1
     monkeypatch.setattr(LocalDatabase,'save_progress',remote_save)
-    click(at,'▶ Fortsätt träna')
+    click(at,'Kör igång')
     vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
     word = next(w for w in vocab['words'] if w['id'] == at.session_state.session.current)
     next(r for r in at.radio if r.label == 'Välj översättning').set_value(word['accepted_answers'][0])
-    click(at,'Kontrollera svar')
+    click(at,'Kontrollera')
     assert events.index('feedback') < events.index('save')
     assert events.count('save') == 1
     assert at.session_state.pending is None
@@ -249,7 +249,7 @@ def test_course_is_required_first_and_kept_when_returning(tmp_path, monkeypatch)
     assert course.value is None and not any(b.label == 'Öppna listan' for b in at.button)
     course.set_value('Spanska nybörjare').run()
     click(at, 'Öppna listan')
-    click(at, '← Alla gloslistor')
+    click(at, 'Alla listor')
     assert next(s for s in at.selectbox if s.label == 'Välj kurs').value == 'Spanska nybörjare'
     assert any(b.label == 'Öppna listan' for b in at.button) and not at.exception
 
@@ -274,19 +274,19 @@ def test_live_progress_shows_whole_list_updates_once_and_follows_direction(tmp_p
     vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
     def row():
         return next(m.value for m in at.markdown if 'class="practice-progress"' in m.value)
-    click(at, '▶ Fortsätt träna')
+    click(at, 'Kör igång')
     total = len(vocab['words'])
     assert f'Ska övas <b>{total}</b>' in row()
     assert 'På väg <b>0</b>' in row() and 'Kan bra <b>0</b>' in row()
     word = next(w for w in vocab['words'] if w['id'] == at.session_state.session.current)
     next(r for r in at.radio if r.label == 'Välj översättning').set_value(word['accepted_answers'][0])
-    click(at, 'Kontrollera svar')
+    click(at, 'Kontrollera')
     assert f'Ska övas <b>{total-1}</b>' in row() and 'På väg <b>1</b>' in row()
     assert at.session_state.session.answered == 1
     at.run()
     assert 'På väg <b>1</b>' in row() and at.session_state.session.answered == 1
     at.sidebar.selectbox[0].set_value('Målspråk till svenska').run()
-    click(at, '▶ Fortsätt träna')
+    click(at, 'Kör igång')
     assert f'Ska övas <b>{total}</b>' in row() and 'På väg <b>0</b>' in row()
     assert '→ svenska' in row() and not at.exception
 
@@ -299,15 +299,15 @@ def test_live_progress_preserves_green_on_help_and_moves_wrong_answer_back(tmp_p
     at.session_state.progress = {key(vocab['id'], word['id'], 'forward'):state}
     at.session_state.session = Session([word['id']], mode='write')
     at.run()
-    click(at, '💡 En bokstav')
+    click(at, 'En bokstav')
     next(t for t in at.text_input if t.label.startswith('Skriv på')).set_value(word['accepted_answers'][0])
-    click(at, 'Rätta mitt svar')
+    click(at, 'Kontrollera')
     markup = next(m.value for m in at.markdown if 'class="practice-progress"' in m.value)
     assert 'Kan bra <b>1</b>' in markup
     at.session_state.session = Session([word['id']], mode='write')
     at.run()
     next(t for t in at.text_input if t.label.startswith('Skriv på')).set_value('xxxxxx')
-    click(at, 'Rätta mitt svar')
+    click(at, 'Kontrollera')
     markup = next(m.value for m in at.markdown if 'class="practice-progress"' in m.value)
     # Ett fel svar flyttar ett grönt ord ett steg ner, till På väg.
     assert 'Kan bra <b>0</b>' in markup and 'På väg <b>1</b>' in markup

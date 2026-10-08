@@ -11,7 +11,7 @@ from ui.training import training
 from ui.teacher import teacher
 from ui.list_page import list_page
 
-st.set_page_config(page_title="GlosFlow – öva och minns", page_icon="🌱", layout="centered", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="GlosFlow – öva och minns", page_icon="🌱", layout="wide", initial_sidebar_state="collapsed")
 
 for name, default in {"user": None, "progress": {}, "revision": 0, "list_id": None,
                       "session": None, "direction": "forward", "pending": None,
@@ -48,7 +48,9 @@ with st.container(key="app_header"):
                 st.rerun()
         else:
             label = "Lärarkonto" if user["role"] == "teacher" else user["name"]
-            html(f'<div class="account-label">{escape(label)}</div>')
+            initials = "".join(part[0] for part in label.split()[:2]).upper() or "?"
+            html(f'<div class="account"><span class="initials" aria-hidden="true">{escape(initials)}</span>'
+                 f'<span>{escape(label)}</span></div>')
 st.sidebar.write(f"**{user['name']}**")
 if user["role"] == "guest":
     st.sidebar.caption("Gästläge · framsteg sparas bara under besöket")
