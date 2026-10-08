@@ -13,7 +13,7 @@ def speech_panel(lists):
     region = setting("AZURE_SPEECH_REGION")
     configured = bool(key and region)
     if not configured:
-        st.info("För att skapa och provlyssna på nya röster behöver du ansluta Azure Speech. Se LJUD.md i uppdateringspaketet. Befintlig uppläsning fungerar under tiden.")
+        st.info("För att skapa och provlyssna på naturliga AI-röster behöver du lägga in AZURE_SPEECH_KEY och AZURE_SPEECH_REGION under Settings → Secrets i Streamlit. Under tiden används den bästa rösten som finns på elevens enhet.")
     selected = st.selectbox("Gloslista för ljud", [v["id"] for v in lists],
                             format_func=lambda i: next(v["name"] for v in lists if v["id"] == i), key="audio_list")
     vocab = next(v for v in lists if v["id"] == selected)
