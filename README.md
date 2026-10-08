@@ -14,7 +14,7 @@ Biblioteket har illustrerade gloskort, två kolumner på dator och en på mobil.
 
 Varje lista har en delbar adress med sitt stabila ID: `?lista=LIST_ID`. Öppna listan och kopiera adressen under **Dela gloslistan**, eller använd länken i lärarpanelen. Eleven ser glosorna direkt och väljer **Öva på dessa glosor**. Alla listor är synliga för den som kommer åt appen; elevdata kräver inloggning. Appens eventuella åtkomstbegränsning i Streamlit gäller även delade länkar.
 
-Glosor på svenska och målspråket kan läsas upp i normal eller långsam takt. Läraren kan provlyssna och skapa naturligare ljud med Azure Speech under **Röster och ljud**. Det kräver eget tjänstekonto och nyckel; se [LJUD.md](LJUD.md). Skapade ljud återanvänds utan API-anrop vid elevens uppspelning. Ladda ner audio_bank.json och spara i data-mappen på GitHub för beständig lagring. För ord utan sparat ljud används webbläsarens Speech Synthesis API; en latinamerikansk spansk röst prioriteras. Tillgänglighet och röst varierar mellan enheter.
+Glosor på svenska och målspråket kan läsas upp i normal eller långsam takt. Läraren kan provlyssna och skapa naturligare ljud med Azure Speech under **Röster och ljud**. Det kräver eget tjänstekonto och nyckel hos Azure. Skapade ljud återanvänds utan API-anrop vid elevens uppspelning. Ladda ner audio_bank.json och spara i data-mappen på GitHub för beständig lagring. För ord utan sparat ljud används webbläsarens Speech Synthesis API; en latinamerikansk spansk röst prioriteras. Tillgänglighet och röst varierar mellan enheter.
 
 Biblioteket börjar med ett större **Välj kurs** utan förvalt alternativ. Valet behålls när eleven går tillbaka till biblioteket. Temabilder föreslås från listans namn och ord. Alla åtta ursprungliga listor har matchande motiv, och läraren kan välja en annan temabild vid redigering.
 
@@ -80,13 +80,13 @@ Använd Google Sheets eller annan beständig lagring på en molnplattform som in
 
 | Låda | Vad händer? |
 | --- | --- |
-| 🔴 Ska övas | Nya eller felbesvarade ord. Ett korrekt quiz- eller skrivsvar utan hjälp flyttar ordet till På väg. |
+| 🔴 Ska övas | Nya ord och ord som har besvarats fel i På väg. Ett korrekt quiz- eller skrivsvar utan hjälp flyttar ordet till På väg. |
 | 🟡 På väg | Repetition efter tre dagar. För att nå Kan bra krävs ett skrivsvar utan hjälp när ordet är redo att repeteras. |
-| 🟢 Kan bra | Kontrolleras efter sju dagar. Ett fel flyttar tillbaka till Ska övas. |
+| 🟢 Kan bra | Kontrolleras efter sju dagar. Ett fel flyttar ordet ett steg ner, till På väg. |
 
 Efter ett fel är ordet redo igen efter tio minuter och kommer dessutom tillbaka efter upp till tre andra ord i den aktuella omgången. Det senare är stödjande övning och räknas inte som ett nytt självständigt minnesbevis. Listor med få ord ger kortare mellanrum. Ett ord läggs tillbaka högst en gång per omgång och omgången har ett tak på 20 frågor.
 
-Ordkort har två självbedömningsknappar. De kan flytta felbesvarade ord till rött men flyttar aldrig ord framåt. Ett korrekt självbedömt kort i rött schemaläggs till nästa dag. Ett hjälpberoende svar ger ny repetition efter tio minuter om ordet var redo. Extra övning före repetitionsdatumet flyttar inte ordet framåt eller skjuter upp nästa planerade repetition.
+Ordkort har två självbedömningsknappar. "Behöver öva" flyttar ordet ett steg ner, men korten flyttar aldrig ord framåt. Ett korrekt självbedömt kort i rött schemaläggs till nästa dag. Ett hjälpberoende svar ger ny repetition efter tio minuter om ordet var redo. Extra övning före repetitionsdatumet flyttar inte ordet framåt eller skjuter upp nästa planerade repetition.
 
 Minnestips och bokstavsledtrådar markerar svaret som hjälpt. ”Nästan rätt” behåller lådan och ger kortare väntan till nästa repetition. Saknad akut accent och mindre stavfel kan ge ”nästan rätt”, men aldrig godkänt svar eller avancemang. Egna bokstäver som ñ, å, ä och ö tas inte bort vid rättning. Versaler, extra mellanrum och frågetecken runt svaret ignoreras.
 

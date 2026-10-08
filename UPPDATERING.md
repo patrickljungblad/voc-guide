@@ -68,7 +68,7 @@ Elever får ha samma namn i olika klasser om de har **olika PIN-koder**. Inloggn
 
 ## Ljud och befintliga data
 
-Läs **LJUD.md** för den tidigare funktionen med naturligare röster. Den här uppdateringen genererar inga nya ljud. Behåll ett befintligt `data/audio_bank.json` som du själv fyllt med ljud; paketets tomma exempel ska inte ersätta det.
+Den här uppdateringen genererar inga nya ljud. Behåll ett befintligt `data/audio_bank.json` som du själv fyllt med ljud; paketets tomma exempel ska inte ersätta det.
 
 ## Testning
 

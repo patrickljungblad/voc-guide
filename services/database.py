@@ -36,6 +36,9 @@ def validate_progress(progress):
                 raise ServiceError("Ogiltig progression.")
         if state["correct"] > state["attempts"]:
             raise ServiceError("Ogiltig progression.")
+        tip = state.get("own_tip", "")
+        if not isinstance(tip, str) or len(tip) > 300:
+            raise ServiceError("Minnesknepet är för långt.")
     return progress
 
 

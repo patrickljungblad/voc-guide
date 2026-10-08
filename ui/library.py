@@ -1,9 +1,11 @@
 import time
+from datetime import datetime
+from zoneinfo import ZoneInfo
 import streamlit as st
 from core.leitner import counts, due_words, key
 from ui.navigation import open_list
 from ui.style import html
-from ui.visuals import library_hero, card_art, mini_progress
+from ui.visuals import library_hero, card_art, mini_progress, course_summary
 
 
 def library(lists):
@@ -18,6 +20,7 @@ def library(lists):
         st.caption("Gloslistorna visas när du har valt kurs.")
         return
     selected = [(i, v) for i, v in enumerate(lists) if v["category"] == category]
+    overview(st.session_state.progress, [v for _, v in selected], st.session_state.direction)
     html(f'<div class="section-intro"><h2>Dina gloslistor</h2><span>{len(selected)} listor · i din egen takt</span></div>')
     for offset in range(0, len(selected), 2):
         columns = st.columns(2, gap="medium")
@@ -36,3 +39,15 @@ def library(lists):
                     html('<div class="card-status">Din första omgång väntar.</div>')
                 if st.button("Öppna listan", key=f"open_{vocab['id']}", use_container_width=True):
                     open_list(vocab["id"])
+
+
+def overview(progress, vocabs, direction):
+    """Hela kursen på en rad: hur många ord eleven kan bra, och hur många som övats i dag."""
+    states = [progress.get(key(v["id"], w["id"], direction), {}) for v in vocabs for w in v["words"]]
+    if not any(state.get("attempts") for state in states):
+        return
+    zone = ZoneInfo("Europe/Stockholm")
+    today = datetime.now(zone).date()
+    practiced_today = sum(1 for state in states if state.get("last_reviewed")
+                          and datetime.fromtimestamp(state["last_reviewed"], zone).date() == today)
+    course_summary(sum(state.get("box") == 3 for state in states), len(states), practiced_today)

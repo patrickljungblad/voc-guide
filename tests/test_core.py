@@ -28,6 +28,9 @@ def test_green_requires_delayed_unassisted_production():
     assert update(first,'near','write',False,due)['box'] == 2
     wrong = update(first,'wrong','write',False,due)
     assert wrong['box'] == 1
+    green = update(first,'correct','write',False,due)
+    assert update(green,'wrong','write',False,green['next_review'])['box'] == 2
+    assert update(initial(),'wrong','quiz',False,0)['box'] == 1
     assert first['attempts'] == 1  # update has not mutated its input
 
 
@@ -73,3 +76,24 @@ def test_quiz_does_not_offer_another_accepted_answer_as_distractor():
     words = [{'id':'a','accepted_answers':['computer','PC']},
              {'id':'b','accepted_answers':['PC']}, {'id':'c','accepted_answers':['school']}]
     assert set(options_for(words[0],words,'forward')) == {'computer','school'}
+
+
+def test_review_text_is_friendly():
+    from core.leitner import next_review_text
+    noon = 1791712800  # 2026-10-11 12:00 i Stockholm
+    assert next_review_text(noon + 600, noon) == 'om 10 minuter'
+    assert next_review_text(noon + 3 * 3600, noon) == 'senare i dag'
+    assert next_review_text(noon + 86400, noon) == 'i morgon'
+    assert next_review_text(noon + 3 * 86400, noon) == 'om 3 dagar'
+
+
+def test_memory_tips_prefer_teacher_then_builtin_then_strategy():
+    from pedagogy.memory_strategies import memory_tip, own_tip
+    word = {'id': 'x1', 'svenska': 'hund', 'accepted_answers': ['perro'], 'memory_tip': ''}
+    generic = memory_tip(word)
+    assert '**perro**' in generic and memory_tip(word) == generic  # samma strategi varje gång
+    assert memory_tip({**word, 'memory_tip': 'Lärarens tips'}) == 'Lärarens tips'
+    assert memory_tip({**word, 'svenska': 'Dator'}).startswith('🔗 Computadora')
+    progress = {'l:x1:reverse': {'own_tip': 'prrr'}}
+    assert own_tip(progress, ['l:x1:forward', 'l:x1:reverse']) == 'prrr'
+    assert own_tip({}, ['l:x1:forward']) == ''
