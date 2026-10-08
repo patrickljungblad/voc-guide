@@ -22,8 +22,8 @@ def click(at,label):
 
 
 def guest(at):
-    click(at,'Prova som gäst')
     click(at,'Öppna listan')
+    click(at,'▶ Öva denna lista')
     return at
 
 
@@ -92,6 +92,7 @@ def test_network_failure_keeps_response_and_blocks_next(tmp_path,monkeypatch):
 
 def test_teacher_panel_can_create_user_and_list(tmp_path,monkeypatch):
     at = app(tmp_path,monkeypatch)
+    click(at,'Logga in för att spara framsteg')
     next(t for t in at.text_input if t.label == 'Lärarlösenord').set_value('a-long-test-password')
     click(at,'Öppna lärarpanelen')
     assert not at.exception
@@ -116,6 +117,7 @@ def test_expired_login_can_save_pending_answer_without_reset(tmp_path,monkeypatc
     at.session_state.user = user
     at.run()
     click(at,'Öppna listan')
+    click(at,'▶ Öva denna lista')
     click(at,'▶ Fortsätt träna')
     vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
     word = next(w for w in vocab['words'] if w['id'] == at.session_state.session.current)
@@ -128,4 +130,110 @@ def test_expired_login_can_save_pending_answer_without_reset(tmp_path,monkeypatc
     click(at,'Logga in och spara svaret')
     assert at.session_state.pending is None and at.session_state.progress == snapshot
     assert db.load_progress(at.session_state.user['token'])['progress'] == snapshot
+    assert not at.exception
+
+
+def test_direct_link_opens_custom_list_without_login_and_survives_rename(tmp_path,monkeypatch):
+    from services.database import LocalDatabase
+    at = app(tmp_path,monkeypatch)
+    db = LocalDatabase(tmp_path/'app.sqlite3','a-long-test-password')
+    token = db.teacher_login('a-long-test-password')['token']
+    vocab = deepcopy(builtin_lists()[0])
+    vocab.update(id='custom_shared',name='Min delbara lista')
+    db.save_lists(token,[vocab])
+    at = AppTest.from_file(APP,default_timeout=10)
+    at.query_params['lista'] = vocab['id']
+    at.run()
+    assert at.session_state.user['role'] == 'guest'
+    assert not any(t.label == 'PIN-kod' for t in at.text_input)
+    assert any(s.value == 'Min delbara lista' for s in at.subheader)
+    assert at.code[0].value.endswith('?lista=custom_shared')
+    click(at,'▶ Öva denna lista')
+    click(at,'▶ Fortsätt träna')
+    assert at.session_state.session is not None and not at.exception
+    vocab['name'] = 'Nytt namn, samma länk'
+    db.save_lists(token,[vocab])
+    second = AppTest.from_file(APP,default_timeout=10)
+    second.query_params['lista'] = vocab['id']
+    second.run()
+    assert any(s.value == vocab['name'] for s in second.subheader)
+
+
+def test_invalid_link_and_return_to_library_clear_query(tmp_path,monkeypatch):
+    at = app(tmp_path,monkeypatch)
+    at.query_params['lista'] = 'missing-id'
+    at.run()
+    assert any('finns inte' in w.value for w in at.warning)
+    click(at,'Visa alla gloslistor')
+    assert 'lista' not in at.query_params and at.session_state.list_id is None
+    click(at,'Öppna listan')
+    assert at.query_params['lista'] == [at.session_state.list_id]
+    click(at,'← Alla gloslistor')
+    assert 'lista' not in at.query_params and not at.exception
+
+
+def test_optional_login_keeps_list_and_loads_account_without_mixing_guest_progress(tmp_path,monkeypatch):
+    from services.database import LocalDatabase
+    at = guest(app(tmp_path,monkeypatch))
+    list_id = at.session_state.list_id
+    db = LocalDatabase(tmp_path/'app.sqlite3','a-long-test-password')
+    token = db.teacher_login('a-long-test-password')['token']
+    db.create_user(token,'Test','2A','0123')
+    user = db.authenticate('Test','2A','0123')
+    saved = {'stored-word':initial()}
+    db.save_progress(user['token'],saved,0,'test-login')
+    at.session_state.progress = {'guest-word':initial()}
+    click(at,'Logga in för att spara framsteg')
+    next(t for t in at.text_input if t.label == 'Klass').set_value('2A')
+    next(t for t in at.text_input if t.label == 'Namn').set_value('Test')
+    next(t for t in at.text_input if t.label == 'PIN-kod').set_value('0123')
+    click(at,'Logga in')
+    assert at.session_state.list_id == list_id
+    assert at.session_state.progress == saved
+    assert at.session_state.user['role'] == 'student'
+    assert not at.exception
+    click(at,'Logga ut')
+    assert at.session_state.user['role'] == 'guest'
+    assert at.session_state.progress == {} and at.session_state.list_id == list_id
+
+
+def test_listening_to_answer_prevents_promotion(tmp_path,monkeypatch):
+    at = guest(app(tmp_path,monkeypatch))
+    click(at,'▶ Fortsätt träna')
+    vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
+    word = next(w for w in vocab['words'] if w['id'] == at.session_state.session.current)
+    click(at,'🔊 Lyssna på svaret som hjälp')
+    next(r for r in at.radio if r.label == 'Välj översättning').set_value(word['accepted_answers'][0])
+    click(at,'Kontrollera svar')
+    assert at.session_state.session.feedback['assisted']
+    assert at.session_state.progress[key(vocab['id'],word['id'],'forward')]['box'] == 1
+    assert not at.exception
+
+
+def test_feedback_is_rendered_before_remote_save(tmp_path,monkeypatch):
+    import streamlit as st
+    from services.database import LocalDatabase
+    at = guest(app(tmp_path,monkeypatch))
+    at.session_state.user = {'name':'Test','role':'student','token':'fake'}
+    events = []
+    success = st.success
+    def show_success(body,*args,**kwargs):
+        if str(body).startswith('Rätt!'):
+            events.append('feedback')
+        return success(body,*args,**kwargs)
+    monkeypatch.setattr(st,'success',show_success)
+    def remote_save(*args,**kwargs):
+        assert 'feedback' in events
+        events.append('save')
+        return 1
+    monkeypatch.setattr(LocalDatabase,'save_progress',remote_save)
+    click(at,'▶ Fortsätt träna')
+    vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
+    word = next(w for w in vocab['words'] if w['id'] == at.session_state.session.current)
+    next(r for r in at.radio if r.label == 'Välj översättning').set_value(word['accepted_answers'][0])
+    click(at,'Kontrollera svar')
+    assert events.index('feedback') < events.index('save')
+    assert events.count('save') == 1
+    assert at.session_state.pending is None
+    assert at.session_state.session.answered == 1
     assert not at.exception
