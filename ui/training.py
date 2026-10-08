@@ -12,6 +12,8 @@ from core.trainer import Session, options_for
 from pedagogy.memory_strategies import memory_tip
 from services.database import Conflict, ServiceError, SessionExpired
 from ui.style import boxes
+from ui.audio import listen
+from ui.navigation import all_lists
 
 
 def persist(db):
@@ -34,18 +36,23 @@ def persist(db):
     return False
 
 
-def save(db, operation_id=None):
+def save(db, operation_id=None, defer=False):
     if st.session_state.user["role"] != "student":
         return True
     st.session_state.pending = {"progress": deepcopy(st.session_state.progress),
                                "revision": st.session_state.revision, "id": operation_id or uuid4().hex}
+    if defer:
+        return True
     return persist(db)
 
 
 def pending_notice(db):
     if not st.session_state.pending:
         return
-    error = st.session_state.save_error or ("network", "Svaret har inte sparats ännu.")
+    # En ny sparning är på väg att starta efter att återkopplingen har visats.
+    if st.session_state.save_error is None:
+        return
+    error = st.session_state.save_error
     st.warning(error[1])
     st.download_button("Hämta kopia av dina framsteg", json.dumps(st.session_state.progress, ensure_ascii=False, indent=2),
                        "mina-framsteg.json", "application/json")
@@ -100,7 +107,7 @@ def answer(db, vocab, word, result, mode, canonical):
     now = time.time()
     progress_key = key(vocab["id"], word["id"], st.session_state.direction)
     previous = st.session_state.progress.get(progress_key, initial())
-    assisted = session.hints > 0 or session.tip or word["id"] in session.exposed
+    assisted = session.hints > 0 or session.tip or session.listened or word["id"] in session.exposed
     state = update(previous, result, mode, assisted, now)
     st.session_state.progress[progress_key] = state
     session.answered += 1
@@ -110,13 +117,17 @@ def answer(db, vocab, word, result, mode, canonical):
                         "box": state["box"], "assisted": assisted, "mode": mode}
     if result != "correct" or assisted:
         session.retry_later(word["id"], [w["id"] for w in vocab["words"]])
-    save(db, session.turn_id)
+    # Ingen nätverksväntan innan eleven får se rättningen.
+    save(db, session.turn_id, defer=True)
     st.rerun()
 
 
 def training(db, vocab):
     if st.button("← Alla gloslistor", disabled=bool(st.session_state.pending)):
-        st.session_state.list_id = st.session_state.session = None
+        all_lists()
+    if st.button("Se glosorna och lyssna", disabled=bool(st.session_state.pending)):
+        st.session_state.view = "list"
+        st.session_state.session = None
         st.rerun()
     st.subheader(vocab["name"])
     progress = st.session_state.progress
@@ -186,11 +197,25 @@ def training(db, vocab):
             st.warning(f"Nästan rätt! Kontrollera stavningen och accenterna: {feedback['answer']}")
         else:
             st.info(f"Rätt svar är: {feedback['answer']}. Läs, säg ordet högt och försök minnas det till nästa gång.")
+        listen(feedback["answer"], vocab["language"] if direction == "forward" else "Svenska")
         if st.button("Nästa ord →", type="primary", use_container_width=True, disabled=bool(st.session_state.pending)):
             session.advance()
             st.rerun()
+        # Skicka återkoppling och den tillfälligt spärrade knappen till webbläsaren
+        # före det långsamma anropet. Bara en sparning får pågå åt gången.
+        if st.session_state.pending and st.session_state.save_error is None:
+            st.caption("Sparar dina framsteg…")
+            persist(db)
+            st.rerun()
         return
     if mode != "cards":
+        if st.button("🔊 Lyssna på svaret som hjälp", key=session.turn_id + "listen"):
+            session.listened = True
+            session.exposed.add(word["id"])
+            st.rerun()
+        if session.listened:
+            st.caption("Svaret visas som hjälp. Ordet flyttas inte framåt av detta svar.")
+            listen(canonical, vocab["language"] if direction == "forward" else "Svenska")
         left, right = st.columns(2)
         with left:
             if st.button("🧠 Minnestips", key=session.turn_id + "tip"):
@@ -231,6 +256,7 @@ def training(db, vocab):
                 st.rerun()
         else:
             st.markdown(f'<div class="word-card">{escape(" / ".join(word[field]))}</div>', unsafe_allow_html=True)
+            listen(canonical, vocab["language"] if direction == "forward" else "Svenska")
             left, right = st.columns(2)
             with left:
                 if st.button("Behöver öva", use_container_width=True):

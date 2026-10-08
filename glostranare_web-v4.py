@@ -8,13 +8,15 @@ from ui.login import login
 from ui.library import library
 from ui.training import training
 from ui.teacher import teacher
+from ui.list_page import list_page
 
 st.set_page_config(page_title="GlosFlow – öva och minns", page_icon="🌱", layout="centered", initial_sidebar_state="collapsed")
 apply_style()
 
 for name, default in {"user": None, "progress": {}, "revision": 0, "list_id": None,
                       "session": None, "direction": "forward", "pending": None,
-                      "save_error": None, "lists": None}.items():
+                      "save_error": None, "lists": None, "show_login": False,
+                      "view": "list", "query_list": None}.items():
     if name not in st.session_state:
         st.session_state[name] = default
 try:
@@ -23,15 +25,31 @@ except ServiceError as error:
     st.error(str(error))
     st.stop()
 
+requested = st.query_params.get("lista")
+if requested != st.session_state.query_list and not st.session_state.pending:
+    st.session_state.query_list = requested
+    st.session_state.list_id = requested
+    st.session_state.session = None
+    st.session_state.view = "list"
+    st.session_state.show_login = False
+
 if st.session_state.user is None:
-    login(db)
-    st.stop()
+    st.session_state.user = {"name": "Gäst", "role": "guest"}
 
 user = st.session_state.user
 st.sidebar.write(f"**{user['name']}**")
 if user["role"] == "guest":
     st.sidebar.caption("Gästläge · framsteg sparas bara under besöket")
-if st.sidebar.button("Logga ut", disabled=bool(st.session_state.pending)):
+    list_view = st.session_state.list_id is not None and st.session_state.view == "list" and not st.session_state.show_login
+    if not list_view and st.button("Logga in för att spara framsteg", disabled=bool(st.session_state.pending)):
+        st.session_state.show_login = True
+        st.rerun()
+    if st.sidebar.button("Elev- eller lärarinloggning"):
+        st.session_state.show_login = True
+        st.rerun()
+else:
+    st.sidebar.caption("Dina framsteg sparas på kontot." if user["role"] == "student" else "Lärarkonto")
+if user["role"] != "guest" and st.sidebar.button("Logga ut", disabled=bool(st.session_state.pending)):
     try:
         if user.get("token"):
             db.logout(user["token"])
@@ -43,6 +61,10 @@ if st.sidebar.button("Logga ut", disabled=bool(st.session_state.pending)):
     else:
         st.session_state.clear()
         st.rerun()
+
+if st.session_state.show_login:
+    login(db)
+    st.stop()
 
 if st.session_state.lists is None:
     try:
@@ -76,6 +98,12 @@ if st.session_state.list_id is None:
 else:
     vocab = next((v for v in lists if v["id"] == st.session_state.list_id), None)
     if vocab is None:
-        st.session_state.list_id = st.session_state.session = None
-        st.rerun()
-    training(db, vocab)
+        st.warning("Gloslistan i länken finns inte. Den kan ha tagits bort eller länken kan vara felaktig.")
+        from ui.navigation import all_lists
+        if st.button("Visa alla gloslistor"):
+            all_lists()
+        st.stop()
+    if st.session_state.view == "training":
+        training(db, vocab)
+    else:
+        list_page(vocab)
