@@ -1,22 +1,31 @@
 import time
 import streamlit as st
-from core.leitner import counts, due_words
+from core.leitner import counts, due_words, key
 from ui.navigation import open_list
+from ui.style import html
+from ui.visuals import library_hero, card_art, mini_progress
 
 
 def library(lists):
-    st.subheader("Välj en gloslista")
-    st.write("Se orden, lyssna och börja öva direkt. Du behöver inget konto.")
+    library_hero()
     categories = sorted({v["category"] for v in lists})
     category = st.selectbox("Kategori", categories)
-    for vocab in lists:
-        if vocab["category"] != category:
-            continue
-        c = counts(vocab, st.session_state.progress, st.session_state.direction)
-        due = len(due_words(vocab, st.session_state.progress, st.session_state.direction, time.time(), limit=300))
-        with st.container(border=True):
-            st.subheader(vocab["name"])
-            st.caption(f"{vocab['language']} · {len(vocab['words'])} glosor · {due} att repetera nu")
-            st.write(f"🔴 {c[1]} Ska övas · 🟡 {c[2]} På väg · 🟢 {c[3]} Kan bra")
-            if st.button("Öppna listan", key=f"open_{vocab['id']}", use_container_width=True):
-                open_list(vocab["id"])
+    selected = [(i, v) for i, v in enumerate(lists) if v["category"] == category]
+    html(f'<div class="section-intro"><h2>Dina gloslistor</h2><span>{len(selected)} listor · i din egen takt</span></div>')
+    for offset in range(0, len(selected), 2):
+        columns = st.columns(2, gap="medium")
+        for column, (index, vocab) in zip(columns, selected[offset:offset + 2]):
+            with column, st.container(key="vocab_" + vocab["id"]):
+                card_art(index, vocab["language"])
+                st.subheader(vocab["name"])
+                c = counts(vocab, st.session_state.progress, st.session_state.direction)
+                due = len(due_words(vocab, st.session_state.progress, st.session_state.direction, time.time(), limit=300))
+                st.caption(f"{len(vocab['words'])} glosor · {due} redo att öva")
+                practiced = any(st.session_state.progress.get(key(vocab["id"], w["id"], st.session_state.direction), {}).get("attempts", 0) for w in vocab["words"])
+                if practiced:
+                    mini_progress(c, len(vocab["words"]))
+                    html(f'<div class="card-status"><b>{c[3]}</b> av {len(vocab["words"])} i Kan bra</div>')
+                else:
+                    html('<div class="card-status">Din första omgång väntar.</div>')
+                if st.button("Öppna listan", key=f"open_{vocab['id']}", use_container_width=True):
+                    open_list(vocab["id"])

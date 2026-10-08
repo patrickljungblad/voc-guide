@@ -1,27 +1,28 @@
 import streamlit as st
 from ui.audio import word_table
 from ui.navigation import all_lists, share_list
+from ui.style import html
+from ui.visuals import symbol
+from html import escape
 
 
 def list_page(vocab):
-    back, account = st.columns([1, 2])
-    with back:
-        if st.button("← Alla gloslistor"):
-            all_lists()
-    with account:
-        if st.session_state.user["role"] == "guest" and st.button("Logga in för att spara framsteg"):
-            st.session_state.show_login = True
-            st.rerun()
+    if st.button("← Alla gloslistor"):
+        all_lists()
+    html(f'<div class="list-heading"><div class="list-heading-icon">{symbol()}</div><div><div class="eyebrow">Din gloslista</div><p class="list-meta">{escape(vocab["language"])} · {len(vocab["words"])} glosor</p></div></div>')
     st.subheader(vocab["name"])
-    st.caption(f"{vocab['language']} · {len(vocab['words'])} glosor")
-    if st.button("▶ Öva denna lista", type="primary", use_container_width=True):
-        st.session_state.view = "training"
-        st.session_state.session = None
-        st.rerun()
-    if st.session_state.user["role"] == "guest":
-        st.caption("Öva utan konto. Logga in för att spara mellan besöken.")
-    share_list(vocab)
-    with st.expander("Sök bland glosorna"):
+    with st.container(key="list_launch"):
+        html('<p class="start-title">Från första ordet till ditt eget flow.</p><p class="start-copy">Lyssna och bekanta dig med orden, eller börja öva direkt.</p>')
+        if st.button("▶ Öva denna lista", type="primary", use_container_width=True):
+            st.session_state.view = "training"
+            st.session_state.session = None
+            st.rerun()
+        if st.session_state.user["role"] == "guest":
+            st.caption("Öva utan konto. Logga in för att spara mellan besöken.")
+    left, right = st.columns(2)
+    with left:
+        share_list(vocab)
+    with right, st.expander("Sök bland glosorna"):
         query = st.text_input("Sökord", key="search_" + vocab["id"], placeholder="Svenska eller målspråk")
     words = [w for w in vocab["words"] if query.strip().casefold() in
              (w["svenska"] + " " + " ".join(w["accepted_answers"])).casefold()]

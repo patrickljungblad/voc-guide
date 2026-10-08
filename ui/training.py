@@ -11,7 +11,8 @@ from core.leitner import counts, due_words, initial, key, update, LABELS
 from core.trainer import Session, options_for
 from pedagogy.memory_strategies import memory_tip
 from services.database import Conflict, ServiceError, SessionExpired
-from ui.style import boxes
+from ui.style import boxes, html
+from ui.visuals import word_card, feedback_signal, completion
 from ui.audio import listen
 from ui.navigation import all_lists
 
@@ -122,100 +123,25 @@ def answer(db, vocab, word, result, mode, canonical):
     st.rerun()
 
 
-def training(db, vocab):
-    if st.button("← Alla gloslistor", disabled=bool(st.session_state.pending)):
-        all_lists()
-    if st.button("Se glosorna och lyssna", disabled=bool(st.session_state.pending)):
-        st.session_state.view = "list"
-        st.session_state.session = None
-        st.rerun()
-    st.subheader(vocab["name"])
-    progress = st.session_state.progress
-    direction = st.session_state.direction
-    boxes(counts(vocab, progress, direction))
-    with st.expander("Så fungerar lådorna"):
-        st.write("Svåra ord kommer tillbaka oftare. Ett rätt quiz- eller skrivsvar kan flytta ett ord till På väg. Efter minst tre dagar kan ett skrivsvar utan hjälp flytta det till Kan bra. Gröna ord kontrolleras efter sju dagar. Fel svar flyttar tillbaka ordet till Ska övas.")
-        st.caption("Ordkort tränar minnet, men självbedömning flyttar inte ord framåt. Hjälpta och nästan rätta svar ger heller inget avancemang. De två översättningsriktningarna har egna lådor.")
-    pending_notice(db)
+def learning_info(vocab):
+    boxes(counts(vocab, st.session_state.progress, st.session_state.direction))
+    st.caption("Framstegen gäller den riktning du tränar i.")
+    st.write("Svåra ord kommer tillbaka oftare. Ett rätt quiz- eller skrivsvar utan hjälp kan flytta ett nytt ord till På väg. Efter minst tre dagar kan ett skrivsvar utan hjälp flytta det till Kan bra. Gröna ord kontrolleras efter sju dagar.")
+    st.caption("Ordkort, hjälpta svar och nästan rätta svar ger inget avancemang. De två översättningsriktningarna har egna lådor.")
+    st.caption("Ord du tar hjälp med eller svarar fel på kan komma tillbaka i samma omgång. Därför kan antalet frågor öka.")
+
+
+def help_panel(word, canonical, mode, vocab):
     session = st.session_state.session
-    if session is None:
-        due = due_words(vocab, progress, direction, time.time(), 300)
-        if due:
-            st.write(f"**{len(due)} glosor redo att övas.** En omgång börjar med högst 10 ord.")
-            if st.button("▶ Fortsätt träna", type="primary", use_container_width=True, disabled=bool(st.session_state.pending)):
-                start(vocab)
-        else:
-            next_at = min(progress[key(vocab["id"], w["id"], direction)]["next_review"] for w in vocab["words"])
-            st.success("Du är klar med dagens planerade repetition. Fint jobbat!")
-            st.caption(f"Nästa repetition: {datetime.fromtimestamp(next_at, ZoneInfo('Europe/Stockholm')).strftime('%Y-%m-%d')}.")
-        with st.expander("Välj träningssätt själv"):
-            mode_label = st.radio("Träningssätt", ["Ordkort", "Quiz", "Skriv"], horizontal=True)
-            st.caption("Här kan du öva extra även på ord som inte är redo för repetition. Extra övning förkortar inte väntetiden till gröna lådan.")
-            if st.button("Starta extra övning", disabled=bool(st.session_state.pending)):
-                start(vocab, {"Ordkort": "cards", "Quiz": "quiz", "Skriv": "write"}[mode_label], extra=True)
-        with st.expander("Nollställ framsteg för den här listan"):
-            reset = st.checkbox("Jag vill radera lådorna för båda riktningarna i denna lista")
-            if st.button("Nollställ listans framsteg", disabled=not reset or bool(st.session_state.pending)):
-                st.session_state.progress = {k: v for k, v in progress.items() if not k.startswith(vocab["id"] + ":")}
-                save(db)
-                st.rerun()
-        return
-    if session.done:
-        st.success(f"Omgången är klar! {session.correct} rätt av {session.answered} svar.")
-        green = counts(vocab, progress, direction)[3] - session.start_green
-        if green > 0:
-            st.write(f"🌱 {green} fler ord ligger nu i Kan bra.")
-        st.write("Kom tillbaka när orden är redo att repeteras. Då tränar du på att minnas över tid.")
-        if st.button("Till listans översikt", type="primary", disabled=bool(st.session_state.pending)):
-            st.session_state.session = None
-            st.rerun()
-        return
-    word = next(w for w in vocab["words"] if w["id"] == session.current)
-    field = "accepted_answers" if direction == "forward" else "swedish_answers"
-    canonical = word[field][0]
-    prompt = word["svenska"] if direction == "forward" else " / ".join(word["accepted_answers"])
-    box = progress.get(key(vocab["id"], word["id"], direction), initial())["box"]
-    mode = session.mode if session.mode != "auto" else ("quiz" if box == 1 else "write")
-    if mode == "quiz" and not session.options:
-        session.options = options_for(word, vocab["words"], direction)
-    if mode == "quiz" and len(session.options) < 2:
-        mode = "write"
-    st.caption(f"Ord {session.index + 1} av {len(session.queue)} · {'Skriv' if mode == 'write' else 'Quiz' if mode == 'quiz' else 'Ordkort'} · {session.streak} rätt i rad")
-    st.progress(session.index / len(session.queue))
-    st.markdown(f'<div class="word-card">{escape(prompt)}</div>', unsafe_allow_html=True)
-    if session.feedback:
-        feedback = session.feedback
-        if feedback["result"] == "correct":
-            st.success(f"Rätt! Svaret är: {feedback['answer']}")
-            if feedback["box"] > feedback["old_box"]:
-                st.write(f"🌱 Ordet flyttades till **{LABELS[feedback['box']]}**!")
-            elif feedback["assisted"]:
-                st.caption("Bra övning med hjälp. Visa att du minns ordet vid ett senare tillfälle för att flytta det framåt.")
-            elif feedback["mode"] == "cards":
-                st.caption("Testa ett quiz eller skrivsvar för att flytta ordet framåt.")
-        elif feedback["result"] == "near":
-            st.warning(f"Nästan rätt! Kontrollera stavningen och accenterna: {feedback['answer']}")
-        else:
-            st.info(f"Rätt svar är: {feedback['answer']}. Läs, säg ordet högt och försök minnas det till nästa gång.")
-        listen(feedback["answer"], vocab["language"] if direction == "forward" else "Svenska")
-        if st.button("Nästa ord →", type="primary", use_container_width=True, disabled=bool(st.session_state.pending)):
-            session.advance()
-            st.rerun()
-        # Skicka återkoppling och den tillfälligt spärrade knappen till webbläsaren
-        # före det långsamma anropet. Bara en sparning får pågå åt gången.
-        if st.session_state.pending and st.session_state.save_error is None:
-            st.caption("Sparar dina framsteg…")
-            persist(db)
-            st.rerun()
-        return
-    if mode != "cards":
+    with st.expander("Behöver du hjälp?", expanded=session.listened or session.tip or session.hints > 0):
+        st.caption("Ta hjälp när du behöver. Ett hjälpt svar flyttar inte ordet framåt.")
         if st.button("🔊 Lyssna på svaret som hjälp", key=session.turn_id + "listen"):
             session.listened = True
             session.exposed.add(word["id"])
             st.rerun()
         if session.listened:
             st.caption("Svaret visas som hjälp. Ordet flyttas inte framåt av detta svar.")
-            listen(canonical, vocab["language"] if direction == "forward" else "Svenska")
+            listen(canonical, vocab["language"] if st.session_state.direction == "forward" else "Svenska")
         left, right = st.columns(2)
         with left:
             if st.button("🧠 Minnestips", key=session.turn_id + "tip"):
@@ -229,9 +155,115 @@ def training(db, vocab):
             st.info(memory_tip(word))
         if session.hints:
             st.info("Bokstavsledtråd: " + canonical[:session.hints] + "_" * (len(canonical) - session.hints))
+
+
+def training(db, vocab):
+    with st.container(key="practice_nav"):
+        back, overview = st.columns([1.1, 1.6])
+    with back:
+        if st.button("← Alla gloslistor", disabled=bool(st.session_state.pending)):
+            all_lists()
+    with overview:
+        if st.button("Se glosorna och lyssna", disabled=bool(st.session_state.pending)):
+            st.session_state.view = "list"
+            st.session_state.session = None
+            st.rerun()
+    st.subheader(vocab["name"])
+    progress = st.session_state.progress
+    direction = st.session_state.direction
+    session = st.session_state.session
+    pending_notice(db)
+    if session is None:
+        due = due_words(vocab, progress, direction, time.time(), 300)
+        with st.container(key="practice_start"):
+            html('<p class="start-title">En liten omgång.<br>Ett steg framåt.</p><p class="start-copy">Träna på att minnas med quiz och skrivsvar. Vi börjar med högst 10 ord.</p>')
+            if due:
+                st.caption(f"{len(due)} glosor redo att öva · i din egen takt")
+                if st.button("▶ Fortsätt träna", type="primary", use_container_width=True, disabled=bool(st.session_state.pending)):
+                    start(vocab)
+            else:
+                next_at = min(progress[key(vocab["id"], w["id"], direction)]["next_review"] for w in vocab["words"])
+                st.success("Du är klar med dagens planerade repetition. Fint jobbat!")
+                st.caption(f"Nästa repetition: {datetime.fromtimestamp(next_at, ZoneInfo('Europe/Stockholm')).strftime('%Y-%m-%d')}.")
+        with st.container(key="practice_modes"):
+            st.subheader("Hitta ditt sätt att öva")
+            mode_label = st.radio("Träningssätt", ["Ordkort", "Quiz", "Skriv"], horizontal=True)
+            descriptions = {"Ordkort": "Säg svaret högt och vänd kortet för att jämföra.",
+                            "Quiz": "Känn igen rätt översättning bland flera alternativ.",
+                            "Skriv": "Skriv översättningen och träna på att plocka fram ordet själv."}
+            st.caption(descriptions[mode_label])
+            if st.button("Starta extra övning", use_container_width=True, disabled=bool(st.session_state.pending)):
+                start(vocab, {"Ordkort": "cards", "Quiz": "quiz", "Skriv": "write"}[mode_label], extra=True)
+            st.caption("Extra övning ändrar inte väntetiden till nästa planerade repetition.")
+        with st.expander("Dina framsteg och repetition"):
+            learning_info(vocab)
+        with st.expander("Nollställ framsteg för den här listan"):
+            reset = st.checkbox("Jag vill radera lådorna för båda riktningarna i denna lista")
+            if st.button("Nollställ listans framsteg", disabled=not reset or bool(st.session_state.pending)):
+                st.session_state.progress = {k: v for k, v in progress.items() if not k.startswith(vocab["id"] + ":")}
+                save(db)
+                st.rerun()
+        return
+    if session.done:
+        practiced = set(session.queue[:session.index])
+        needs_work = sum(progress.get(key(vocab["id"], wid, direction), initial())["box"] == 1 for wid in practiced)
+        completion(len(practiced), needs_work)
+        st.success(f"Omgången är klar! {session.correct} rätt av {session.answered} svar.")
+        green = counts(vocab, progress, direction)[3] - session.start_green
+        if green > 0:
+            st.write(f"🌱 {green} fler ord ligger nu i Kan bra.")
+        if st.button("Till listans översikt", type="primary", use_container_width=True, disabled=bool(st.session_state.pending)):
+            st.session_state.session = None
+            st.rerun()
+        with st.expander("Dina framsteg och repetition"):
+            learning_info(vocab)
+        return
+    word = next(w for w in vocab["words"] if w["id"] == session.current)
+    field = "accepted_answers" if direction == "forward" else "swedish_answers"
+    canonical = word[field][0]
+    prompt = word["svenska"] if direction == "forward" else " / ".join(word["accepted_answers"])
+    destination = vocab["language"] if direction == "forward" else "svenska"
+    box = progress.get(key(vocab["id"], word["id"], direction), initial())["box"]
+    mode = session.mode if session.mode != "auto" else ("quiz" if box == 1 else "write")
+    if mode == "quiz" and not session.options:
+        session.options = options_for(word, vocab["words"], direction)
+    if mode == "quiz" and len(session.options) < 2:
+        mode = "write"
+    mode_label = {"quiz": "Quiz", "write": "Skriv", "cards": "Ordkort"}[mode]
+    streak = f" · {session.streak} rätt i rad" if session.streak >= 2 else ""
+    html(f'<div class="exercise-meta"><span class="mode-pill">{mode_label}</span><span>Fråga {session.index + 1} av {len(session.queue)}{streak}</span></div>')
+    st.progress(min(1.0, session.answered / len(session.queue)))
+    st.caption(f"Du har gett {session.answered} av {len(session.queue)} svar.")
+    word_card(prompt, destination)
+    if session.feedback:
+        feedback = session.feedback
+        feedback_signal(feedback["result"])
+        if feedback["result"] == "correct":
+            st.success(f"Rätt! Svaret är: {feedback['answer']}")
+            if feedback["box"] > feedback["old_box"]:
+                st.write(f"🌱 Ordet flyttades till **{LABELS[feedback['box']]}**!")
+            elif feedback["assisted"]:
+                st.caption("Bra övning med hjälp. Visa att du minns ordet vid ett senare tillfälle för att flytta det framåt.")
+            elif feedback["mode"] == "cards":
+                st.caption("Testa ett quiz eller skrivsvar för att flytta ordet framåt.")
+        elif feedback["result"] == "near":
+            st.warning(f"Nästan rätt! Kontrollera stavningen och accenterna: {feedback['answer']}")
+        else:
+            st.info(f"Rätt svar är: {feedback['answer']}. Läs, säg ordet högt och försök minnas det till nästa gång.")
+        if st.button("Nästa ord →", type="primary", use_container_width=True, disabled=bool(st.session_state.pending)):
+            session.advance()
+            st.rerun()
+        with st.expander("Lyssna på svaret"):
+            listen(feedback["answer"], destination)
+        # Återkopplingen skickas till webbläsaren före det långsamma anropet.
+        if st.session_state.pending and st.session_state.save_error is None:
+            st.caption("Sparar dina framsteg…")
+            persist(db)
+            st.rerun()
+        return
     if mode == "write":
-        with st.form("write_" + session.turn_id):
-            value = st.text_input("Skriv på " + (vocab["language"] if direction == "forward" else "svenska"), max_chars=300)
+        with st.container(key="answer_write"), st.form("write_" + session.turn_id):
+            value = st.text_input("Skriv på " + destination, max_chars=300)
             submit = st.form_submit_button("Rätta mitt svar", type="primary", use_container_width=True)
         if submit:
             if not value.strip():
@@ -239,15 +271,17 @@ def training(db, vocab):
             else:
                 result, matched = grade(value, word[field])
                 answer(db, vocab, word, result, mode, matched)
+        help_panel(word, canonical, mode, vocab)
     elif mode == "quiz":
-        with st.form("quiz_" + session.turn_id):
-            value = st.radio("Välj översättning", session.options, index=None)
+        with st.container(key="answer_quiz"), st.form("quiz_" + session.turn_id):
+            value = st.radio("Välj översättning", session.options, index=None, width="stretch")
             submit = st.form_submit_button("Kontrollera svar", type="primary", use_container_width=True)
         if submit:
             if value is None:
                 st.warning("Välj ett alternativ först.")
             else:
                 answer(db, vocab, word, "correct" if value == canonical else "wrong", mode, canonical)
+        help_panel(word, canonical, mode, vocab)
     else:
         st.caption("Försök säga svaret innan du vänder kortet.")
         if not session.flipped:
@@ -255,8 +289,9 @@ def training(db, vocab):
                 session.flipped = True
                 st.rerun()
         else:
-            st.markdown(f'<div class="word-card">{escape(" / ".join(word[field]))}</div>', unsafe_allow_html=True)
-            listen(canonical, vocab["language"] if direction == "forward" else "Svenska")
+            word_card(" / ".join(word[field]), destination, flipped=True)
+            with st.expander("Lyssna på ordet"):
+                listen(canonical, destination)
             left, right = st.columns(2)
             with left:
                 if st.button("Behöver öva", use_container_width=True):
@@ -264,3 +299,5 @@ def training(db, vocab):
             with right:
                 if st.button("Jag kunde det", use_container_width=True):
                     answer(db, vocab, word, "correct", mode, canonical)
+    with st.expander("Dina framsteg och repetition"):
+        learning_info(vocab)
