@@ -27,25 +27,48 @@ const synth = window.speechSynthesis;
 const status = document.getElementById('status');
 const buttons = [];
 let currentUtterance = null;
+let currentPlayer = null;
+function recorded(text,lang) {return (data.clips || {})[(lang || '') + '\n' + text];}
+function stopAll() {
+  currentUtterance = null;
+  if (synth) synth.cancel();
+  if (currentPlayer) {currentPlayer.pause(); currentPlayer.currentTime = 0; currentPlayer = null;}
+}
 function voiceFor(tag) {
   if (!tag || !synth) return null;
   const voices = synth.getVoices();
   const prefix = tag.toLowerCase().split('-')[0];
   const candidates = voices.filter(v => v.lang.toLowerCase().split(/[-_]/)[0] === prefix);
+  const ranked = [...candidates].sort((a,b) => Number(/natural|neural|online/i.test(b.name)) - Number(/natural|neural|online/i.test(a.name)));
   if (prefix === 'es') {
-    const latinAmerican = candidates.find(v => /[-_](mx|cl|ar|co|us|pe|uy|ve|ec|bo|cr|do|gt|hn|ni|pa|py|sv|pr)$/i.test(v.lang));
+    const latinAmerican = ranked.find(v => /[-_](mx|cl|ar|co|us|pe|uy|ve|ec|bo|cr|do|gt|hn|ni|pa|py|sv|pr)$/i.test(v.lang));
     if (latinAmerican) return latinAmerican;
   }
-  return candidates.find(v => v.lang.toLowerCase().replace('_','-') === tag.toLowerCase()) || candidates[0] || null;
+  return ranked.find(v => v.lang.toLowerCase().replace('_','-') === tag.toLowerCase()) || ranked[0] || null;
 }
 function refreshVoices() {
-  buttons.forEach(({button,lang}) => {button.disabled = !voiceFor(lang);});
-  if (!synth) status.textContent = 'Uppläsning stöds inte i denna webbläsare. Du kan fortfarande läsa och öva glosorna.';
+  buttons.forEach(({button,lang,text}) => {button.disabled = !recorded(text,lang) && !voiceFor(lang);});
+  if (Object.keys(data.clips || {}).length) status.textContent = 'Sparade AI-röster används där ljud finns. Övriga ord använder enhetens röst.';
+  else if (!synth) status.textContent = 'Uppläsning stöds inte i denna webbläsare. Du kan fortfarande läsa och öva glosorna.';
   else if (!data.language) status.textContent = 'Uppläsning saknas för detta språk. Läraren kan ange ett språknamn som Spanska eller en språkkod som es-MX.';
   else if (!voiceFor(data.language)) status.textContent = 'Ingen röst för ' + data.label + ' hittades. Prova en annan webbläsare eller aktivera en röst för språket på enheten.';
   else status.textContent = 'Röst: ' + voiceFor(data.language).name + '. Tryck på ett ord för att lyssna.';
 }
 function speak(text,lang) {
+  stopAll();
+  const clip = recorded(text,lang);
+  if (clip) {
+    const player = new Audio(clip.src);
+    currentPlayer = player;
+    player.playbackRate = Number(document.getElementById('speed').value);
+    player.preservesPitch = true;
+    player.onplaying = () => {if (currentPlayer === player) status.textContent = 'Lyssnar: ' + text;};
+    player.onended = () => {if (currentPlayer === player) {currentPlayer=null; status.textContent='Klart. Du kan lyssna igen eller välja ett annat ord.';}};
+    const failed = () => {if (currentPlayer === player) {stopAll(); status.textContent='Det sparade ljudet kunde inte spelas. Prova igen.';}};
+    player.onerror = failed;
+    player.play().catch(failed);
+    return;
+  }
   const voice = voiceFor(lang);
   if (!voice) {refreshVoices(); return;}
   synth.cancel();
@@ -65,7 +88,7 @@ function term(text,lang,short=false) {
   const button = document.createElement('button'); button.type = 'button'; button.textContent = short ? '🔊' : '🔊 Lyssna';
   button.setAttribute('aria-label','Lyssna på ' + text); button.title = 'Lyssna på ' + text;
   button.addEventListener('click',() => speak(text,lang)); wrapper.appendChild(button);
-  buttons.push({button,lang}); return wrapper;
+  buttons.push({button,lang,text}); return wrapper;
 }
 const content = document.getElementById('content');
 if (data.table) {
@@ -79,8 +102,8 @@ if (data.table) {
   content.className = 'single';
   data.rows.forEach(word => word.target.forEach(text => content.appendChild(term(text,data.language))));
 }
-document.getElementById('stop').addEventListener('click',() => {currentUtterance=null; if(synth) synth.cancel(); status.textContent='Ljudet är stoppat.';});
-window.addEventListener('pagehide',() => {if(synth) synth.cancel();});
+document.getElementById('stop').addEventListener('click',() => {stopAll(); status.textContent='Ljudet är stoppat.';});
+window.addEventListener('pagehide',stopAll);
 if (synth) synth.addEventListener('voiceschanged',refreshVoices);
 refreshVoices();
 </script>

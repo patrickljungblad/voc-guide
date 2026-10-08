@@ -40,6 +40,10 @@ def apply_style():
     .section-intro {display:flex; align-items:center; justify-content:space-between; gap:14px; margin:8px 0;}
     .section-intro h2 {font-size:22px; font-weight:730; letter-spacing:-.035em; margin:0!important; padding:0!important;}
     .section-intro span {color:var(--gf-muted); font-size:13px;}
+    .st-key-course_choice {padding:24px; background:white; border:2px solid #78bdb0; border-radius:22px; box-shadow:0 6px 24px rgba(5,132,111,.07);}
+    .st-key-course_choice h2 {font-size:28px; padding:0!important; margin:0 0 7px;}
+    .st-key-course_choice p {color:#426473; margin:0 0 10px;}
+    .st-key-course_choice [data-baseweb="select"] > div {min-height:54px; background:#f0f9f6; font-size:18px; border-color:#68b4a3;}
     [class*="st-key-vocab_"] {padding:16px; border:1px solid #e0e9ef; border-radius:24px; background:white;
         box-shadow:0 7px 24px rgba(24,57,76,.045); transition:transform .18s ease,box-shadow .18s ease; height:100%;}
     [class*="st-key-vocab_"]:hover {transform:translateY(-3px); box-shadow:0 12px 30px rgba(24,57,76,.085);}

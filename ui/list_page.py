@@ -3,13 +3,14 @@ from ui.audio import word_table
 from ui.navigation import all_lists, share_list
 from ui.style import html
 from ui.visuals import symbol
+from ui.themes import theme_for, theme_svg
 from html import escape
 
 
 def list_page(vocab):
     if st.button("← Alla gloslistor"):
         all_lists()
-    html(f'<div class="list-heading"><div class="list-heading-icon">{symbol()}</div><div><div class="eyebrow">Din gloslista</div><p class="list-meta">{escape(vocab["language"])} · {len(vocab["words"])} glosor</p></div></div>')
+    html(f'<div class="list-heading"><div class="list-heading-icon">{theme_svg(theme_for(vocab))}</div><div><div class="eyebrow">Din gloslista</div><p class="list-meta">{escape(vocab["language"])} · {len(vocab["words"])} glosor</p></div></div>')
     st.subheader(vocab["name"])
     with st.container(key="list_launch"):
         html('<p class="start-title">Från första ordet till ditt eget flow.</p><p class="start-copy">Lyssna och bekanta dig med orden, eller börja öva direkt.</p>')

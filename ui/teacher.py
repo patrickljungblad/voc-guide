@@ -7,26 +7,35 @@ from core.migration import migrate_legacy
 from data.vocabulary import parse_words, validate_lists
 from services.database import ServiceError
 from ui.navigation import share_list
+from ui.themes import THEMES
+from ui.visuals import card_art
+from ui.print_quiz import print_quiz_panel
+from ui.speech_admin import speech_panel
 
 
 def teacher(db, lists):
     st.subheader("Lärarpanel")
     st.caption("Gloslistorna är synliga för alla som kommer åt appen. Elevkonton och framsteg visas bara efter inloggning.")
     token = st.session_state.user["token"]
-    tab_lists, tab_students = st.tabs(["Gloslistor", "Elever och framsteg"])
+    tab_lists, tab_students, tab_print, tab_audio = st.tabs(["Gloslistor", "Elever och framsteg", "Glosförhör", "Röster och ljud"])
+    with tab_print:
+        print_quiz_panel(lists)
+    with tab_audio:
+        speech_panel(lists)
     with tab_lists:
         with st.expander("Skapa gloslista"):
             with st.form("create_list"):
                 name = st.text_input("Listans namn", max_chars=160)
-                category = st.text_input("Kategori", "Egna listor", max_chars=160)
+                category = st.text_input("Kurs", "Egna listor", max_chars=160)
                 language = st.text_input("Språk", "Spanska", max_chars=160)
+                theme = st.selectbox("Temabild", ["auto", *THEMES], format_func=lambda t: "Automatisk – utifrån glosorna" if t == "auto" else THEMES[t], key="create_theme")
                 st.caption("Klistra in två kolumner från ett kalkylblad: svenska och målspråk. Alternativa svar avskiljs med |. En tredje kolumn kan innehålla ett minnestips.")
                 text = st.text_area("Glosor", placeholder="hund\tperro\ndator\tcomputadora|ordenador", height=180)
                 submit = st.form_submit_button("Spara ny lista", type="primary")
             if submit:
                 try:
                     new_list = {"id": uuid4().hex, "name": name.strip(), "category": category.strip(),
-                                "language": language.strip(), "words": parse_words(text)}
+                                "language": language.strip(), "words": parse_words(text), "theme": theme}
                     changed = validate_lists(lists + [new_list])
                     db.save_lists(token, changed)
                     st.session_state.lists = changed
@@ -37,11 +46,15 @@ def teacher(db, lists):
         selected = st.selectbox("Ändra en lista", [v["id"] for v in lists],
                                 format_func=lambda i: next(v["name"] for v in lists if v["id"] == i))
         vocab = next(v for v in lists if v["id"] == selected)
+        card_art(0, vocab["language"], vocab)
         share_list(vocab)
         with st.form("edit_" + selected):
             new_name = st.text_input("Namn", vocab["name"], max_chars=160)
-            new_category = st.text_input("Kategori", vocab["category"], max_chars=160)
+            new_category = st.text_input("Kurs", vocab["category"], max_chars=160)
             new_language = st.text_input("Språk", vocab["language"], max_chars=160)
+            theme_options = ["auto", *THEMES]
+            new_theme = st.selectbox("Temabild", theme_options, index=theme_options.index(vocab.get("theme", "auto")) if vocab.get("theme", "auto") in theme_options else 0,
+                                     format_func=lambda t: "Automatisk – utifrån glosorna" if t == "auto" else THEMES[t], key="edit_theme_" + selected)
             rows = [{"id": w["id"], "Svenska": "|".join(w["swedish_answers"]),
                      "Målspråk": "|".join(w["accepted_answers"]), "Minnestips": w.get("memory_tip", "")} for w in vocab["words"]]
             st.caption("Flera godkända svar: använd | mellan alternativen. Behåll ordets betydelse när du ändrar en befintlig rad; skapa en ny rad för en ny glosa.")
@@ -50,7 +63,7 @@ def teacher(db, lists):
         if submit:
             try:
                 changed_list = deepcopy(vocab)
-                changed_list.update(name=new_name.strip(), category=new_category.strip(), language=new_language.strip())
+                changed_list.update(name=new_name.strip(), category=new_category.strip(), language=new_language.strip(), theme=new_theme)
                 old_words = {w["id"]: w for w in vocab["words"]}
                 changed_words = []
                 for row in edited:

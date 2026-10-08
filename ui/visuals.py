@@ -1,6 +1,7 @@
 """Små vektorillustrationer och tydliga statusytor, utan externa bildanrop."""
 from html import escape
 from ui.style import html
+from ui.themes import theme_for, theme_svg
 
 
 def symbol(name="book"):
@@ -31,8 +32,11 @@ def library_hero():
     </svg></div>''')
 
 
-def card_art(index, language):
+def card_art(index, language, vocab=None):
     palette = ("blue", "mint", "sky")[index % 3]
+    if vocab is not None:
+        html(f'<div class="card-art palette-{palette}"><span class="language-pill">{escape(language.upper())}</span>{theme_svg(theme_for(vocab))}</div>')
+        return
     html(f'''<div class="card-art palette-{palette}"><span class="language-pill">{escape(language.upper())}</span>
     <svg viewBox="0 0 140 110" fill="none" aria-hidden="true">
     <rect x="42" y="21" width="64" height="76" rx="12" fill="currentColor" opacity=".16" transform="rotate(12 74 59)"/>

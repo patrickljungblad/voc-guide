@@ -3,6 +3,7 @@ import json
 import re
 from pathlib import Path
 import streamlit.components.v1 as components
+from services.speech import load_bank, audio_for
 
 LANGUAGES = {"spanska": "es-MX", "spanish": "es-MX", "español": "es-MX",
              "engelska": "en-GB", "english": "en-GB", "svenska": "sv-SE",
@@ -21,8 +22,19 @@ def language_tag(language):
 
 
 def speech_html(rows, language, table=False):
+    bank = load_bank()
+    clips = {}
+    tag = language_tag(language)
+    for row in rows:
+        terms = [(text, tag) for text in row["target"]]
+        if table:
+            terms.append((row["svenska"], "sv-SE"))
+        for text, lang in terms:
+            audio = audio_for(text, lang, bank)
+            if audio:
+                clips[(lang or "") + "\n" + text] = audio
     payload = json.dumps({"rows": rows, "language": language_tag(language),
-                          "label": language, "table": table}, ensure_ascii=False)
+                          "label": language, "table": table, "clips": clips}, ensure_ascii=False)
     # Ord och listnamn får aldrig kunna avsluta script-taggen.
     payload = payload.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
     template = Path(__file__).with_name("speech.html").read_text(encoding="utf-8")

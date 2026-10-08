@@ -9,14 +9,21 @@ from ui.visuals import library_hero, card_art, mini_progress
 def library(lists):
     library_hero()
     categories = sorted({v["category"] for v in lists})
-    category = st.selectbox("Kategori", categories)
+    previous = st.session_state.get("chosen_course")
+    with st.container(key="course_choice"):
+        html('<div class="eyebrow">Steg 1</div><h2>Välj kurs</h2><p>Börja här – välj din kurs.</p>')
+        category = st.selectbox("Välj kurs", categories, index=categories.index(previous) if previous in categories else None, placeholder="Klicka här och välj din kurs", label_visibility="collapsed", key="course_select")
+    st.session_state.chosen_course = category
+    if category is None:
+        st.caption("Gloslistorna visas när du har valt kurs.")
+        return
     selected = [(i, v) for i, v in enumerate(lists) if v["category"] == category]
     html(f'<div class="section-intro"><h2>Dina gloslistor</h2><span>{len(selected)} listor · i din egen takt</span></div>')
     for offset in range(0, len(selected), 2):
         columns = st.columns(2, gap="medium")
         for column, (index, vocab) in zip(columns, selected[offset:offset + 2]):
             with column, st.container(key="vocab_" + vocab["id"]):
-                card_art(index, vocab["language"])
+                card_art(index, vocab["language"], vocab)
                 st.subheader(vocab["name"])
                 c = counts(vocab, st.session_state.progress, st.session_state.direction)
                 due = len(due_words(vocab, st.session_state.progress, st.session_state.direction, time.time(), limit=300))
