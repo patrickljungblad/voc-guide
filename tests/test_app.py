@@ -92,7 +92,7 @@ def test_network_failure_keeps_response_and_blocks_next(tmp_path,monkeypatch):
 
 def test_teacher_panel_can_create_user_and_list(tmp_path,monkeypatch):
     at = app(tmp_path,monkeypatch)
-    click(at,'Logga in för att spara framsteg')
+    click(at,'Logga in')
     next(t for t in at.text_input if t.label == 'Lärarlösenord').set_value('a-long-test-password')
     click(at,'Öppna lärarpanelen')
     assert not at.exception
@@ -183,7 +183,7 @@ def test_optional_login_keeps_list_and_loads_account_without_mixing_guest_progre
     saved = {'stored-word':initial()}
     db.save_progress(user['token'],saved,0,'test-login')
     at.session_state.progress = {'guest-word':initial()}
-    click(at,'Logga in för att spara framsteg')
+    click(at,'Logga in')
     next(t for t in at.text_input if t.label == 'Klass').set_value('2A')
     next(t for t in at.text_input if t.label == 'Namn').set_value('Test')
     next(t for t in at.text_input if t.label == 'PIN-kod').set_value('0123')
