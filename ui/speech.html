@@ -19,7 +19,7 @@ tbody tr:hover td {background:#edf8f3;}
 @media(max-width:450px) {body {font-size:14px;} th,td {padding:8px;} .term button {padding:4px 6px;}}
 </style></head>
 <body>
-<div class="controls"><label for="speed">Tempo</label><select id="speed"><option value="1">Normalt</option><option value="0.7">Långsamt</option></select><button id="stop" type="button">Stoppa ljud</button></div>
+<div class="controls"><label for="speed">Tempo</label><select id="speed"><option value="1">Normalt</option><option value="0.8">Långsamt</option></select><button id="stop" type="button">Stoppa ljud</button></div>
 <p class="status" id="status" role="status" aria-live="polite"></p><div id="content"></div>
 <script>
 const data = __SPEECH_DATA__;
@@ -34,17 +34,30 @@ function stopAll() {
   if (synth) synth.cancel();
   if (currentPlayer) {currentPlayer.pause(); currentPlayer.currentTime = 0; currentPlayer = null;}
 }
+// Enhetens röster varierar mycket i kvalitet. Vi poängsätter dem och väljer den mest naturliga:
+// neurala/"Natural"-röster (Edge), Googles nätröster (Chrome, Chromebook), Apples förbättrade röster.
+// Gamla lokala röster (t.ex. Microsoft Sabina/Helena) och eSpeak låter robotiska och väljs sist.
+const LATIN_AMERICA = /[-_](mx|us|419|cl|ar|co|pe|uy|ve|ec|bo|cr|do|gt|hn|ni|pa|py|sv|pr)$/i;
+const NOVELTY = /\b(albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|organ|superstar|trinoids|whisper|wobble|zarvox)\b/i;
+function voiceScore(v, tag) {
+  const name = v.name || '';
+  let score = 0;
+  if (/natural|neural/i.test(name)) score += 100;
+  if (/premium|enhanced|förbättrad|siri/i.test(name)) score += 70;
+  if (/online/i.test(name) || /^google/i.test(name) || v.localService === false) score += 60;
+  if (/espeak|compact|robot/i.test(name) || NOVELTY.test(name)) score -= 100;
+  const lang = v.lang.toLowerCase().replace('_', '-');
+  if (tag.toLowerCase().startsWith('es') && LATIN_AMERICA.test(lang)) score += 30;
+  if (lang === tag.toLowerCase()) score += 10;
+  if (v.default) score += 2;
+  return score;
+}
 function voiceFor(tag) {
   if (!tag || !synth) return null;
-  const voices = synth.getVoices();
   const prefix = tag.toLowerCase().split('-')[0];
-  const candidates = voices.filter(v => v.lang.toLowerCase().split(/[-_]/)[0] === prefix);
-  const ranked = [...candidates].sort((a,b) => Number(/natural|neural|online/i.test(b.name)) - Number(/natural|neural|online/i.test(a.name)));
-  if (prefix === 'es') {
-    const latinAmerican = ranked.find(v => /[-_](mx|cl|ar|co|us|pe|uy|ve|ec|bo|cr|do|gt|hn|ni|pa|py|sv|pr)$/i.test(v.lang));
-    if (latinAmerican) return latinAmerican;
-  }
-  return ranked.find(v => v.lang.toLowerCase().replace('_','-') === tag.toLowerCase()) || ranked[0] || null;
+  const candidates = synth.getVoices().filter(v => v.lang.toLowerCase().split(/[-_]/)[0] === prefix);
+  if (!candidates.length) return null;
+  return candidates.map(v => [voiceScore(v, tag), v]).sort((a, b) => b[0] - a[0])[0][1];
 }
 function refreshVoices() {
   buttons.forEach(({button,lang,text}) => {button.disabled = !recorded(text,lang) && !voiceFor(lang);});
@@ -52,7 +65,11 @@ function refreshVoices() {
   else if (!synth) status.textContent = 'Uppläsning stöds inte i denna webbläsare. Du kan fortfarande läsa och öva glosorna.';
   else if (!data.language) status.textContent = 'Uppläsning saknas för detta språk. Läraren kan ange ett språknamn som Spanska eller en språkkod som es-MX.';
   else if (!voiceFor(data.language)) status.textContent = 'Ingen röst för ' + data.label + ' hittades. Prova en annan webbläsare eller aktivera en röst för språket på enheten.';
-  else status.textContent = 'Röst: ' + voiceFor(data.language).name + '. Tryck på ett ord för att lyssna.';
+  else {
+    const voice = voiceFor(data.language);
+    status.textContent = 'Röst: ' + voice.name + '. Tryck på ett ord för att lyssna.' +
+      (voiceScore(voice, data.language) < 60 ? ' Låter rösten robotisk? Prova webbläsaren Edge eller Chrome, som har naturligare röster.' : '');
+  }
 }
 function speak(text,lang) {
   stopAll();

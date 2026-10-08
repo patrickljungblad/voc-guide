@@ -147,3 +147,21 @@ test('Name/PIN login lockout is shared with legacy login',() => {
   assert.match(b.call('authenticate_student',{name:'Test',pin:'0123'}).message,/15 minuter/);
   assert.match(b.call('authenticate',{name:'Test',group:'2A',pin:'0123'}).message,/15 minuter/);
 });
+
+test('Audio clips round trip, need a teacher and reject unsafe values',() => {
+  const b = backend(); const {teacher,student} = account(b);
+  const mp3 = Buffer.alloc(70000,7).toString('base64');
+  const key = 'a'.repeat(64);
+  const clip = {text:'hola',language:'es-MX',voice:'es-MX-DaliaNeural',mp3};
+  assert.deepEqual(b.call('get_audio').data,{});
+  assert.equal(b.call('save_audio',{token:student,clips:{[key]:clip}}).ok,false);
+  assert.equal(b.call('save_audio',{token:teacher,clips:{[key]:clip}}).data,1);
+  assert.equal(b.call('save_audio',{token:teacher,clips:{[key]:{...clip,voice:'es-MX-JorgeNeural'}}}).data,1);
+  const stored = b.call('get_audio').data;
+  assert.deepEqual(Object.keys(stored),[key]);
+  assert.equal(stored[key].mp3,mp3);
+  assert.equal(stored[key].voice,'es-MX-JorgeNeural');
+  assert.equal(b.call('save_audio',{token:teacher,clips:{[key]:{...clip,text:'=IMPORTXML("x")'}}}).ok,false);
+  assert.equal(b.call('save_audio',{token:teacher,clips:{['b'.repeat(64)]:{...clip,mp3:'<script>'}}}).ok,false);
+  assert.equal(b.call('save_audio',{token:teacher,clips:{'not-a-key':clip}}).ok,false);
+});

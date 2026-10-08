@@ -8,6 +8,16 @@ För namn/PIN-inloggning: ersätt Code.gs i det befintliga Apps Script-projektet
 
 `authenticate_student` tar namn och PIN, söker exakt en matchning och returnerar samma elev-ID, klass och tokenformat som tidigare. `authenticate` med klass finns kvar för förnyelse av en redan identifierad session. Båda anropen delar spärren per elevnamn. Nya konton kan inte dela både namn och PIN-kod; äldre dubbla kombinationer avvisas vid namn/PIN-inloggning.
 
+## Ljud (AI-röster)
+
+För att AI-rösterna ska sparas i kalkylbladet behöver Apps Script-koden uppdateras en gång:
+
+1. Öppna kalkylbladet och välj **Tillägg → Apps Script**.
+2. Markera allt i `Code.gs`, ta bort det och klistra in hela innehållet i projektets [Code.gs](Code.gs). Spara.
+3. Välj **Distribuera → Hantera distributioner**, klicka på pennan vid den aktiva distributionen, välj **Version: Ny version** och **Distribuera**. Adressen är densamma, så inget behöver ändras i Streamlit.
+
+Ljuden hamnar i en ny flik, `Audio_v2`, som skapas automatiskt. Ändra inte i den fliken för hand. Bara lärare kan spara ljud; alla kan spela upp dem.
+
 ## Installation från en äldre version
 
 1. Skapa ett nytt, privat Google-kalkylblad. Kopiera kalkylbladets ID från adressen mellan `/d/` och `/edit`.

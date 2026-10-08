@@ -12,11 +12,11 @@ class SheetsDatabase:
             raise ServiceError("Konfigurera en Google Apps Script /exec-adress och en API-nyckel på minst 32 tecken.")
         self.url, self.api_key = url, api_key
 
-    def request(self, action, **values):
+    def request(self, action, timeout=20, **values):
         payload = {"action": action, "api_key": self.api_key, **values}
         req = urllib.request.Request(self.url, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"})
         try:
-            with urllib.request.urlopen(req, timeout=20) as response:
+            with urllib.request.urlopen(req, timeout=timeout) as response:
                 result = json.loads(response.read())
         except Exception:
             raise ServiceError("Databasen kunde inte nås. Ditt svar finns kvar här; försök spara igen.") from None
@@ -63,3 +63,10 @@ class SheetsDatabase:
 
     def import_progress(self, token, student_id, progress, expected_revision):
         return self.request("import_progress", token=token, student_id=student_id, progress=progress, expected_revision=expected_revision)
+
+    def get_audio(self):
+        # Alla ljud på en gång; appen sparar svaret i en timme så att eleverna inte väntar.
+        return self.request("get_audio", timeout=60) or {}
+
+    def save_audio(self, token, clips):
+        return self.request("save_audio", timeout=60, token=token, clips=clips)

@@ -64,6 +64,7 @@ class LocalDatabase:
                 CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, user_id TEXT, role TEXT, expires REAL);
                 CREATE TABLE IF NOT EXISTS failures (identity TEXT PRIMARY KEY, count INTEGER, started REAL);
                 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
+                CREATE TABLE IF NOT EXISTS audio (key TEXT PRIMARY KEY, text TEXT, language TEXT, voice TEXT, mp3 TEXT);
             ''')
 
     @contextmanager
@@ -214,3 +215,18 @@ class LocalDatabase:
             if not row or row["revision"] != expected_revision:
                 raise Conflict("Elevens framsteg ändrades. Öppna lärarpanelen igen och försök på nytt.")
             db.execute("UPDATE users SET progress=?,revision=revision+1,last_operation=NULL WHERE id=?", (json.dumps(progress), student_id))
+
+    def get_audio(self):
+        with self.connection() as db:
+            return {row["key"]: {"text": row["text"], "language": row["language"], "voice": row["voice"], "mp3": row["mp3"]}
+                    for row in db.execute("SELECT * FROM audio")}
+
+    def save_audio(self, token, clips):
+        from services.speech import valid_clip
+        if not isinstance(clips, dict) or len(clips) > 60 or not all(valid_clip(k, c) for k, c in clips.items()):
+            raise ServiceError("Ogiltigt ljud.")
+        with self.connection() as db:
+            self._session(db, token, teacher=True)
+            db.executemany("INSERT OR REPLACE INTO audio VALUES(?,?,?,?,?)",
+                           [(k, c["text"], c["language"], c["voice"], c["mp3"]) for k, c in clips.items()])
+        return len(clips)

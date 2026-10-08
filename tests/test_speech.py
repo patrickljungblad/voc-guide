@@ -65,3 +65,59 @@ def test_activated_spanish_variant_wins_even_if_previous_variant_is_cached(tmp_p
     assert speech.audio_for('hola', 'es-MX', speech.load_bank())['voice'] == 'es-CL-CatalinaNeural'
     speech.store_clips({}, {'es':'es-MX'})
     assert speech.audio_for('hola', 'es-MX', speech.load_bank())['voice'] == 'es-MX-DaliaNeural'
+
+
+def fake_clip(text, language, voice, api_key, region):
+    return speech.clip_key(text, language), {'text': text, 'language': language, 'voice': voice,
+                                             'mp3': base64.b64encode(b'ID3-' + text.encode()).decode()}
+
+
+def test_generate_paces_requests_retries_rate_limit_and_saves_in_batches(monkeypatch):
+    calls, saved, sleeps = [], [], []
+    def make(text, language, voice, api_key, region):
+        calls.append(text)
+        if text == 'b' and calls.count('b') == 1:
+            raise speech.RateLimited('gräns')
+        return fake_clip(text, language, voice, api_key, region)
+    monkeypatch.setattr(speech, 'make_clip', make)
+    missing = [(t, 'es-MX', 'es-MX-DaliaNeural') for t in 'abcdefghijklmnopq']
+    done = speech.generate(missing, 'k', 'swedencentral', lambda batch: saved.append(dict(batch)), sleep=sleeps.append)
+    assert done == 17 and calls.count('b') == 2
+    assert [len(b) for b in saved] == [15, 2]
+    assert 20 in sleeps and sleeps.count(3.1) == 16
+
+
+def test_generate_keeps_finished_clips_when_azure_fails(monkeypatch):
+    saved = []
+    def make(text, language, voice, api_key, region):
+        if text == 'c':
+            raise ServiceError('Kontrollera ljudtjänstens nyckel och region.')
+        return fake_clip(text, language, voice, api_key, region)
+    monkeypatch.setattr(speech, 'make_clip', make)
+    missing = [(t, 'sv-SE', 'sv-SE-SofieNeural') for t in 'abcd']
+    with pytest.raises(ServiceError):
+        speech.generate(missing, 'k', 'swedencentral', saved.append, sleep=lambda s: None)
+    assert [sorted(c['text'] for c in b.values()) for b in saved] == [['a', 'b']]
+
+
+def test_local_database_stores_audio_for_teachers_only(tmp_path):
+    from services.database import LocalDatabase
+    db = LocalDatabase(tmp_path / 'db.sqlite3', 'a-long-test-password')
+    teacher = db.teacher_login('a-long-test-password')['token']
+    clip_id, clip = fake_clip('hola', 'es-MX', 'es-MX-DaliaNeural', '', '')
+    assert db.get_audio() == {}
+    assert db.save_audio(teacher, {clip_id: clip}) == 1
+    assert db.get_audio() == {clip_id: clip}
+    with pytest.raises(ServiceError):
+        db.save_audio(teacher, {'wrong-key': clip})
+    db.create_user(teacher, 'Test', '2A', '0123')
+    student = db.authenticate('Test', '2A', '0123')['token']
+    with pytest.raises(ServiceError):
+        db.save_audio(student, {clip_id: clip})
+
+
+def test_saved_database_clips_are_used_in_playback():
+    clip_id, clip = fake_clip('hola', 'es-MX', 'es-MX-DaliaNeural', '', '')
+    html = speech_html([{'target': ['hola']}], 'Spanska', extra_clips={clip_id: clip})
+    assert 'data:audio/mpeg;base64,' + clip['mp3'] in html
+    assert 'data:audio/mpeg' not in speech_html([{'target': ['hola']}], 'Spanska')

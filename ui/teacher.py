@@ -21,7 +21,7 @@ def teacher(db, lists):
     with tab_print:
         print_quiz_panel(lists)
     with tab_audio:
-        speech_panel(lists)
+        speech_panel(db, token, lists)
     with tab_lists:
         with st.expander("Skapa gloslista"):
             with st.form("create_list"):
