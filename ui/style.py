@@ -22,7 +22,11 @@ CSS = """
 
 /* Grund: typsnitt, bakgrund och Streamlits egna detaljer */
 .stApp {font-family:'Figtree', system-ui, sans-serif; color:var(--ink);}
-.stApp *:not([data-testid="stIconMaterial"]):not(code):not(pre):not(.material-symbols-rounded) {font-family:inherit;}
+/* Bara textelement får Figtree. Ikoner (t.ex. glödlampan i "Jag behöver en ledtråd") är ett eget ikontypsnitt
+   och får aldrig ärva ett vanligt typsnitt, då visas ikonens namn som text i stället för bilden. */
+.stApp p, .stApp li, .stApp label, .stApp input, .stApp textarea, .stApp button, .stApp summary,
+.stApp td, .stApp th, .stApp [data-testid="stMarkdownContainer"], .stApp [data-baseweb="select"],
+.stApp [data-baseweb="tab"], .stApp [data-testid="stCaptionContainer"] {font-family:'Figtree', system-ui, sans-serif;}
 [data-testid="stAppViewContainer"] {background:var(--bg);}
 [data-testid="stHeader"] {background:transparent;}
 [data-testid="stDecoration"] {display:none;}
