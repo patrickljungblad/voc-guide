@@ -12,16 +12,21 @@ from ui.visuals import card_art
 from ui.print_quiz import print_quiz_panel
 from ui.speech_admin import speech_panel
 
+# AI-röster från Azure är avstängda tills vidare. Sätt till True för att visa fliken igen.
+AI_VOICES = False
+
 
 def teacher(db, lists):
     st.subheader("Lärarpanel")
     st.caption("Gloslistorna är synliga för alla som kommer åt appen. Elevkonton och framsteg visas bara efter inloggning.")
     token = st.session_state.user["token"]
-    tab_lists, tab_students, tab_print, tab_audio = st.tabs(["Gloslistor", "Elever och framsteg", "Glosförhör", "Röster och ljud"])
+    tabs = ["Gloslistor", "Elever och framsteg", "Glosförhör"] + (["Röster och ljud"] if AI_VOICES else [])
+    tab_lists, tab_students, tab_print, *tab_audio = st.tabs(tabs)
     with tab_print:
         print_quiz_panel(lists)
-    with tab_audio:
-        speech_panel(db, token, lists)
+    if AI_VOICES:
+        with tab_audio[0]:
+            speech_panel(db, token, lists)
     with tab_lists:
         with st.expander("Skapa gloslista"):
             with st.form("create_list"):
