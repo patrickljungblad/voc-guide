@@ -11,7 +11,7 @@ from pedagogy.memory_strategies import OWN_TIP_MAX, memory_tip, own_tip
 from services.database import Conflict, ServiceError, SessionExpired
 from ui.style import BOXES, boxes, html
 from ui.visuals import answer_card, chip, completion, memory_title, practice_progress, steps, word_card
-from ui.audio import listen
+from ui.audio import READ_ALOUD, listen
 from ui.navigation import all_lists
 
 
@@ -160,22 +160,23 @@ def help_panel(word, canonical, mode, vocab):
     with st.expander("Jag behöver en ledtråd", expanded=session.listened or session.tip or session.hints > 0,
                      icon=":material/lightbulb:"):
         st.caption("Ta hjälp när du behöver. Ett ord du fått hjälp med flyttas inte framåt den här gången.")
-        columns = st.columns(3 if mode == "write" else 2)
-        with columns[0]:
+        columns = iter(st.columns(1 + READ_ALOUD + (mode == "write")))
+        with next(columns):
             if st.button("Minnestips", key=session.turn_id + "tip", icon=":material/psychology:", use_container_width=True):
                 session.tip = True
                 st.rerun()
-        with columns[1]:
-            if st.button("Lyssna på svaret", key=session.turn_id + "listen", icon=":material/volume_up:", use_container_width=True):
-                session.listened = True
-                session.exposed.add(word["id"])
-                st.rerun()
+        if READ_ALOUD:
+            with next(columns):
+                if st.button("Lyssna på svaret", key=session.turn_id + "listen", icon=":material/volume_up:", use_container_width=True):
+                    session.listened = True
+                    session.exposed.add(word["id"])
+                    st.rerun()
         if mode == "write":
-            with columns[2]:
+            with next(columns):
                 if st.button("En bokstav", key=session.turn_id + "hint", icon=":material/spellcheck:", use_container_width=True):
                     session.hints = min(len(canonical), session.hints + 1)
                     st.rerun()
-        if session.listened:
+        if session.listened and READ_ALOUD:
             listen(canonical, vocab["language"] if st.session_state.direction == "forward" else "Svenska")
         if session.tip:
             mine = own_tip(st.session_state.progress, word_keys(vocab, word))
@@ -194,7 +195,7 @@ def start_page(db, vocab):
         if st.button("Alla listor", icon=":material/arrow_back:", disabled=pending):
             all_lists()
     with overview:
-        if st.button("Se glosorna och lyssna", icon=":material/volume_up:", disabled=pending):
+        if st.button("Se glosorna och lyssna" if READ_ALOUD else "Se glosorna", icon=":material/list:", disabled=pending):
             st.session_state.view = "list"
             st.session_state.session = None
             st.rerun()
@@ -307,8 +308,9 @@ def feedback_view(db, vocab, word, prompt, destination):
     if next_clicked:
         session.advance()
         st.rerun()
-    with st.expander("Lyssna på svaret", icon=":material/volume_up:"):
-        listen(feedback["answer"], destination)
+    if READ_ALOUD:
+        with st.expander("Lyssna på svaret", icon=":material/volume_up:"):
+            listen(feedback["answer"], destination)
     # Återkopplingen skickas till webbläsaren före det långsamma anropet.
     if st.session_state.pending and st.session_state.save_error is None:
         st.caption("Sparar dina framsteg…")
@@ -350,8 +352,9 @@ def question_view(db, vocab, word, mode, prompt, destination):
                 st.rerun()
         else:
             word_card(" / ".join(word[field]), destination, flipped=True)
-            with st.expander("Lyssna på ordet", icon=":material/volume_up:"):
-                listen(canonical, destination)
+            if READ_ALOUD:
+                with st.expander("Lyssna på ordet", icon=":material/volume_up:"):
+                    listen(canonical, destination)
             left, right = st.columns(2)
             with left:
                 if st.button("Behöver öva", use_container_width=True):

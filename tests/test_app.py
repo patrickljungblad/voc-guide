@@ -200,6 +200,9 @@ def test_optional_login_keeps_list_and_loads_account_without_mixing_guest_progre
 
 
 def test_listening_to_answer_prevents_promotion(tmp_path,monkeypatch):
+    import ui.audio, ui.training
+    monkeypatch.setattr(ui.audio,'READ_ALOUD',True)
+    monkeypatch.setattr(ui.training,'READ_ALOUD',True)
     at = guest(app(tmp_path,monkeypatch))
     click(at,'Kör igång')
     vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
@@ -266,6 +269,14 @@ def test_teacher_creates_ab_pdfs_and_hides_old_results_after_option_change(tmp_p
     assert any('Förhöret och facit är klara' in s.value for s in at.success)
     next(r for r in at.radio if r.label == 'Språkriktning för förhöret').set_value('reverse').run()
     assert not any('Förhöret och facit är klara' in s.value for s in at.success)
+    assert not at.exception
+
+
+def test_read_aloud_is_hidden_when_turned_off(tmp_path,monkeypatch):
+    at = guest(app(tmp_path,monkeypatch))
+    click(at,'Kör igång')
+    assert not any('Lyssna' in b.label for b in at.button)
+    assert not any('Lyssna' in e.label for e in at.expander)
     assert not at.exception
 
 
