@@ -1,5 +1,5 @@
 import streamlit as st
-from ui.audio import word_table
+from ui.audio import READ_ALOUD, word_table
 from ui.navigation import all_lists, share_list
 from ui.style import html
 from ui.visuals import symbol
@@ -13,7 +13,8 @@ def list_page(vocab):
     html(f'<div class="list-heading"><div class="list-heading-icon">{theme_svg(theme_for(vocab))}</div><div><div class="eyebrow">Din gloslista</div><p class="list-meta">{escape(vocab["language"])} · {len(vocab["words"])} glosor</p></div></div>')
     st.subheader(vocab["name"])
     with st.container(key="list_launch"):
-        html('<p class="start-title">Redo att öva?</p><p class="start-copy">Lyssna på orden först, eller kör igång direkt.</p>')
+        intro = "Lyssna på orden först, eller kör igång direkt." if READ_ALOUD else "Titta igenom orden först, eller kör igång direkt."
+        html(f'<p class="start-title">Redo att öva?</p><p class="start-copy">{intro}</p>')
         if st.button("Öva på listan", type="primary", use_container_width=True, icon=":material/arrow_forward:"):
             st.session_state.view = "training"
             st.session_state.session = None

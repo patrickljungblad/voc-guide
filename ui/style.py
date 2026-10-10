@@ -131,6 +131,12 @@ button:focus-visible {outline:3px solid #2563eb!important; outline-offset:3px;}
 .card-art svg {width:124px; height:100px;}
 .language-pill {position:absolute; top:12px; left:12px; padding:4px 9px; background:#fff; border-radius:999px; font-size:10px; font-weight:700; letter-spacing:.07em; color:var(--muted);}
 
+/* Glostabell utan ljud */
+.word-list {width:100%; border-collapse:separate; border-spacing:0; background:#fff; border-radius:20px; overflow:hidden; margin-top:12px;}
+.word-list th {text-align:left; background:var(--brand-soft); color:var(--brand-dark); padding:14px 18px; font-size:14px;}
+.word-list td {padding:14px 18px; border-top:1px solid var(--line); font-size:17px; overflow-wrap:anywhere;}
+.word-list td:last-child {font-weight:700;}
+
 /* Lådorna som rutor */
 .boxes {display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:12px 0 16px;}
 .box {padding:14px; border-radius:18px; background:var(--bg); display:flex; flex-direction:column; gap:2px;}

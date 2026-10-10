@@ -3,6 +3,9 @@ import json
 import re
 from pathlib import Path
 import streamlit as st
+
+# All uppläsning är avstängd tills vidare. Sätt till True för att slå på ljudknapparna igen.
+READ_ALOUD = False
 import streamlit.components.v1 as components
 from services.speech import load_bank, audio_for, valid_clip
 
@@ -61,6 +64,18 @@ def listen(text, language):
 
 
 def word_table(words, language):
+    if not READ_ALOUD:
+        plain_table(words, language)
+        return
     rows = [{"svenska": w["svenska"], "target": w["accepted_answers"]} for w in words]
     components.html(speech_html(rows, language, table=True, extra_clips=saved_clips()),
                     height=min(660, 190 + 92 * len(rows)), scrolling=True)
+
+
+def plain_table(words, language):
+    """Glosorna som en enkel tabell, utan ljud."""
+    from html import escape
+    from ui.style import html
+    rows = "".join(f"<tr><td>{escape(w['svenska'])}</td><td>{escape(' / '.join(w['accepted_answers']))}</td></tr>" for w in words)
+    html(f'''<table class="word-list"><thead><tr><th scope="col">Svenska</th><th scope="col">{escape(language)}</th></tr></thead>
+    <tbody>{rows}</tbody></table>''')
