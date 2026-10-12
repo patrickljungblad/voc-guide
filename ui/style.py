@@ -49,7 +49,8 @@ a {color:var(--brand);}
     display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;}
 
 /* Påminnelse om inloggning för gäster */
-.account-hint {text-align:right; font-size:12px; color:var(--muted); margin-top:2px;}
+.account-hint {text-align:right; font-size:12px; line-height:1.3; color:var(--muted); margin-top:4px; background:none; border:0; padding:0;}
+.account-hint span {color:var(--brand); font-weight:700;}
 .st-key-save_prompt {background:var(--brand-soft); border-radius:18px; padding:12px 16px; margin:10px 0;}
 .save-text {margin:0; font-size:15px; color:var(--ink);}
 
