@@ -355,7 +355,7 @@ def test_teacher_can_delete_and_restore_a_list(tmp_path, monkeypatch):
 def test_round_size_twenty_and_focus_list(tmp_path, monkeypatch):
     at = guest(app(tmp_path, monkeypatch))
     vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
-    at.session_state.round_size = '20 ord'
+    at.session_state.round_pref = '20 ord'
     at.run()
     click(at, 'Kör igång')
     assert len(at.session_state.session.queue) == min(20, len(vocab['words']))

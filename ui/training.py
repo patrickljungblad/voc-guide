@@ -96,7 +96,7 @@ ROUND_SIZES = {"10 ord": 10, "20 ord": 20, "Alla": 300}
 
 
 def round_size():
-    return ROUND_SIZES.get(st.session_state.get("round_size") or "10 ord", 10)
+    return ROUND_SIZES.get(st.session_state.get("round_pref", "10 ord"), 10)
 
 
 def start(vocab, mode="auto", extra=False):
@@ -230,8 +230,12 @@ def start_page(db, vocab):
             with right:
                 # En vanlig radioknapp (stylad som knappar) fungerar i alla Streamlit-versioner och i testerna.
                 with st.container(key="round_choice"):
-                    st.radio("Antal ord per omgång", list(ROUND_SIZES), key="round_size",
-                             horizontal=True, label_visibility="collapsed")
+                    # Valet sparas i en egen nyckel, så att det finns kvar även när knapparna inte visas.
+                    options = list(ROUND_SIZES)
+                    current = st.session_state.get("round_pref", "10 ord")
+                    st.session_state.round_pref = st.radio(
+                        "Antal ord per omgång", options, index=options.index(current) if current in options else 0,
+                        horizontal=True, label_visibility="collapsed")
             with st.container(key="cta"):
                 if st.button("Kör igång", type="primary", use_container_width=True, disabled=pending,
                              icon=":material/arrow_forward:"):
