@@ -134,7 +134,9 @@ def memory_panel(db, vocab, word):
     mine = own_tip(st.session_state.progress, keys)
     with st.container(key="memory_panel"):
         memory_title()
-        st.markdown(f"**Ditt eget knep:** {mine}" if mine else memory_tip(word))
+        st.markdown(memory_tip(word))
+        if mine:
+            st.markdown(f"**Ditt eget knep:** {mine}")
         with st.form("own_tip_" + session.turn_id, border=False):
             text = st.text_input("Ditt eget knep" if not mine else "Ändra ditt knep", value=mine, max_chars=OWN_TIP_MAX,
                                  placeholder="T.ex. Perro har två r, som en hund som morrar: prrr")
@@ -218,6 +220,7 @@ def start_page(db, vocab):
             next_at = min(progress[key(vocab["id"], w["id"], direction)]["next_review"] for w in vocab["words"])
             st.success("Allt är klart för i dag. Snyggt jobbat!")
             st.caption(f"Nästa repetition {next_review_text(next_at, time.time())}.")
+    save_prompt()
     with st.expander("Öva extra på ditt eget sätt"):
         with st.container(key="practice_modes"):
             mode_label = st.radio("Träningssätt", ["Ordkort", "Quiz", "Skriv"], horizontal=True)
@@ -235,6 +238,22 @@ def start_page(db, vocab):
             st.session_state.progress = {k: v for k, v in progress.items() if not k.startswith(vocab["id"] + ":")}
             save(db)
             st.rerun()
+
+
+def save_prompt(after_round=False):
+    """Påminnelse för gäster: framsteg sparas bara med konto."""
+    if st.session_state.user.get("role") != "guest":
+        return
+    text = ("Som gäst sparas inte omgången till nästa gång. Logga in innan du övar nästa gång, så sparas allt."
+            if after_round else "Vill du spara dina framsteg till nästa gång? Logga in innan du börjar öva.")
+    with st.container(key="save_prompt"):
+        left, right = st.columns([3, 1.2], vertical_alignment="center")
+        with left:
+            html(f'<p class="save-text">{text}</p>')
+        with right:
+            if st.button("Logga in och spara", key="save_prompt_login", use_container_width=True):
+                st.session_state.show_login = True
+                st.rerun()
 
 
 def done_page(vocab, session):
@@ -255,6 +274,7 @@ def done_page(vocab, session):
     with right:
         if st.button("Till startsidan", use_container_width=True, disabled=pending):
             all_lists()
+    save_prompt(after_round=True)
 
 
 def question_header(session):

@@ -93,7 +93,17 @@ def test_memory_tips_prefer_teacher_then_builtin_then_strategy():
     generic = memory_tip(word)
     assert '**perro**' in generic and memory_tip(word) == generic  # samma strategi varje gång
     assert memory_tip({**word, 'memory_tip': 'Lärarens tips'}) == 'Lärarens tips'
-    assert memory_tip({**word, 'svenska': 'Dator'}).startswith('🔗 Computadora')
+    assert 'library' in memory_tip({**word, 'accepted_answers': ['libro']})
+    assert 'kalorier' in memory_tip({**word, 'accepted_answers': ['Hace calor.']})
+
     progress = {'l:x1:reverse': {'own_tip': 'prrr'}}
     assert own_tip(progress, ['l:x1:forward', 'l:x1:reverse']) == 'prrr'
     assert own_tip({}, ['l:x1:forward']) == ''
+
+
+def test_every_builtin_word_has_its_own_tip():
+    from pedagogy.memory_strategies import memory_tip, STRATEGIES
+    generic = {title for _, title, _ in STRATEGIES}
+    for vocab in builtin_lists():
+        for word in vocab['words']:
+            assert not any(title in memory_tip(word) for title in generic), word['svenska']

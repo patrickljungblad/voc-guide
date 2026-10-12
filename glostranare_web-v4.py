@@ -46,6 +46,7 @@ with st.container(key="app_header"):
             if st.button("Logga in", key="open_login"):
                 st.session_state.show_login = True
                 st.rerun()
+            html('<div class="account-hint">Spara dina framsteg</div>')
         else:
             label = "Lärarkonto" if user["role"] == "teacher" else user["name"]
             initials = "".join(part[0] for part in label.split()[:2]).upper() or "?"

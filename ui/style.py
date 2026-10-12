@@ -48,6 +48,11 @@ a {color:var(--brand);}
 .account .initials {width:34px; height:34px; flex:0 0 34px; border-radius:50%; background:#DDEBE6; color:var(--brand);
     display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;}
 
+/* Påminnelse om inloggning för gäster */
+.account-hint {text-align:right; font-size:12px; color:var(--muted); margin-top:2px;}
+.st-key-save_prompt {background:var(--brand-soft); border-radius:18px; padding:12px 16px; margin:10px 0;}
+.save-text {margin:0; font-size:15px; color:var(--ink);}
+
 /* Knappar: mörkgrön som standard, korall för det viktigaste valet på sidan */
 .stApp button {border-radius:14px; font-weight:600;}
 button[kind="primary"], [data-testid="stBaseButton-primary"], [data-testid="stBaseButton-primaryFormSubmit"] {

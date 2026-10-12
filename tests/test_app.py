@@ -323,3 +323,11 @@ def test_live_progress_preserves_green_on_help_and_moves_wrong_answer_back(tmp_p
     # Ett fel svar flyttar ett grönt ord ett steg ner, till På väg.
     assert 'Kan bra <b>0</b>' in markup and 'På väg <b>1</b>' in markup
     assert f"Ska övas <b>{len(vocab['words']) - 1}</b>" in markup and not at.exception
+
+
+def test_guest_sees_save_prompt_and_can_open_login(tmp_path, monkeypatch):
+    at = guest(app(tmp_path, monkeypatch))
+    assert any(b.label == 'Logga in och spara' for b in at.button)
+    click(at, 'Logga in och spara')
+    assert at.session_state.show_login and any(t.label == 'PIN-kod' for t in at.text_input)
+    assert not at.exception
