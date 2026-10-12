@@ -360,6 +360,6 @@ def test_round_size_twenty_and_focus_list(tmp_path, monkeypatch):
     click(at, 'Kör igång')
     assert len(at.session_state.session.queue) == min(20, len(vocab['words']))
     click(at, 'Avsluta')
-    focus = next(s for s in at.selectbox if s.label == 'Följ')
+    focus = next(s for s in at.selectbox if s.label == 'Visa framsteg för')
     focus.set_value(vocab['id']).run()
     assert at.session_state.focus_list == vocab['id'] and not at.exception
