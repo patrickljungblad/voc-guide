@@ -228,14 +228,14 @@ def start_page(db, vocab):
             with left:
                 st.caption(f"{len(due)} glosor väntar")
             with right:
-                # En vanlig radioknapp (stylad som knappar) fungerar i alla Streamlit-versioner och i testerna.
-                with st.container(key="round_choice"):
-                    # Valet sparas i en egen nyckel, så att det finns kvar även när knapparna inte visas.
-                    options = list(ROUND_SIZES)
-                    current = st.session_state.get("round_pref", "10 ord")
-                    st.session_state.round_pref = st.radio(
-                        "Antal ord per omgång", options, index=options.index(current) if current in options else 0,
-                        horizontal=True, label_visibility="collapsed")
+                # Tre små knappar i stället för ett formulärfält: inget widgetvärde som kan försvinna mellan sidorna.
+                current = st.session_state.get("round_pref", "10 ord")
+                with st.container(key="round_choice", horizontal=True, horizontal_alignment="right", gap="small"):
+                    for label in ROUND_SIZES:
+                        if st.button(label, key="round_" + label, type="primary" if label == current else "secondary",
+                                     help="Antal ord per omgång"):
+                            st.session_state.round_pref = label
+                            st.rerun()
             with st.container(key="cta"):
                 if st.button("Kör igång", type="primary", use_container_width=True, disabled=pending,
                              icon=":material/arrow_forward:"):
