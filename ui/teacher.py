@@ -16,17 +16,37 @@ from ui.speech_admin import speech_panel
 AI_VOICES = False
 
 
+def restore_panel(db, token, lists):
+    hidden = [v for v in lists if v.get("hidden")]
+    if not hidden:
+        return
+    with st.expander(f"Borttagna listor ({len(hidden)})"):
+        for vocab in hidden:
+            left, right = st.columns([3, 1], vertical_alignment="center")
+            left.write(vocab["name"])
+            if right.button("Återställ", key="restore_" + vocab["id"]):
+                try:
+                    changed = [{k: x for k, x in v.items() if k != "hidden"} if v["id"] == vocab["id"] else v for v in lists]
+                    db.save_lists(token, changed)
+                    st.session_state.lists = changed
+                    st.rerun()
+                except (ServiceError, ValueError) as error:
+                    st.error(str(error))
+
+
 def teacher(db, lists):
     st.subheader("Lärarpanel")
     st.caption("Gloslistorna är synliga för alla som kommer åt appen. Elevkonton och framsteg visas bara efter inloggning.")
     token = st.session_state.user["token"]
+    # Borttagna listor sparas som dolda, så att även inbyggda listor kan tas bort och återställas.
+    visible = [v for v in lists if not v.get("hidden")]
     tabs = ["Gloslistor", "Elever och framsteg", "Glosförhör"] + (["Röster och ljud"] if AI_VOICES else [])
     tab_lists, tab_students, tab_print, *tab_audio = st.tabs(tabs)
     with tab_print:
-        print_quiz_panel(lists)
+        print_quiz_panel(visible)
     if AI_VOICES:
         with tab_audio[0]:
-            speech_panel(db, token, lists)
+            speech_panel(db, token, visible)
     with tab_lists:
         with st.expander("Skapa gloslista"):
             with st.form("create_list"):
@@ -34,8 +54,10 @@ def teacher(db, lists):
                 category = st.text_input("Kurs", "Egna listor", max_chars=160)
                 language = st.text_input("Språk", "Spanska", max_chars=160)
                 theme = st.selectbox("Temabild", ["auto", *THEMES], format_func=lambda t: "Automatisk – utifrån glosorna" if t == "auto" else THEMES[t], key="create_theme")
-                st.caption("Klistra in två kolumner från ett kalkylblad: svenska och målspråk. Alternativa svar avskiljs med |. En tredje kolumn kan innehålla ett minnestips.")
-                text = st.text_area("Glosor", placeholder="hund\tperro\ndator\tcomputadora|ordenador", height=180)
+                st.caption("En glosa per rad: svenska = målspråk. Du kan också klistra in två kolumner från ett kalkylblad. "
+                           "Flera godkända svar skiljs med |. Lägg gärna till ett minnestips efter ett till =.")
+                text = st.text_area("Glosor", placeholder="hund = perro\ndator = computadora | ordenador\nkatt = gato = Låter som gate: en katt vid en grind",
+                                    height=180)
                 submit = st.form_submit_button("Spara ny lista", type="primary")
             if submit:
                 try:
@@ -48,8 +70,12 @@ def teacher(db, lists):
                     st.rerun()
                 except (ServiceError, ValueError) as error:
                     st.error(str(error))
-        selected = st.selectbox("Ändra en lista", [v["id"] for v in lists],
-                                format_func=lambda i: next(v["name"] for v in lists if v["id"] == i))
+        if not visible:
+            st.info("Det finns inga listor. Skapa en ny lista ovan eller återställ en borttagen lista nedan.")
+            restore_panel(db, token, lists)
+            return
+        selected = st.selectbox("Ändra en lista", [v["id"] for v in visible],
+                                format_func=lambda i: next(v["name"] for v in visible if v["id"] == i))
         vocab = next(v for v in lists if v["id"] == selected)
         card_art(0, vocab["language"], vocab)
         share_list(vocab)
@@ -87,6 +113,18 @@ def teacher(db, lists):
                 st.success("Ändringarna är sparade. Ordens ID och elevframsteg bevaras.")
             except (ServiceError, ValueError) as error:
                 st.error(str(error))
+        with st.expander("Ta bort listan"):
+            st.caption("Listan försvinner för eleverna. Elevernas framsteg finns kvar, och du kan återställa listan när du vill.")
+            sure = st.checkbox(f"Ja, ta bort {vocab['name']}", key="confirm_delete_" + selected)
+            if st.button("Ta bort listan", disabled=not sure, key="delete_" + selected):
+                try:
+                    changed = [{**v, "hidden": True} if v["id"] == selected else v for v in lists]
+                    db.save_lists(token, changed)
+                    st.session_state.lists = changed
+                    st.rerun()
+                except (ServiceError, ValueError) as error:
+                    st.error(str(error))
+        restore_panel(db, token, lists)
         st.download_button("Exportera glosbiblioteket", json.dumps(st.session_state.lists, ensure_ascii=False, indent=2), "glosbibliotek.json", "application/json")
         with st.expander("Importera glosbibliotek från JSON"):
             upload = st.file_uploader("Bibliotek med stabila list- och ord-ID", type=["json"], key="library_import")
@@ -122,8 +160,10 @@ def teacher(db, lists):
         if not students:
             st.info("Skapa ett elevkonto för att komma igång.")
             return
-        selected_list = st.selectbox("Visa framsteg för", [v["id"] for v in lists], format_func=lambda i: next(v["name"] for v in lists if v["id"] == i))
-        shown = next(v for v in lists if v["id"] == selected_list)
+        if not visible:
+            return
+        selected_list = st.selectbox("Visa framsteg för", [v["id"] for v in visible], format_func=lambda i: next(v["name"] for v in visible if v["id"] == i))
+        shown = next(v for v in visible if v["id"] == selected_list)
         rows = []
         for student in students:
             boxes = counts(shown, student["progress"], "forward")

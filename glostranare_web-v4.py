@@ -89,10 +89,11 @@ if st.session_state.lists is None:
             st.rerun()
         st.stop()
 
-lists = st.session_state.lists
 if user["role"] == "teacher":
-    teacher(db, lists)
+    teacher(db, st.session_state.lists)
     st.stop()
+# Listor som läraren tagit bort visas inte för eleverna.
+lists = [v for v in st.session_state.lists if not v.get("hidden")]
 
 with st.sidebar.expander("Träningsriktning"):
     label = st.selectbox("Översätt från", ["Svenska till målspråk", "Målspråk till svenska"],

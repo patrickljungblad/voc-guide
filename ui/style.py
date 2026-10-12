@@ -53,6 +53,11 @@ a {color:var(--brand);}
 .st-key-save_prompt {background:var(--brand-soft); border-radius:18px; padding:12px 16px; margin:10px 0;}
 .save-text {margin:0; font-size:15px; color:var(--ink);}
 
+/* Paustips */
+.st-key-pause_hint {background:var(--amber-soft); border-radius:20px; padding:16px 20px; margin:10px 0;}
+.pause-title {font-family:var(--display); font-weight:800; font-size:19px; margin:0 0 4px; color:var(--ink);}
+.pause-text {margin:0; font-size:15px; line-height:1.55; color:var(--ink);}
+
 /* Knappar: mörkgrön som standard, korall för det viktigaste valet på sidan */
 .stApp button {border-radius:14px; font-weight:600;}
 button[kind="primary"], [data-testid="stBaseButton-primary"], [data-testid="stBaseButton-primaryFormSubmit"] {

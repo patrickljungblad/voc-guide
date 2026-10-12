@@ -92,10 +92,23 @@ def pending_notice(db):
                 st.error(str(error))
 
 
+ROUND_SIZES = {"10 ord": 10, "20 ord": 20, "Alla": 300}
+
+
+def round_size():
+    return ROUND_SIZES.get(st.session_state.get("round_size", "10 ord"), 10)
+
+
 def start(vocab, mode="auto", extra=False):
-    eligible = vocab["words"] if extra else due_words(vocab, st.session_state.progress, st.session_state.direction, time.time())
-    st.session_state.session = Session([w["id"] for w in eligible[:10]], mode=mode,
-        start_green=counts(vocab, st.session_state.progress, st.session_state.direction)[3])
+    progress, direction = st.session_state.progress, st.session_state.direction
+    eligible = vocab["words"] if extra else due_words(vocab, progress, direction, time.time(), limit=300)
+    if extra:
+        # Extra övning börjar med de ord som sitter sämst.
+        eligible = sorted(eligible, key=lambda w: progress.get(key(vocab["id"], w["id"], direction), initial())["box"])
+    queue = [w["id"] for w in eligible[:round_size()]]
+    st.session_state.session = Session(queue, mode=mode, cap=max(20, len(queue) + 10),
+                                       start_green=counts(vocab, progress, direction)[3])
+    st.session_state.setdefault("practice_started", time.time())
     st.rerun()
 
 
@@ -211,7 +224,12 @@ def start_page(db, vocab):
              f'<p class="start-title">{escape(vocab["name"])}</p>')
         boxes(counts(vocab, progress, direction))
         if due:
-            st.caption(f"{len(due)} glosor väntar · högst 10 per omgång")
+            left, right = st.columns([1.4, 1], vertical_alignment="center")
+            with left:
+                st.caption(f"{len(due)} glosor väntar")
+            with right:
+                st.segmented_control("Antal ord per omgång", list(ROUND_SIZES), key="round_size",
+                                     default="10 ord", label_visibility="collapsed")
             with st.container(key="cta"):
                 if st.button("Kör igång", type="primary", use_container_width=True, disabled=pending,
                              icon=":material/arrow_forward:"):
@@ -219,7 +237,10 @@ def start_page(db, vocab):
         else:
             next_at = min(progress[key(vocab["id"], w["id"], direction)]["next_review"] for w in vocab["words"])
             st.success("Allt är klart för i dag. Snyggt jobbat!")
-            st.caption(f"Nästa repetition {next_review_text(next_at, time.time())}.")
+            st.caption(f"Nästa repetition {next_review_text(next_at, time.time())}. "
+                       "Vill du ändå öva går det bra – orden flyttas inte framåt förrän det är dags.")
+            if st.button("Öva ändå", use_container_width=True, disabled=pending, icon=":material/replay:"):
+                start(vocab, extra=True)
     save_prompt()
     with st.expander("Öva extra på ditt eget sätt"):
         with st.container(key="practice_modes"):
@@ -256,12 +277,34 @@ def save_prompt(after_round=False):
                 st.rerun()
 
 
+PAUSE_MINUTES, PAUSE_ROUNDS = 20, 3
+
+
+def pause_hint():
+    """Ingen spärr, bara ett tips: korta pass som sprids ut ger bättre minne än ett långt pass."""
+    minutes = (time.time() - st.session_state.get("practice_started", time.time())) / 60
+    rounds = st.session_state.get("rounds_done", 0)
+    if minutes < PAUSE_MINUTES and rounds < PAUSE_ROUNDS:
+        return
+    spent = f"{round(minutes)} minuter" if minutes >= PAUSE_MINUTES else f"{rounds} omgångar"
+    with st.container(key="pause_hint"):
+        html(f'<p class="pause-title">Du har övat i {spent} – starkt jobbat!</p>'
+             '<p class="pause-text">Hjärnan minns orden bättre om du övar en stund varje dag än om du övar '
+             'länge på en gång. Forskare kallar det <b>spacing-effekten</b>, och den är en av de säkraste '
+             'slutsatserna om hur vi lär oss. Ta gärna en paus och kom tillbaka i morgon. '
+             'Du kan förstås fortsätta öva om du vill.</p>')
+
+
 def done_page(vocab, session):
     progress, direction = st.session_state.progress, st.session_state.direction
     pending = bool(st.session_state.pending)
     practiced = set(session.queue[:session.index])
     needs_work = sum(progress.get(key(vocab["id"], wid, direction), initial())["box"] == 1 for wid in practiced)
     completion(session.correct, session.answered, len(practiced), needs_work)
+    if not getattr(session, "counted", False):
+        session.counted = True
+        st.session_state.rounds_done = st.session_state.get("rounds_done", 0) + 1
+    pause_hint()
     green = counts(vocab, progress, direction)[3] - session.start_green
     if green > 0:
         st.success(f"{green} fler ord ligger nu i Kan bra.")

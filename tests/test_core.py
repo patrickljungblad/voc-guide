@@ -107,3 +107,24 @@ def test_every_builtin_word_has_its_own_tip():
     for vocab in builtin_lists():
         for word in vocab['words']:
             assert not any(title in memory_tip(word) for title in generic), word['svenska']
+
+
+def test_word_lists_accept_common_separators():
+    from data.vocabulary import parse_words
+    words = parse_words('hund = perro\nspela tv-spel - jugar a videojuegos\ndator\tcomputadora|ordenador\tTänk computer\nsol;sol')
+    assert [w['svenska'] for w in words] == ['hund', 'spela tv-spel', 'dator', 'sol']
+    assert words[2]['accepted_answers'] == ['computadora', 'ordenador'] and words[2]['memory_tip'] == 'Tänk computer'
+    import pytest
+    with pytest.raises(ValueError):
+        parse_words('bara ett ord')
+
+
+def test_round_cap_grows_with_round_size():
+    ids = [str(i) for i in range(25)]
+    session = Session(ids[:], cap=35)
+    session.retry_later('0', ids)
+    assert session.queue.count('0') == 2
+    assert Session(ids[:20]).queue == ids[:20]
+    full = Session(ids[:20])
+    full.retry_later('0', ids)
+    assert full.queue.count('0') == 1
