@@ -53,6 +53,14 @@ a {color:var(--brand);}
 .st-key-save_prompt {background:var(--brand-soft); border-radius:18px; padding:12px 16px; margin:10px 0;}
 .save-text {margin:0; font-size:15px; color:var(--ink);}
 
+/* Val av antal ord, som små knappar */
+.st-key-round_choice [role="radiogroup"] {gap:6px; justify-content:flex-end; flex-wrap:nowrap;}
+.st-key-round_choice label[data-baseweb="radio"] {margin:0; padding:6px 12px; border-radius:999px; border:1px solid var(--line); background:#fff; cursor:pointer;}
+.st-key-round_choice label[data-baseweb="radio"] > div:first-child {display:none;}
+.st-key-round_choice label[data-baseweb="radio"] p {font-size:14px; font-weight:600; white-space:nowrap;}
+.st-key-round_choice label[data-baseweb="radio"]:has(input:checked) {background:var(--brand); border-color:var(--brand); color:#fff;}
+.st-key-round_choice label[data-baseweb="radio"]:focus-within {outline:3px solid #2563eb; outline-offset:2px;}
+
 /* Paustips */
 .st-key-pause_hint {background:var(--amber-soft); border-radius:20px; padding:16px 20px; margin:10px 0;}
 .pause-title {font-family:var(--display); font-weight:800; font-size:19px; margin:0 0 4px; color:var(--ink);}
