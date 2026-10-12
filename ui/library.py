@@ -63,9 +63,9 @@ def progress_panel(categories, category, selected, stats, focus):
             st.rerun()
         options = [COURSE] + [v["id"] for v in selected]
         names = {v["id"]: v["name"] for v in selected}
-        chosen = st.selectbox("Följ", options, index=options.index(focus),
+        chosen = st.selectbox("Visa framsteg för", options, index=options.index(focus),
                               format_func=lambda i: "Hela kursen" if i == COURSE else names[i],
-                              help="Välj en lista, till exempel veckans glosor, så visas bara den här och i Kör igång.")
+                              help="Välj en lista, till exempel veckans glosor. Då visas bara den listans framsteg här, och Kör igång övar på den.")
         if chosen != focus:
             st.session_state.focus_list = chosen
             st.rerun()
