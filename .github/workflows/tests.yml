@@ -10,7 +10,10 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install -r requirements-dev.txt
-      - run: pytest -q
+      # Misslyckade tester visas som felmeddelanden direkt på GitHub, utan att man behöver öppna loggen.
+      - run: |
+          pytest -q -rf --tb=line > pytest.txt 2>&1 || { grep -E "^(FAILED|ERROR)|^/.*: " pytest.txt | head -10 | sed 's/^/::error::/'; cat pytest.txt; exit 1; }
+          cat pytest.txt
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

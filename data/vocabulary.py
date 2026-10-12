@@ -39,18 +39,38 @@ def validate_lists(lists):
     return lists
 
 
+SEPARATORS = ("\t", " = ", "=", " – ", " — ", " - ", ";")
+
+
+def split_line(line):
+    """Delar en rad i svenska, målspråk och eventuellt minnestips.
+
+    Tabb (från kalkylblad) går först. Annars godtas =, ett tankstreck eller bindestreck med
+    mellanslag runt (så att t.ex. "tv-spel" inte delas) och semikolon.
+    """
+    for separator in SEPARATORS:
+        if separator in line:
+            parts = [part.strip() for part in line.split(separator)]
+            if separator != "\t" and len(parts) > 3:
+                parts = parts[:2] + [separator.strip().join(parts[2:])]
+            return parts
+    return [line.strip()]
+
+
 def parse_words(text):
-    """Tabbseparerat: svenska, målspråk (alternativ med |), valfritt minnestips."""
+    """En glosa per rad: svenska, målspråk (alternativ med |) och valfritt minnestips."""
     words = []
-    for line in text.splitlines():
+    for number, line in enumerate(text.splitlines(), start=1):
         if not line.strip():
             continue
-        parts = line.split("\t")
-        if not 2 <= len(parts) <= 3:
-            raise ValueError("Använd en tabb mellan svenska, målspråk och eventuellt minnestips.")
+        parts = split_line(line)
+        if not 2 <= len(parts) <= 3 or not parts[0] or not parts[1]:
+            raise ValueError(f"Rad {number} ({line.strip()[:40]}) behöver svenska och målspråk, till exempel: hund = perro")
         sv, target = parts[:2]
-        words.append({"id": uuid4().hex, "svenska": sv.strip(),
-                      "swedish_answers": [x.strip() for x in sv.split("|")],
-                      "accepted_answers": [x.strip() for x in target.split("|")],
-                      "memory_tip": parts[2].strip() if len(parts) == 3 else ""})
+        words.append({"id": uuid4().hex, "svenska": sv.replace("|", ", "),
+                      "swedish_answers": [x.strip() for x in sv.split("|") if x.strip()],
+                      "accepted_answers": [x.strip() for x in target.split("|") if x.strip()],
+                      "memory_tip": parts[2] if len(parts) == 3 else ""})
+    if not words:
+        raise ValueError("Skriv minst en glosa, till exempel: hund = perro")
     return words

@@ -323,3 +323,43 @@ def test_live_progress_preserves_green_on_help_and_moves_wrong_answer_back(tmp_p
     # Ett fel svar flyttar ett grönt ord ett steg ner, till På väg.
     assert 'Kan bra <b>0</b>' in markup and 'På väg <b>1</b>' in markup
     assert f"Ska övas <b>{len(vocab['words']) - 1}</b>" in markup and not at.exception
+
+
+def test_guest_sees_save_prompt_and_can_open_login(tmp_path, monkeypatch):
+    at = guest(app(tmp_path, monkeypatch))
+    assert any(b.label == 'Logga in och spara' for b in at.button)
+    click(at, 'Logga in och spara')
+    assert at.session_state.show_login and any(t.label == 'PIN-kod' for t in at.text_input)
+    assert not at.exception
+
+
+def teacher_session(at):
+    click(at, 'Logga in')
+    next(t for t in at.text_input if t.label == 'Lärarlösenord').set_value('a-long-test-password')
+    click(at, 'Öppna lärarpanelen')
+    return at
+
+
+def test_teacher_can_delete_and_restore_a_list(tmp_path, monkeypatch):
+    at = teacher_session(app(tmp_path, monkeypatch))
+    first = at.session_state.lists[0]
+    next(c for c in at.checkbox if c.label.startswith('Ja, ta bort')).check().run()
+    click(at, 'Ta bort listan')
+    assert next(v for v in at.session_state.lists if v['id'] == first['id'])['hidden']
+    assert first['name'] not in next(s for s in at.selectbox if s.label == 'Ändra en lista').options
+    click(at, 'Återställ')
+    assert not next(v for v in at.session_state.lists if v['id'] == first['id']).get('hidden')
+    assert not at.exception
+
+
+def test_round_size_twenty_and_focus_list(tmp_path, monkeypatch):
+    at = guest(app(tmp_path, monkeypatch))
+    vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
+    at.session_state.round_pref = '20 ord'
+    at.run()
+    click(at, 'Kör igång')
+    assert len(at.session_state.session.queue) == min(20, len(vocab['words']))
+    click(at, 'Avsluta')
+    focus = next(s for s in at.selectbox if s.label == 'Följ')
+    focus.set_value(vocab['id']).run()
+    assert at.session_state.focus_list == vocab['id'] and not at.exception

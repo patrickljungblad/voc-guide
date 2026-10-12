@@ -9,6 +9,7 @@ from core.answers import normalize
 class Session:
     queue: list[str]
     mode: str = "auto"
+    cap: int = 20
     index: int = 0
     correct: int = 0
     answered: int = 0
@@ -42,7 +43,8 @@ class Session:
         self.turn_id = uuid4().hex
 
     def retry_later(self, word_id, all_ids):
-        if word_id in self.retries or len(self.queue) >= 20:
+        # Fel ord får komma tillbaka, men omgången växer högst till taket.
+        if word_id in self.retries or len(self.queue) >= getattr(self, "cap", 20):
             return
         self.retries.add(word_id)
         self.exposed.add(word_id)

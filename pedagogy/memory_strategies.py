@@ -1,18 +1,7 @@
 """Minnesstrategier: ordspecifika tips, roterande strategier och elevens egna knep."""
 from zlib import crc32
-
-TIPS = {
-    "dator": "🔗 Computadora liknar engelskans computer. Tänk på din egen dator och säg ordet högt.",
-    "bok": "🔗 Libro: koppla boken till library, ett bibliotek fullt av böcker.",
-    "telefonnummer": "🔗 Número de teléfono: du känner redan igen nummer och telefon.",
-    "jag har": "🧩 Tengo är jag-formen av tener. Lägg märke till -o. Säg: Tengo un libro.",
-    "att ha": "💬 Sätt tener i ett uttryck: tener un libro, att ha en bok.",
-    "det är soligt": "🔗 Sol betyder sol. Se en sol framför dig och säg: Hace sol.",
-    "det är kallt": "💬 Föreställ dig en kall morgon: Hace frío. Säg meningen högt.",
-    "onsdag": "🧩 Dela upp miércoles: miér-co-les. Betoningen och accenten ligger på första delen.",
-    "spanska": "🔗 Español och Spanish: koppla till ett språk du redan kan namnet på.",
-    "engelska": "🔗 Inglés liknar engelska. Observera accenten över é.",
-}
+from core.answers import normalize
+from pedagogy.word_tips import WORD_TIPS
 
 # Varje ord får alltid samma strategi, så att eleven känner igen den nästa gång.
 STRATEGIES = (
@@ -38,8 +27,14 @@ def _strategy(word):
 
 
 def memory_tip(word):
-    """Lärarens tips i listan går först, sedan inbyggda tips, sist en roterande strategi."""
-    return word.get("memory_tip") or TIPS.get(word["svenska"].casefold()) or _strategy(word)
+    """Lärarens tips i listan går först, sedan ordets eget tips, sist en roterande strategi."""
+    if word.get("memory_tip"):
+        return word["memory_tip"]
+    for answer in word["accepted_answers"]:
+        tip = WORD_TIPS.get(normalize(answer))
+        if tip:
+            return tip
+    return _strategy(word)
 
 
 OWN_TIP_MAX = 200

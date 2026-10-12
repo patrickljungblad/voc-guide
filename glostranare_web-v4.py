@@ -46,6 +46,7 @@ with st.container(key="app_header"):
             if st.button("Logga in", key="open_login"):
                 st.session_state.show_login = True
                 st.rerun()
+            html('<div class="account-hint">Spara dina framsteg</div>')
         else:
             label = "Lärarkonto" if user["role"] == "teacher" else user["name"]
             initials = "".join(part[0] for part in label.split()[:2]).upper() or "?"
@@ -88,10 +89,11 @@ if st.session_state.lists is None:
             st.rerun()
         st.stop()
 
-lists = st.session_state.lists
 if user["role"] == "teacher":
-    teacher(db, lists)
+    teacher(db, st.session_state.lists)
     st.stop()
+# Listor som läraren tagit bort visas inte för eleverna.
+lists = [v for v in st.session_state.lists if not v.get("hidden")]
 
 with st.sidebar.expander("Träningsriktning"):
     label = st.selectbox("Översätt från", ["Svenska till målspråk", "Målspråk till svenska"],

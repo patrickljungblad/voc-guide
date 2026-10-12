@@ -49,16 +49,29 @@ def continue_card(vocab, stats):
             practice_list(vocab["id"], start_now=bool(due))
 
 
-def course_panel(categories, category, selected, all_stats):
+COURSE = "__course__"
+
+
+def progress_panel(categories, category, selected, stats, focus):
+    """Högerspalten: eleven väljer om framstegen gäller hela kursen eller en fokuslista."""
     with st.container(key="course_panel"):
-        html("<h2>Din kurs</h2>")
-        new = st.selectbox("Välj kurs", categories, index=categories.index(category),
-                           label_visibility="collapsed", key="course_select")
+        html("<h2>Dina framsteg</h2>")
+        new = st.selectbox("Välj kurs", categories, index=categories.index(category), key="course_select")
         if new != category:
             st.session_state.chosen_course = new
+            st.session_state.pop("focus_list", None)
             st.rerun()
-        totals = {n: sum(s["counts"][n] for s in all_stats) for n in (1, 2, 3)}
-        words = sum(len(v["words"]) for v in selected)
+        options = [COURSE] + [v["id"] for v in selected]
+        names = {v["id"]: v["name"] for v in selected}
+        chosen = st.selectbox("Följ", options, index=options.index(focus),
+                              format_func=lambda i: "Hela kursen" if i == COURSE else names[i],
+                              help="Välj en lista, till exempel veckans glosor, så visas bara den här och i Kör igång.")
+        if chosen != focus:
+            st.session_state.focus_list = chosen
+            st.rerun()
+        shown = list(stats.values()) if focus == COURSE else [stats[focus]]
+        words = sum(len(v["words"]) for v in selected) if focus == COURSE else len(next(v for v in selected if v["id"] == focus)["words"])
+        totals = {n: sum(s["counts"][n] for s in shown) for n in (1, 2, 3)}
         html(f'<div class="big-number"><b>{totals[3]}</b><span>av {words} ord sitter</span></div>')
         box_rows(totals)
 
@@ -99,16 +112,23 @@ def library(lists):
     chip = f'<span class="chip hot">{symbol("flame")}{today} övade i dag</span>' if today else ""
     html(f'{chip}<div class="greeting">{hello}<br>{waiting}</div>')
 
-    # Senast övade listan med ord som väntar; annars första listan med väntande ord.
-    with_due = [v for v in selected if stats[v["id"]]["due"]]
-    pool = with_due or selected
-    target = max(pool, key=lambda v: (stats[v["id"]]["last"], -selected.index(v)))
+    # Fokuslistan styr både högerspalten och Kör igång. Utan fokus väljs listan automatiskt:
+    # senast övade listan med ord som väntar, annars första listan med väntande ord.
+    focus = st.session_state.get("focus_list", COURSE)
+    if focus != COURSE and focus not in stats:
+        focus = COURSE
+    if focus != COURSE:
+        target = next(v for v in selected if v["id"] == focus)
+    else:
+        with_due = [v for v in selected if stats[v["id"]]["due"]]
+        pool = with_due or selected
+        target = max(pool, key=lambda v: (stats[v["id"]]["last"], -selected.index(v)))
 
     left, right = st.columns([1.9, 1], gap="medium")
     with left:
         continue_card(target, stats[target["id"]])
     with right:
-        course_panel(categories, category, selected, list(stats.values()))
+        progress_panel(categories, category, selected, stats, focus)
 
     html('<div class="section-title">Alla listor</div>')
     for offset in range(0, len(selected), 3):
