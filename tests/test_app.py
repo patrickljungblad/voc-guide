@@ -106,7 +106,7 @@ def test_teacher_panel_can_create_user_and_list(tmp_path,monkeypatch):
     next(t for t in at.text_input if t.label == 'Listans namn').set_value('Ny lista')
     at.text_area[0].set_value('hund\tperro\nkatt\tgato')
     click(at,'Spara ny lista')
-    assert len(at.session_state.lists) == 9 and not at.exception
+    assert len(at.session_state.lists) == 10 and not at.exception
 
 
 def test_expired_login_can_save_pending_answer_without_reset(tmp_path,monkeypatch):
