@@ -15,6 +15,8 @@ BUILTIN = dict(zip([
     "52785c71b8695a748dac66e1d22d6087", "4e3674bbd68d56488344052b0a334102",
     "d36849a293265e509d2305b843345df0", "95a6bd2a2eb158a285cbd19c17d3af84",
 ], list(THEMES)[:8]))
+# Senare inbyggda listor med valt motiv.
+BUILTIN["a9e24d164acc478b93a863cac2ffcedd"] = "introduction"  # Spanska nybörjare - inför kapitelprov 1
 KEYWORDS = {
     "questions": "frågeord varför hur varifrån vart qué cómo dónde cuándo quién",
     "contact": "telefonnummer ålder tengo tienes tener teléfono años",

@@ -73,7 +73,7 @@ def test_teacher_lists_and_import_preserve_revision_guard(db):
     from data.vocabulary import builtin_lists
     token,teacher = account(db)
     db.save_lists(teacher,builtin_lists())
-    assert len(db.get_lists()) == 8
+    assert len(db.get_lists()) == 9
     student = db.students(teacher)[0]
     db.import_progress(teacher,student['id'],{'word':initial()},0)
     assert db.load_progress(token)['revision'] == 1

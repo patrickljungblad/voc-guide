@@ -1593,5 +1593,202 @@
         "legacy_key": "Spanska fortsättning - v. 36_spela fotboll"
       }
     ]
+  },
+  {
+    "id": "a9e24d164acc478b93a863cac2ffcedd",
+    "name": "Spanska nybörjare - inför kapitelprov 1",
+    "language": "Spanska",
+    "category": "Spanska nybörjare",
+    "theme": "introduction",
+    "words": [
+      {
+        "id": "2bc896d2734242eb81e74f23648aa19a",
+        "svenska": "många",
+        "accepted_answers": [
+          "muchas",
+          "muchos"
+        ],
+        "swedish_answers": [
+          "många"
+        ],
+        "memory_tip": ""
+      },
+      {
+        "id": "8616b153506f40e9bdba74ed40b3c7c5",
+        "svenska": "men",
+        "accepted_answers": [
+          "pero"
+        ],
+        "swedish_answers": [
+          "men"
+        ],
+        "memory_tip": ""
+      },
+      {
+        "id": "e3decd84112540c89a40a32a98359b8a",
+        "svenska": "också",
+        "accepted_answers": [
+          "también"
+        ],
+        "swedish_answers": [
+          "också"
+        ],
+        "memory_tip": ""
+      },
+      {
+        "id": "2b807ac8e428429a839bdad0f56c5966",
+        "svenska": "syskon",
+        "accepted_answers": [
+          "hermanos"
+        ],
+        "swedish_answers": [
+          "syskon"
+        ],
+        "memory_tip": ""
+      },
+      {
+        "id": "4c93a2277ba14ae697e742b58fcb1761",
+        "svenska": "bror",
+        "accepted_answers": [
+          "hermano"
+        ],
+        "swedish_answers": [
+          "bror"
+        ],
+        "memory_tip": ""
+      },
+      {
+        "id": "5954407558fc46f29370867ffe9dbe73",
+        "svenska": "syster",
+        "accepted_answers": [
+          "hermana"
+        ],
+        "swedish_answers": [
+          "syster"
+        ],
+        "memory_tip": ""
+      },
+      {
+        "id": "698cd87889114ea7abe875b9598724ef",
+        "svenska": "som",
+        "accepted_answers": [
+          "que"
+        ],
+        "swedish_answers": [
+          "som"
+        ],
+        "memory_tip": ""
+      },
+      {
+        "id": "c365bba368e146c7988c153477949817",
+        "svenska": "att ha",
+        "accepted_answers": [
+          "tener"
+        ],
+        "swedish_answers": [
+          "att ha"
+        ],
+        "memory_tip": ""
+      },
+      {
+        "id": "86a96e96c4c34fac90f3f9881f170d37",
+        "svenska": "att arbeta",
+        "accepted_answers": [
+          "trabajar"
+        ],
+        "swedish_answers": [
+          "att arbeta"
+        ],
+        "memory_tip": ""
+      },
+      {
+        "id": "19bd13b4702748ef9b2befb1034454df",
+        "svenska": "skola",
+        "accepted_answers": [
+          "escuela"
+        ],
+        "swedish_answers": [
+          "skola"
+        ],
+        "memory_tip": ""
+      },
+      {
+        "id": "4259f356e1fe45fc940469c7534c0c04",
+        "svenska": "jag vill",
+        "accepted_answers": [
+          "quiero"
+        ],
+        "swedish_answers": [
+          "jag vill"
+        ],
+        "memory_tip": ""
+      },
+      {
+        "id": "b9da8d62965846498b3f02283cb0af47",
+        "svenska": "bibliotek",
+        "accepted_answers": [
+          "biblioteca"
+        ],
+        "swedish_answers": [
+          "bibliotek"
+        ],
+        "memory_tip": ""
+      },
+      {
+        "id": "f76abaacfd1843049de935cf3ecabe48",
+        "svenska": "tyska",
+        "accepted_answers": [
+          "alemán"
+        ],
+        "swedish_answers": [
+          "tyska"
+        ],
+        "memory_tip": ""
+      },
+      {
+        "id": "e481fb0d7a6c453ebf85fdfa43510804",
+        "svenska": "franska",
+        "accepted_answers": [
+          "francés"
+        ],
+        "swedish_answers": [
+          "franska"
+        ],
+        "memory_tip": ""
+      },
+      {
+        "id": "e2ad6fcbb53346fa967c17145640299f",
+        "svenska": "bor",
+        "accepted_answers": [
+          "vive"
+        ],
+        "swedish_answers": [
+          "bor"
+        ],
+        "memory_tip": ""
+      },
+      {
+        "id": "24da00a39bbf4e25ac3f4c836d66fb22",
+        "svenska": "lite",
+        "accepted_answers": [
+          "poco"
+        ],
+        "swedish_answers": [
+          "lite"
+        ],
+        "memory_tip": ""
+      },
+      {
+        "id": "be70d72c02ee409391d9dce2eb4efa25",
+        "svenska": "detsamma",
+        "accepted_answers": [
+          "igualmente"
+        ],
+        "swedish_answers": [
+          "detsamma"
+        ],
+        "memory_tip": ""
+      }
+    ]
   }
 ]

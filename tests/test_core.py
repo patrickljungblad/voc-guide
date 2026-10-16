@@ -62,7 +62,7 @@ def test_failed_word_returns_after_three_other_words_without_unbounded_loops():
 
 def test_library_and_migration():
     lists = validate_lists(builtin_lists())
-    assert len(lists) == 8 and sum(len(v['words']) for v in lists) == 125
+    assert len(lists) == 9 and sum(len(v['words']) for v in lists) == 142
     word = lists[0]['words'][0]
     migrated,missing = migrate_legacy({word['legacy_key']:3,'_stats_flashcard_total':99,'unknown':2},lists)
     assert len(migrated) == 1 and next(iter(migrated.values()))['box'] == 3
