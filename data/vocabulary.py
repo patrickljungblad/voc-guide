@@ -1,7 +1,9 @@
 import json
 import re
 from pathlib import Path
+from datetime import datetime
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 
 def builtin_lists():
@@ -74,3 +76,20 @@ def parse_words(text):
     if not words:
         raise ValueError("Skriv minst en glosa, till exempel: hund = perro")
     return words
+
+
+def now_published():
+    """Tidpunkt då en lista publiceras, i svensk tid."""
+    return datetime.now(ZoneInfo("Europe/Stockholm")).isoformat(timespec="seconds")
+
+
+def with_builtin_dates(lists):
+    """Inbyggda listor som läraren redan sparat om saknar datum: hämta det från originalet."""
+    dates = {v["id"]: v.get("published") for v in builtin_lists()}
+    return [v if v.get("published") or not dates.get(v["id"]) else {**v, "published": dates[v["id"]]} for v in lists]
+
+
+def newest_first(lists):
+    """Senast publicerade först. Listor utan datum hamnar efter, i den ordning de lades till (nyast först)."""
+    order = {id(v): i for i, v in enumerate(lists)}
+    return sorted(lists, key=lambda v: (v.get("published") or "", order[id(v)]), reverse=True)

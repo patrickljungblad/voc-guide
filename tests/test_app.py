@@ -363,3 +363,14 @@ def test_round_size_twenty_and_focus_list(tmp_path, monkeypatch):
     focus = next(s for s in at.selectbox if s.label == 'Visa framsteg för')
     focus.set_value(vocab['id']).run()
     assert at.session_state.focus_list == vocab['id'] and not at.exception
+
+
+def test_start_page_picks_newest_published_list(tmp_path, monkeypatch):
+    monkeypatch.setenv('DATABASE_PATH', str(tmp_path / 'newest.sqlite3'))
+    monkeypatch.setenv('BACKEND', 'sqlite')
+    at = AppTest.from_file(APP, default_timeout=10).run()
+    next(s for s in at.selectbox if s.label == 'Välj kurs').set_value('Spanska nybörjare').run()
+    card = next(m.value for m in at.markdown if 'class="continue"' in m.value)
+    assert 'inför kapitelprov 1' in card and not at.exception
+    click(at, 'Kör igång')
+    assert at.session_state.list_id == 'a9e24d164acc478b93a863cac2ffcedd'

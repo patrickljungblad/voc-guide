@@ -5,6 +5,7 @@ from html import escape
 from zoneinfo import ZoneInfo
 import streamlit as st
 from core.leitner import counts, due_words, key
+from data.vocabulary import newest_first
 from ui.navigation import open_list, practice_list
 from ui.style import box_rows, html
 from ui.visuals import meter, symbol
@@ -37,7 +38,7 @@ def choose_course(categories):
 
 def continue_card(vocab, stats):
     c, due = stats["counts"], stats["due"]
-    eyebrow = "Fortsätt där du slutade" if stats["last"] else "Börja här"
+    eyebrow = "Fortsätt där du slutade" if stats["last"] else "Senaste gloslistan"
     if not due:
         eyebrow = "Klar för i dag"
     with st.container(key="continue_card"):
@@ -100,7 +101,7 @@ def library(lists):
         return
 
     progress, direction, now = st.session_state.progress, st.session_state.direction, time.time()
-    selected = [v for v in lists if v["category"] == category]
+    selected = newest_first([v for v in lists if v["category"] == category])
     stats = {v["id"]: list_stats(v, progress, direction, now) for v in selected}
     due = sum(s["due"] for s in stats.values())
     today = sum(s["today"] for s in stats.values())
@@ -112,17 +113,15 @@ def library(lists):
     chip = f'<span class="chip hot">{symbol("flame")}{today} övade i dag</span>' if today else ""
     html(f'{chip}<div class="greeting">{hello}<br>{waiting}</div>')
 
-    # Fokuslistan styr både högerspalten och Kör igång. Utan fokus väljs listan automatiskt:
-    # senast övade listan med ord som väntar, annars första listan med väntande ord.
+    # Fokuslistan styr både högerspalten och Kör igång. Utan fokus väljs alltid
+    # den senast publicerade listan i kursen.
     focus = st.session_state.get("focus_list", COURSE)
     if focus != COURSE and focus not in stats:
         focus = COURSE
     if focus != COURSE:
         target = next(v for v in selected if v["id"] == focus)
     else:
-        with_due = [v for v in selected if stats[v["id"]]["due"]]
-        pool = with_due or selected
-        target = max(pool, key=lambda v: (stats[v["id"]]["last"], -selected.index(v)))
+        target = selected[0]
 
     left, right = st.columns([1.9, 1], gap="medium")
     with left:
