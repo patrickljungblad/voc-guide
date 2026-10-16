@@ -342,7 +342,8 @@ def teacher_session(at):
 
 def test_teacher_can_delete_and_restore_a_list(tmp_path, monkeypatch):
     at = teacher_session(app(tmp_path, monkeypatch))
-    first = at.session_state.lists[0]
+    from data.vocabulary import newest_first
+    first = newest_first(at.session_state.lists)[0]  # listan som är vald i lärarpanelen
     next(c for c in at.checkbox if c.label.startswith('Ja, ta bort')).check().run()
     click(at, 'Ta bort listan')
     assert next(v for v in at.session_state.lists if v['id'] == first['id'])['hidden']
