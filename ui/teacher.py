@@ -4,7 +4,7 @@ from uuid import uuid4
 import streamlit as st
 from core.leitner import counts
 from core.migration import migrate_legacy
-from data.vocabulary import parse_words, validate_lists
+from data.vocabulary import newest_first, now_published, parse_words, validate_lists
 from services.database import ServiceError
 from ui.navigation import share_list
 from ui.themes import THEMES
@@ -39,7 +39,7 @@ def teacher(db, lists):
     st.caption("Gloslistorna är synliga för alla som kommer åt appen. Elevkonton och framsteg visas bara efter inloggning.")
     token = st.session_state.user["token"]
     # Borttagna listor sparas som dolda, så att även inbyggda listor kan tas bort och återställas.
-    visible = [v for v in lists if not v.get("hidden")]
+    visible = newest_first([v for v in lists if not v.get("hidden")])
     tabs = ["Gloslistor", "Elever och framsteg", "Glosförhör"] + (["Röster och ljud"] if AI_VOICES else [])
     tab_lists, tab_students, tab_print, *tab_audio = st.tabs(tabs)
     with tab_print:
@@ -62,7 +62,8 @@ def teacher(db, lists):
             if submit:
                 try:
                     new_list = {"id": uuid4().hex, "name": name.strip(), "category": category.strip(),
-                                "language": language.strip(), "words": parse_words(text), "theme": theme}
+                                "language": language.strip(), "words": parse_words(text), "theme": theme,
+                                "published": now_published()}
                     changed = validate_lists(lists + [new_list])
                     db.save_lists(token, changed)
                     st.session_state.lists = changed

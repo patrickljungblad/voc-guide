@@ -128,3 +128,17 @@ def test_round_cap_grows_with_round_size():
     full = Session(ids[:20])
     full.retry_later('0', ids)
     assert full.queue.count('0') == 1
+
+
+def test_newest_published_list_comes_first_even_after_teacher_edits():
+    from data.vocabulary import newest_first, with_builtin_dates
+    lists = builtin_lists()
+    assert newest_first(lists)[0]['name'] == 'Spanska nybörjare - inför kapitelprov 1'
+    nybörjare = newest_first([v for v in lists if v['category'] == 'Spanska nybörjare'])
+    assert [v['published'][:10] for v in nybörjare] == sorted((v['published'][:10] for v in nybörjare), reverse=True)
+    saved = [{k: x for k, x in v.items() if k != 'published'} for v in lists]
+    assert all(v.get('published') for v in with_builtin_dates(saved))
+    newer = {**lists[0], 'id': 'ny', 'published': '2026-12-01T08:00:00+01:00'}
+    undated = {**lists[0], 'id': 'gammal_egen'}
+    del undated['published']
+    assert [v['id'] for v in newest_first([undated, newer] + lists)][0] == 'ny'

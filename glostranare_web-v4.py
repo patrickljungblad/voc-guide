@@ -1,7 +1,7 @@
 """Start: streamlit run glostranare_web-v4.py"""
 import streamlit as st
 from html import escape
-from data.vocabulary import builtin_lists, validate_lists
+from data.vocabulary import builtin_lists, validate_lists, with_builtin_dates
 from services.config import database
 from services.database import ServiceError, SessionExpired
 from ui.style import apply_style, html
@@ -82,7 +82,7 @@ if st.session_state.lists is None:
         custom = db.get_lists()
         by_id = {v["id"]: v for v in builtin_lists()}
         by_id.update({v["id"]: v for v in custom})
-        st.session_state.lists = validate_lists(list(by_id.values()))
+        st.session_state.lists = validate_lists(with_builtin_dates(list(by_id.values())))
     except (ServiceError, ValueError) as error:
         st.error(str(error))
         if st.button("Försök hämta listorna igen"):
