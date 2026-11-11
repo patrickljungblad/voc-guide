@@ -5,6 +5,7 @@ from streamlit.testing.v1 import AppTest
 from core.leitner import initial, key
 from core.trainer import Session
 from data.vocabulary import builtin_lists
+from services.config import lists_changed
 from services.database import ServiceError
 
 APP = str(Path(__file__).parents[1] / 'glostranare_web-v4.py')
@@ -143,6 +144,7 @@ def test_direct_link_opens_custom_list_without_login_and_survives_rename(tmp_pat
     vocab = deepcopy(builtin_lists()[0])
     vocab.update(id='custom_shared',name='Min delbara lista')
     db.save_lists(token,[vocab])
+    lists_changed()  # listorna sparades direkt i databasen, förbi lärarpanelen
     at = AppTest.from_file(APP,default_timeout=10)
     at.query_params['lista'] = vocab['id']
     at.run()
@@ -155,6 +157,7 @@ def test_direct_link_opens_custom_list_without_login_and_survives_rename(tmp_pat
     assert at.session_state.session is not None and not at.exception
     vocab['name'] = 'Nytt namn, samma länk'
     db.save_lists(token,[vocab])
+    lists_changed()
     second = AppTest.from_file(APP,default_timeout=10)
     second.query_params['lista'] = vocab['id']
     second.run()
@@ -375,3 +378,56 @@ def test_start_page_picks_newest_published_list(tmp_path, monkeypatch):
     assert 'inför kapitelprov 1' in card and not at.exception
     click(at, 'Kör igång')
     assert at.session_state.list_id == 'a9e24d164acc478b93a863cac2ffcedd'
+
+
+def test_answers_save_in_background_without_blocking_next(tmp_path, monkeypatch):
+    import threading, time as clock
+    from services.database import LocalDatabase
+    monkeypatch.setenv('SAVE_WAIT', '0')
+    at = app(tmp_path, monkeypatch)
+    db = LocalDatabase(tmp_path / 'app.sqlite3', 'a-long-test-password')
+    teacher = db.teacher_login('a-long-test-password')['token']
+    db.create_user(teacher, 'Test', '2A', '0123')
+    at.session_state.user = db.authenticate('Test', '2A', '0123')
+    at.run()
+    real_save, release = LocalDatabase.save_progress, threading.Event()
+    def slow_save(self, *args, **kwargs):
+        release.wait(5)
+        return real_save(self, *args, **kwargs)
+    monkeypatch.setattr(LocalDatabase, 'save_progress', slow_save)
+    click(at, 'Öppna listan')
+    click(at, 'Öva på listan')
+    click(at, 'Kör igång')
+    for _ in range(2):
+        vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
+        word = next(w for w in vocab['words'] if w['id'] == at.session_state.session.current)
+        answer = next((r for r in at.radio if r.label == 'Välj översättning'), None)
+        if answer:
+            answer.set_value(word['accepted_answers'][0])
+        else:
+            next(t for t in at.text_input if t.label.startswith('Skriv på')).set_value(word['accepted_answers'][0])
+        click(at, 'Kontrollera')
+        # Sparningen pågår fortfarande, men eleven kan gå vidare direkt.
+        assert at.session_state.pending is not None
+        assert not at.exception, at.exception
+        assert not next(b for b in at.button if b.label == 'Nästa').disabled, [b.label for b in at.button]
+        click(at, 'Nästa')
+    release.set()
+    deadline = clock.time() + 5
+    while at.session_state.pending is not None and clock.time() < deadline:
+        clock.sleep(0.1)
+        at.run()
+    assert at.session_state.pending is None and at.session_state.save_error is None
+    assert db.load_progress(at.session_state.user['token'])['progress'] == at.session_state.progress
+    assert not at.exception
+
+
+def test_word_list_can_be_printed_by_students(tmp_path, monkeypatch):
+    at = guest(app(tmp_path, monkeypatch))
+    click(at, 'Alla listor')
+    click(at, 'Öppna listan')
+    download = next(e for e in at.get('download_button') if e.proto.label == 'Skriv ut gloslistan')
+    assert download.proto.label and not at.exception
+    from services.print_quiz import word_list_pdf
+    vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
+    assert word_list_pdf(vocab).startswith(b'%PDF') and word_list_pdf(vocab, with_tips=True).startswith(b'%PDF')

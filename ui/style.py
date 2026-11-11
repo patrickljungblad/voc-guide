@@ -1,4 +1,5 @@
 import base64
+from functools import lru_cache
 from pathlib import Path
 import streamlit as st
 
@@ -243,15 +244,24 @@ button:focus-visible {outline:3px solid #2563eb!important; outline-offset:3px;}
 """
 
 
-def apply_style():
+@lru_cache(maxsize=1)
+def _page_head():
+    """Stilmallen och loggan byggs en gång per server i stället för vid varje klick."""
     css = CSS
     for name, value in {"AMBER_SOFT": AMBER_SOFT, "CORAL_SOFT": CORAL_SOFT, "CORAL_INK": CORAL_INK, "BRAND_DARK": BRAND_DARK,
                         "BRAND_SOFT": BRAND_SOFT, "CORAL": CORAL, "AMBER": AMBER, "BRAND": BRAND, "MUTED": MUTED,
                         "LINE": LINE, "INK": INK, "RED": RED, "BG": BG}.items():
         css = css.replace(name, value)
+    css = "\n".join(line.strip() for line in css.splitlines())
     logo = base64.b64encode(Path(__file__).with_name("glosflow-logo.svg").read_bytes()).decode("ascii")
-    html(f"<style>{css}</style>")
-    html(f'<div class="brand"><img src="data:image/svg+xml;base64,{logo}" width="430" height="110" alt="GlosFlow"></div>')
+    return (f"<style>{css}</style>",
+            f'<div class="brand"><img src="data:image/svg+xml;base64,{logo}" width="430" height="110" alt="GlosFlow"></div>')
+
+
+def apply_style():
+    style, brand = _page_head()
+    st.markdown(style, unsafe_allow_html=True)
+    st.markdown(brand, unsafe_allow_html=True)
 
 
 BOXES = ((1, "red", "Ska övas", "Övas ofta"), (2, "amber", "På väg", "Var 3:e dag"), (3, "green", "Kan bra", "Var 7:e dag"))

@@ -2,12 +2,19 @@ import json
 import re
 from pathlib import Path
 from datetime import datetime
+from functools import lru_cache
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
 
+@lru_cache(maxsize=1)
+def _builtin_text():
+    return Path(__file__).with_name("vocabulary.json").read_text(encoding="utf-8")
+
+
 def builtin_lists():
-    return json.loads(Path(__file__).with_name("vocabulary.json").read_text(encoding="utf-8"))
+    # Filen läses en gång; varje anrop får en egen kopia som kan ändras utan risk.
+    return json.loads(_builtin_text())
 
 
 def validate_lists(lists):

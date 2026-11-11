@@ -2,6 +2,7 @@ from copy import deepcopy
 import json
 from uuid import uuid4
 import streamlit as st
+from services.config import lists_changed
 from core.leitner import counts
 from core.migration import migrate_legacy
 from data.vocabulary import newest_first, now_published, parse_words, validate_lists
@@ -10,6 +11,7 @@ from ui.navigation import share_list
 from ui.themes import THEMES
 from ui.visuals import card_art
 from ui.print_quiz import print_quiz_panel
+from ui.print_list import print_button
 from ui.speech_admin import speech_panel
 
 # AI-röster från Azure är avstängda tills vidare. Sätt till True för att visa fliken igen.
@@ -28,6 +30,7 @@ def restore_panel(db, token, lists):
                 try:
                     changed = [{k: x for k, x in v.items() if k != "hidden"} if v["id"] == vocab["id"] else v for v in lists]
                     db.save_lists(token, changed)
+                    lists_changed()
                     st.session_state.lists = changed
                     st.rerun()
                 except (ServiceError, ValueError) as error:
@@ -66,6 +69,7 @@ def teacher(db, lists):
                                 "published": now_published()}
                     changed = validate_lists(lists + [new_list])
                     db.save_lists(token, changed)
+                    lists_changed()
                     st.session_state.lists = changed
                     st.success("Listan är sparad och finns nu i elevernas bibliotek.")
                     st.rerun()
@@ -80,6 +84,8 @@ def teacher(db, lists):
         vocab = next(v for v in lists if v["id"] == selected)
         card_art(0, vocab["language"], vocab)
         share_list(vocab)
+        with st.expander("Skriv ut gloslistan", icon=":material/print:"):
+            print_button(vocab, "teacher")
         with st.form("edit_" + selected):
             new_name = st.text_input("Namn", vocab["name"], max_chars=160)
             new_category = st.text_input("Kurs", vocab["category"], max_chars=160)
@@ -110,6 +116,7 @@ def teacher(db, lists):
                 changed = [changed_list if v["id"] == selected else v for v in lists]
                 validate_lists(changed)
                 db.save_lists(token, changed)
+                lists_changed()
                 st.session_state.lists = changed
                 st.success("Ändringarna är sparade. Ordens ID och elevframsteg bevaras.")
             except (ServiceError, ValueError) as error:
@@ -121,6 +128,7 @@ def teacher(db, lists):
                 try:
                     changed = [{**v, "hidden": True} if v["id"] == selected else v for v in lists]
                     db.save_lists(token, changed)
+                    lists_changed()
                     st.session_state.lists = changed
                     st.rerun()
                 except (ServiceError, ValueError) as error:
@@ -136,6 +144,7 @@ def teacher(db, lists):
                     merged.update({v["id"]: v for v in incoming})
                     changed = validate_lists(list(merged.values()))
                     db.save_lists(token, changed)
+                    lists_changed()
                     st.session_state.lists = changed
                     st.rerun()
                 except (ServiceError, ValueError) as error:

@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from copy import deepcopy
 from html import escape
 import json
@@ -13,26 +14,62 @@ from ui.style import BOXES, boxes, html
 from ui.visuals import answer_card, chip, completion, memory_title, practice_progress, steps, word_card
 from ui.audio import READ_ALOUD, listen
 from ui.navigation import all_lists
+from services.config import setting
 
 
-def persist(db):
-    pending = st.session_state.pending
-    if not pending:
-        return True
-    try:
-        revision = db.save_progress(st.session_state.user["token"], pending["progress"],
-                                    pending["revision"], pending["id"])
-        st.session_state.revision = revision
-        st.session_state.pending = None
-        st.session_state.save_error = None
-        return True
-    except Conflict as error:
-        st.session_state.save_error = ("conflict", str(error))
-    except SessionExpired as error:
-        st.session_state.save_error = ("auth", str(error))
-    except ServiceError as error:
-        st.session_state.save_error = ("network", str(error))
+# Sparningen sker i bakgrunden, så att eleven kan gå vidare direkt efter ett svar.
+# Varje sparning har ett eget ID och servern känner igen upprepningar, så inget sparas dubbelt.
+SAVER = ThreadPoolExecutor(max_workers=8, thread_name_prefix="glosflow-save")
+
+
+def persist(db, wait=None):
+    """Sparar elevens senaste framsteg.
+
+    wait=None väntar tills sparningen är klar. Ett tal väntar högst så många sekunder och
+    låter annars sparningen fortsätta i bakgrunden; då returneras None.
+    """
+    while True:
+        flight = st.session_state.get("saving")
+        if flight:
+            try:
+                revision = flight["future"].result(timeout=wait)
+            except FutureTimeout:
+                return None
+            except Conflict as error:
+                return _save_failed("conflict", error)
+            except SessionExpired as error:
+                return _save_failed("auth", error)
+            except ServiceError as error:
+                return _save_failed("network", error)
+            except Exception:
+                return _save_failed("network", "Det gick inte att spara just nu. Försök igen.")
+            st.session_state.saving = None
+            st.session_state.revision = revision
+            st.session_state.save_error = None
+            pending = st.session_state.pending
+            if pending and pending["id"] == flight["id"]:
+                st.session_state.pending = None
+        pending = st.session_state.pending
+        if not pending:
+            return True
+        # Den senaste ögonblicksbilden skickas, med den revision servern senast gav oss.
+        future = SAVER.submit(db.save_progress, st.session_state.user["token"], pending["progress"],
+                              st.session_state.revision, pending["id"])
+        st.session_state.saving = {"future": future, "id": pending["id"]}
+
+
+def _save_failed(kind, error):
+    st.session_state.saving = None
+    st.session_state.save_error = (kind, str(error))
     return False
+
+
+def save_in_background(db):
+    """Startar eller avslutar en sparning utan att eleven behöver vänta."""
+    if st.session_state.get("pending") and st.session_state.get("save_error") is None:
+        # SAVE_WAIT: hur länge svaret väntar på sparningen (0 i appen; testerna väntar tills den är klar).
+        return persist(db, wait=float(setting("SAVE_WAIT", "0") or 0))
+    return True
 
 
 def save(db, operation_id=None, defer=False):
@@ -114,7 +151,8 @@ def start(vocab, mode="auto", extra=False):
 
 def answer(db, vocab, word, result, mode, canonical, given=None):
     session = st.session_state.session
-    if session.feedback is not None or st.session_state.pending:
+    # Ett svar får lämnas medan förra svaret sparas i bakgrunden, men inte om sparningen har misslyckats.
+    if session.feedback is not None or st.session_state.save_error is not None:
         return
     now = time.time()
     progress_key = key(vocab["id"], word["id"], st.session_state.direction)
@@ -203,7 +241,7 @@ def help_panel(word, canonical, mode, vocab):
 
 
 def start_page(db, vocab):
-    progress, direction, pending = st.session_state.progress, st.session_state.direction, bool(st.session_state.pending)
+    progress, direction, pending = st.session_state.progress, st.session_state.direction, st.session_state.save_error is not None
     with st.container(key="practice_nav"):
         back, overview = st.columns([1, 1])
     with back:
@@ -303,7 +341,7 @@ def pause_hint():
 
 def done_page(vocab, session):
     progress, direction = st.session_state.progress, st.session_state.direction
-    pending = bool(st.session_state.pending)
+    pending = st.session_state.save_error is not None
     practiced = set(session.queue[:session.index])
     needs_work = sum(progress.get(key(vocab["id"], wid, direction), initial())["box"] == 1 for wid in practiced)
     completion(session.correct, session.answered, len(practiced), needs_work)
@@ -327,7 +365,7 @@ def done_page(vocab, session):
 
 
 def question_header(session):
-    pending = bool(st.session_state.pending)
+    pending = st.session_state.save_error is not None
     with st.container(key="practice_header"):
         quit_column, bar, streak_column = st.columns([1.1, 6, 1.5], vertical_alignment="center")
     with quit_column:
@@ -343,7 +381,7 @@ def question_header(session):
 def feedback_view(db, vocab, word, prompt, destination):
     session = st.session_state.session
     feedback = session.feedback
-    pending = bool(st.session_state.pending)
+    pending = st.session_state.save_error is not None
     result = feedback["result"]
     if result == "correct":
         after = f"{session.streak} rätt i rad – snyggt!" if session.streak >= 2 else ""
@@ -380,11 +418,10 @@ def feedback_view(db, vocab, word, prompt, destination):
     if READ_ALOUD:
         with st.expander("Lyssna på svaret", icon=":material/volume_up:"):
             listen(feedback["answer"], destination)
-    # Återkopplingen skickas till webbläsaren före det långsamma anropet.
+    # Återkopplingen visas först. Sparningen startar sedan i bakgrunden, så Nästa fungerar direkt.
     if st.session_state.pending and st.session_state.save_error is None:
-        st.caption("Sparar dina framsteg…")
-        persist(db)
-        st.rerun()
+        if save_in_background(db) is not None:
+            st.rerun()
 
 
 def question_view(db, vocab, word, mode, prompt, destination):
@@ -439,6 +476,10 @@ def training(db, vocab):
         start_page(db, vocab)
         return
     if session.done:
+        # Omgången är slut: se till att allt verkligen är sparat innan resultatet visas.
+        if st.session_state.pending and st.session_state.save_error is None:
+            with st.spinner("Sparar dina framsteg …"):
+                persist(db)
         pending_notice(db)
         done_page(vocab, session)
         return
