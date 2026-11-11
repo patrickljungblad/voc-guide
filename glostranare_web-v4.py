@@ -2,14 +2,15 @@
 import streamlit as st
 from html import escape
 from data.vocabulary import builtin_lists, validate_lists, with_builtin_dates
-from services.config import database
+from services.config import database, shared_lists
 from services.database import ServiceError, SessionExpired
 from ui.style import apply_style, html
 from ui.login import login
 from ui.library import library
-from ui.training import training
+from ui.training import persist, save_in_background, training
 from ui.teacher import teacher
 from ui.list_page import list_page
+from ui.games import blitz_game, match_game
 
 st.set_page_config(page_title="GlosFlow – öva och minns", page_icon="🌱", layout="wide", initial_sidebar_state="collapsed")
 
@@ -60,7 +61,10 @@ if user["role"] == "guest":
         st.rerun()
 else:
     st.sidebar.caption("Dina framsteg sparas på kontot." if user["role"] == "student" else "Lärarkonto")
-if user["role"] != "guest" and st.sidebar.button("Logga ut", disabled=bool(st.session_state.pending)):
+if user["role"] != "guest" and st.sidebar.button("Logga ut", disabled=st.session_state.save_error is not None):
+    if st.session_state.pending:
+        with st.spinner("Sparar dina framsteg …"):
+            persist(db)
     try:
         if user.get("token"):
             db.logout(user["token"])
@@ -79,7 +83,7 @@ if st.session_state.show_login:
 
 if st.session_state.lists is None:
     try:
-        custom = db.get_lists()
+        custom = shared_lists()
         by_id = {v["id"]: v for v in builtin_lists()}
         by_id.update({v["id"]: v for v in custom})
         st.session_state.lists = validate_lists(with_builtin_dates(list(by_id.values())))
@@ -117,5 +121,14 @@ else:
         st.stop()
     if st.session_state.view == "training":
         training(db, vocab)
+    elif st.session_state.view == "match":
+        match_game(vocab)
+    elif st.session_state.view == "blitz":
+        blitz_game(vocab)
     else:
         list_page(vocab)
+
+# Sist på sidan, när allt redan visats: plocka upp en sparning som blivit klar i bakgrunden
+# och starta nästa om eleven hunnit svara igen. Eleven behöver aldrig vänta på det här.
+if st.session_state.user.get("role") == "student":
+    save_in_background(db)

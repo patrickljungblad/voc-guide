@@ -90,3 +90,59 @@ def quiz_pdf(vocab, versions, direction="forward", answers=False):
         canvas.restoreState()
     doc.build(story, onFirstPage=footer, onLaterPages=footer)
     return stream.getvalue()
+
+
+def word_list_pdf(vocab, with_tips=False):
+    """Gloslistan att skriva ut: svenska och målspråk sida vid sida, gärna med minnestips."""
+    from pedagogy.memory_strategies import memory_tip
+    font_dir = Path(reportlab.__file__).parent / "fonts"
+    for name, filename in (("GlosFlow", "Vera.ttf"), ("GlosFlow-Bold", "VeraBd.ttf")):
+        if name not in pdfmetrics.getRegisteredFontNames():
+            pdfmetrics.registerFont(TTFont(name, str(font_dir / filename)))
+    pdfmetrics.registerFontFamily("GlosFlow", normal="GlosFlow", bold="GlosFlow-Bold")
+    ink = colors.HexColor("#10302B")
+    body = ParagraphStyle("list-body", fontName="GlosFlow", fontSize=11, leading=15, textColor=ink, splitLongWords=True)
+    target = ParagraphStyle("list-target", parent=body, fontName="GlosFlow-Bold")
+    tip = ParagraphStyle("list-tip", parent=body, fontSize=8.5, leading=11.5, textColor=colors.HexColor("#3E5A54"))
+    heading = ParagraphStyle("list-heading", parent=body, fontName="GlosFlow-Bold", fontSize=20, leading=26, spaceAfter=4)
+    meta = ParagraphStyle("list-meta", parent=body, fontSize=9.5, leading=13, textColor=colors.HexColor("#3E5A54"))
+
+    def p(text, style=body):
+        return Paragraph(escape(str(text)), style)
+
+    def tip_text(word):
+        # Tipsen är skrivna i Markdown; på papper räcker ren text.
+        return memory_tip(word).replace("**", "").replace("*", "")
+
+    stream = BytesIO()
+    doc = SimpleDocTemplate(stream, pagesize=A4, leftMargin=18*mm, rightMargin=18*mm, topMargin=17*mm,
+                            bottomMargin=19*mm, title="GlosFlow - " + vocab["name"], author="GlosFlow")
+    story = [p(vocab["name"], heading), p(f"{vocab['category']}  |  {len(vocab['words'])} glosor", meta), Spacer(1, 6*mm)]
+    rows = [[p("Svenska", target), p(vocab["language"], target)]]
+    for word in vocab["words"]:
+        cell = [p(" / ".join(word["accepted_answers"]), target)]
+        if with_tips:
+            cell.append(p(tip_text(word), tip))
+        rows.append([p(word["svenska"]), cell])
+    table = Table(rows, colWidths=[64*mm, 110*mm], repeatRows=1, hAlign="LEFT", splitInRow=1)
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E3F3EE")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 7), ("RIGHTPADDING", (0, 0), (-1, -1), 7),
+        ("TOPPADDING", (0, 0), (-1, -1), 7), ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ("LINEBELOW", (0, 0), (-1, 0), .6, colors.HexColor("#758a8d")),
+        ("LINEBELOW", (0, 1), (-1, -1), .3, colors.HexColor("#c9d3d5")),
+        # En tunn linje i mitten gör det lätt att vika papperet och förhöra sig själv.
+        ("LINEAFTER", (0, 0), (0, -1), .6, colors.HexColor("#c9d3d5")),
+    ]))
+    story.append(table)
+
+    def footer(canvas, document):
+        canvas.saveState()
+        canvas.setFont("GlosFlow", 8)
+        canvas.setFillColor(colors.HexColor("#526773"))
+        canvas.drawString(18*mm, 11*mm, "GlosFlow | Vik papperet på mitten och förhör dig själv")
+        canvas.drawRightString(192*mm, 11*mm, f"Sida {document.page}")
+        canvas.restoreState()
+    doc.build(story, onFirstPage=footer, onLaterPages=footer)
+    return stream.getvalue()

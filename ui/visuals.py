@@ -8,6 +8,11 @@ ICONS = {
     "check": '<circle cx="16" cy="16" r="13"/><path d="m10 16 4 4 8-9"/>',
     "flame": '<path d="M16 4c1.3 5.3 6.7 8 6.7 14.7a6.7 6.7 0 0 1-13.4 0c0-2.7 1.4-4 2.7-5.4 0 2.7 1.3 4 2.7 4 0-5.3-1.4-9.3 1.3-13.3Z"/>',
     "bulb": '<path d="M12 24h8M13.3 28h5.4M16 4a8 8 0 0 0-5.3 14c.9.9 1.3 2 1.3 3.3h8c0-1.3.4-2.4 1.3-3.3A8 8 0 0 0 16 4Z"/>',
+    "pairs": '<rect x="4" y="6" width="10" height="8" rx="2"/><rect x="18" y="18" width="10" height="8" rx="2"/><path d="M14 10h4a3 3 0 0 1 3 3v5"/>',
+    "bolt": '<path d="M18 3 7 18h8l-2 11 12-16h-8l1-10Z"/>',
+    "choice": '<circle cx="9" cy="10" r="3"/><circle cx="9" cy="22" r="3"/><path d="M16 10h11M16 22h11"/>',
+    "pen": '<path d="m20 6 6 6L12 26H6v-6L20 6Z"/><path d="m17 9 6 6"/>',
+    "cards": '<rect x="5" y="9" width="16" height="19" rx="3"/><path d="M11 9V7a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v15a3 3 0 0 1-3 3h-3"/>',
 }
 
 

@@ -1,6 +1,8 @@
 import streamlit as st
 from ui.audio import READ_ALOUD, word_table
 from ui.navigation import all_lists, share_list
+from ui.print_list import print_button
+from ui.games import practice_menu
 from ui.style import html
 from ui.visuals import symbol
 from ui.themes import theme_for, theme_svg
@@ -21,14 +23,18 @@ def list_page(vocab):
             st.rerun()
         if st.session_state.user["role"] == "guest":
             st.caption("Öva utan konto. Logga in för att spara mellan besöken.")
-    left, right = st.columns(2)
+    practice_menu(vocab, "list")
+    html('<div class="section-title">Glosorna</div>')
+    left, middle, right = st.columns(3)
     with left:
         share_list(vocab)
+    with middle, st.expander("Skriv ut", icon=":material/print:"):
+        print_button(vocab, "student")
     with right, st.expander("Sök bland glosorna"):
         query = st.text_input("Sökord", key="search_" + vocab["id"], placeholder="Svenska eller målspråk")
     words = [w for w in vocab["words"] if query.strip().casefold() in
              (w["svenska"] + " " + " ".join(w["accepted_answers"])).casefold()]
     if not words:
         st.info("Inga glosor matchar din sökning.")
-        return
-    word_table(words, vocab["language"])
+    else:
+        word_table(words, vocab["language"])

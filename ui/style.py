@@ -1,4 +1,5 @@
 import base64
+from functools import lru_cache
 from pathlib import Path
 import streamlit as st
 
@@ -57,6 +58,43 @@ a {color:var(--brand);}
 /* Val av antal ord, som små knappar */
 .st-key-round_choice button {min-height:34px!important; padding:4px 12px!important; border-radius:999px!important; font-size:14px!important;}
 .st-key-round_choice button p {font-size:14px!important; white-space:nowrap;}
+
+/* Meny över sätt att öva */
+[class*="st-key-mode_"] {background:#fff; border-radius:22px; padding:18px; height:100%; transition:transform .15s ease, box-shadow .15s ease;}
+[class*="st-key-mode_"]:hover {transform:translateY(-2px); box-shadow:0 10px 26px rgba(16,48,43,.07);}
+[class*="st-key-mode_"][class*="_match"], [class*="st-key-mode_"][class*="_blitz"] {background:var(--coral-soft);}
+.mode-card {display:flex; flex-direction:column; gap:4px; min-height:118px;}
+.mode-icon {width:42px; height:42px; border-radius:12px; background:var(--brand-soft); color:var(--brand); display:flex; align-items:center; justify-content:center; margin-bottom:4px;}
+[class*="_match"] .mode-icon, [class*="_blitz"] .mode-icon {background:#fff; color:var(--coral-ink);}
+.mode-icon svg {width:24px; height:24px;}
+.mode-title {font-family:var(--display); font-weight:800; font-size:19px; margin:0; color:var(--ink);}
+.mode-text {font-size:14px; line-height:1.45; color:var(--muted); margin:0;}
+[class*="st-key-mode_"] button {background:#fff; border:1px solid var(--line); font-weight:700; color:var(--ink);}
+
+/* Spelen */
+.game-hint {font-size:15px; color:var(--muted); margin:6px 0 10px;}
+.st-key-game_header [data-testid="stHorizontalBlock"] {flex-wrap:nowrap!important; align-items:center;}
+.st-key-game_header [data-testid="stColumn"] {min-width:0!important;}
+.st-key-game_header button {border:0; background:transparent; color:var(--muted);}
+.st-key-match_board button {min-height:58px; font-size:18px!important; border-radius:16px!important; border:2px solid var(--line);}
+.st-key-match_board button p {font-size:18px!important; font-weight:700;}
+.st-key-match_board button[kind="primary"], .st-key-match_board [data-testid="stBaseButton-primary"] {background:var(--brand-soft)!important; color:var(--brand-dark)!important; border:2px solid var(--brand)!important; min-height:58px; font-size:18px;}
+.st-key-match_board [data-testid="stBaseButton-primary"]:hover, .st-key-match_board [data-testid="stBaseButton-primary"]:focus {background:var(--brand-soft)!important; color:var(--brand-dark)!important;}
+.st-key-match_board [data-testid="stBaseButton-primary"] p {color:var(--brand-dark)!important;}
+/* Paren ska stå bredvid varandra även på mobil. */
+.st-key-match_board [data-testid="stHorizontalBlock"] {flex-wrap:nowrap!important; gap:10px!important;}
+.st-key-match_board [data-testid="stColumn"] {min-width:0!important; width:auto!important; flex:1 1 0!important;}
+.st-key-game_header .chip {white-space:nowrap;}
+.st-key-match_board button:disabled {background:#EAF4F0; border-color:#EAF4F0; color:var(--brand); opacity:.75;}
+.blitz-timer {display:flex; align-items:center; gap:10px;}
+.blitz-bar {flex:1; height:12px; border-radius:999px; background:var(--line); overflow:hidden;}
+.blitz-bar i {display:block; height:100%; background:var(--coral); border-radius:999px; transition:width 1s linear;}
+.blitz-timer span {font-family:var(--display); font-weight:800; font-variant-numeric:tabular-nums; min-width:44px; text-align:right;}
+.st-key-blitz_options button {min-height:76px; border-radius:20px!important; border:2px solid var(--line); background:#fff;}
+.st-key-blitz_options button p {font-size:20px!important; font-weight:700;}
+.st-key-blitz_options button:hover {border-color:var(--coral);}
+.blitz-last {margin:0 0 8px; font-weight:700; font-size:15px;}
+.blitz-last.ok {color:var(--brand);} .blitz-last.miss {color:var(--coral-ink);}
 
 /* Paustips */
 .st-key-pause_hint {background:var(--amber-soft); border-radius:20px; padding:16px 20px; margin:10px 0;}
@@ -236,22 +274,35 @@ button:focus-visible {outline:3px solid #2563eb!important; outline-offset:3px;}
     .practice-progress .metrics b {margin-left:2px; font-size:15px;}
     .practice-progress .dot {width:8px; height:8px;}
     .practice-progress .rule {display:none;}
-    .st-key-practice_header [data-testid="stColumn"]:first-child button p {display:none;}
+    .st-key-game_header [data-testid="stColumn"]:first-child button p {position:absolute!important; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap;}
+    .st-key-game_header .chip {padding:5px 9px; font-size:13px;}
+    .st-key-match_board button {min-height:52px; padding:6px!important;}
+    .st-key-match_board button p {font-size:16px!important; overflow-wrap:anywhere;}
+    .st-key-practice_header [data-testid="stColumn"]:first-child button p {position:absolute!important; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap;}
     .st-key-practice_header .chip {padding:5px 9px; font-size:13px;}
 }
 @media(prefers-reduced-motion:reduce) {*,*:before,*:after {animation:none!important; transition:none!important; scroll-behavior:auto!important;}}
 """
 
 
-def apply_style():
+@lru_cache(maxsize=1)
+def _page_head():
+    """Stilmallen och loggan byggs en gång per server i stället för vid varje klick."""
     css = CSS
     for name, value in {"AMBER_SOFT": AMBER_SOFT, "CORAL_SOFT": CORAL_SOFT, "CORAL_INK": CORAL_INK, "BRAND_DARK": BRAND_DARK,
                         "BRAND_SOFT": BRAND_SOFT, "CORAL": CORAL, "AMBER": AMBER, "BRAND": BRAND, "MUTED": MUTED,
                         "LINE": LINE, "INK": INK, "RED": RED, "BG": BG}.items():
         css = css.replace(name, value)
+    css = "\n".join(line.strip() for line in css.splitlines())
     logo = base64.b64encode(Path(__file__).with_name("glosflow-logo.svg").read_bytes()).decode("ascii")
-    html(f"<style>{css}</style>")
-    html(f'<div class="brand"><img src="data:image/svg+xml;base64,{logo}" width="430" height="110" alt="GlosFlow"></div>')
+    return (f"<style>{css}</style>",
+            f'<div class="brand"><img src="data:image/svg+xml;base64,{logo}" width="430" height="110" alt="GlosFlow"></div>')
+
+
+def apply_style():
+    style, brand = _page_head()
+    st.markdown(style, unsafe_allow_html=True)
+    st.markdown(brand, unsafe_allow_html=True)
 
 
 BOXES = ((1, "red", "Ska övas", "Övas ofta"), (2, "amber", "På väg", "Var 3:e dag"), (3, "green", "Kan bra", "Var 7:e dag"))

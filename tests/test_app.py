@@ -5,6 +5,7 @@ from streamlit.testing.v1 import AppTest
 from core.leitner import initial, key
 from core.trainer import Session
 from data.vocabulary import builtin_lists
+from services.config import lists_changed
 from services.database import ServiceError
 
 APP = str(Path(__file__).parents[1] / 'glostranare_web-v4.py')
@@ -143,6 +144,7 @@ def test_direct_link_opens_custom_list_without_login_and_survives_rename(tmp_pat
     vocab = deepcopy(builtin_lists()[0])
     vocab.update(id='custom_shared',name='Min delbara lista')
     db.save_lists(token,[vocab])
+    lists_changed()  # listorna sparades direkt i databasen, förbi lärarpanelen
     at = AppTest.from_file(APP,default_timeout=10)
     at.query_params['lista'] = vocab['id']
     at.run()
@@ -155,6 +157,7 @@ def test_direct_link_opens_custom_list_without_login_and_survives_rename(tmp_pat
     assert at.session_state.session is not None and not at.exception
     vocab['name'] = 'Nytt namn, samma länk'
     db.save_lists(token,[vocab])
+    lists_changed()
     second = AppTest.from_file(APP,default_timeout=10)
     second.query_params['lista'] = vocab['id']
     second.run()
@@ -375,3 +378,108 @@ def test_start_page_picks_newest_published_list(tmp_path, monkeypatch):
     assert 'inför kapitelprov 1' in card and not at.exception
     click(at, 'Kör igång')
     assert at.session_state.list_id == 'a9e24d164acc478b93a863cac2ffcedd'
+
+
+def test_answers_save_in_background_without_blocking_next(tmp_path, monkeypatch):
+    import threading, time as clock
+    from services.database import LocalDatabase
+    monkeypatch.setenv('SAVE_WAIT', '0')
+    at = app(tmp_path, monkeypatch)
+    db = LocalDatabase(tmp_path / 'app.sqlite3', 'a-long-test-password')
+    teacher = db.teacher_login('a-long-test-password')['token']
+    db.create_user(teacher, 'Test', '2A', '0123')
+    at.session_state.user = db.authenticate('Test', '2A', '0123')
+    at.run()
+    real_save, release = LocalDatabase.save_progress, threading.Event()
+    def slow_save(self, *args, **kwargs):
+        release.wait(5)
+        return real_save(self, *args, **kwargs)
+    monkeypatch.setattr(LocalDatabase, 'save_progress', slow_save)
+    click(at, 'Öppna listan')
+    click(at, 'Öva på listan')
+    click(at, 'Kör igång')
+    for _ in range(2):
+        vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
+        word = next(w for w in vocab['words'] if w['id'] == at.session_state.session.current)
+        answer = next((r for r in at.radio if r.label == 'Välj översättning'), None)
+        if answer:
+            answer.set_value(word['accepted_answers'][0])
+        else:
+            next(t for t in at.text_input if t.label.startswith('Skriv på')).set_value(word['accepted_answers'][0])
+        click(at, 'Kontrollera')
+        # Sparningen pågår fortfarande, men eleven kan gå vidare direkt.
+        assert at.session_state.pending is not None
+        assert not at.exception, at.exception
+        assert not next(b for b in at.button if b.label == 'Nästa').disabled, [b.label for b in at.button]
+        click(at, 'Nästa')
+    release.set()
+    deadline = clock.time() + 5
+    while at.session_state.pending is not None and clock.time() < deadline:
+        clock.sleep(0.1)
+        at.run()
+    assert at.session_state.pending is None and at.session_state.save_error is None
+    assert db.load_progress(at.session_state.user['token'])['progress'] == at.session_state.progress
+    assert not at.exception
+
+
+def test_word_list_can_be_printed_by_students(tmp_path, monkeypatch):
+    at = guest(app(tmp_path, monkeypatch))
+    click(at, 'Alla listor')
+    click(at, 'Öppna listan')
+    download = next(e for e in at.get('download_button') if e.proto.label == 'Skriv ut gloslistan')
+    assert download.proto.label and not at.exception
+    from services.print_quiz import word_list_pdf
+    vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
+    assert word_list_pdf(vocab).startswith(b'%PDF') and word_list_pdf(vocab, with_tips=True).startswith(b'%PDF')
+
+
+def test_practice_menu_shows_all_ways_to_practise(tmp_path, monkeypatch):
+    at = app(tmp_path, monkeypatch)
+    click(at, 'Öppna listan')
+    labels = [b.label for b in at.button]
+    for label in ['Spela: Para ihop', 'Spela: Blixtrunda', 'Öva: Flerval', 'Öva: Skriv själv', 'Öva: Ordkort']:
+        assert label in labels
+    click(at, 'Öva: Skriv själv')
+    assert at.session_state.view == 'training' and at.session_state.session.mode == 'write'
+    assert any(t.label.startswith('Skriv på') for t in at.text_input) and not at.exception
+
+
+def test_match_game_pairs_words_and_finishes(tmp_path, monkeypatch):
+    at = app(tmp_path, monkeypatch)
+    click(at, 'Öppna listan')
+    click(at, 'Spela: Para ihop')
+    vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
+    # Ett felaktigt par räknas som miss.
+    state = at.session_state.match
+    left, right = state['left'], state['right']
+    wrong = next(r for r in right if r != left[0])
+    next(b for b in at.button if b.key == f'match_L_{left[0]}').click().run()
+    next(b for b in at.button if b.key == f'match_R_{wrong}').click().run()
+    assert at.session_state.match['misses'] == 1
+    for _ in range(len(vocab['words'])):
+        state = at.session_state.match
+        if state['finished_at']:
+            break
+        word_id = next(i for i in state['left'] if i not in state['matched'])
+        next(b for b in at.button if b.key == f'match_L_{word_id}').click().run()
+        next(b for b in at.button if b.key == f'match_R_{word_id}').click().run()
+    assert at.session_state.match['finished_at'] and len(at.session_state.match['done']) == len(vocab['words'])
+    assert any('Alla par hittade' in m.value for m in at.markdown)
+    assert at.session_state.progress == {} and not at.exception  # spelen flyttar inte orden mellan lådorna
+
+
+def test_blitz_round_counts_score_and_ends_after_time(tmp_path, monkeypatch):
+    at = app(tmp_path, monkeypatch)
+    click(at, 'Öppna listan')
+    click(at, 'Spela: Blixtrunda')
+    vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
+    word = next(w for w in vocab['words'] if w['id'] == at.session_state.blitz['word'])
+    index = at.session_state.blitz['options'].index(word['accepted_answers'][0])
+    next(b for b in at.button if b.key == f'blitz_0_{index}').click().run()
+    assert at.session_state.blitz['score'] == 1 and at.session_state.blitz['answered'] == 1
+    at.session_state.blitz['started'] -= 61
+    at.run()
+    assert at.session_state.blitz['over'] and any('Tiden är ute' in m.value for m in at.markdown)
+    assert at.session_state.blitz_records[vocab['id']] == 1
+    click(at, 'Spela igen')
+    assert not at.session_state.blitz['over'] and not at.exception
