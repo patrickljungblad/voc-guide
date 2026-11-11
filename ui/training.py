@@ -14,6 +14,7 @@ from ui.style import BOXES, boxes, html
 from ui.visuals import answer_card, chip, completion, memory_title, practice_progress, steps, word_card
 from ui.audio import READ_ALOUD, listen
 from ui.navigation import all_lists
+from ui.games import practice_menu
 from services.config import setting
 
 
@@ -286,15 +287,7 @@ def start_page(db, vocab):
             if st.button("Öva ändå", use_container_width=True, disabled=pending, icon=":material/replay:"):
                 start(vocab, extra=True)
     save_prompt()
-    with st.expander("Öva extra på ditt eget sätt"):
-        with st.container(key="practice_modes"):
-            mode_label = st.radio("Träningssätt", ["Ordkort", "Quiz", "Skriv"], horizontal=True)
-            descriptions = {"Ordkort": "Säg svaret högt och vänd kortet för att jämföra.",
-                            "Quiz": "Känn igen rätt översättning bland flera alternativ.",
-                            "Skriv": "Skriv översättningen och träna på att plocka fram ordet själv."}
-            st.caption(descriptions[mode_label] + " Extra övning flyttar inte orden mellan lådorna.")
-            if st.button("Starta extra övning", use_container_width=True, disabled=pending):
-                start(vocab, {"Ordkort": "cards", "Quiz": "quiz", "Skriv": "write"}[mode_label], extra=True)
+    practice_menu(vocab, "start")
     with st.expander("Hur fungerar lådorna?"):
         learning_info(vocab)
     with st.expander("Nollställ framsteg för den här listan"):
@@ -362,6 +355,7 @@ def done_page(vocab, session):
         if st.button("Till startsidan", use_container_width=True, disabled=pending):
             all_lists()
     save_prompt(after_round=True)
+    practice_menu(vocab, "done")
 
 
 def question_header(session):

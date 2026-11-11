@@ -10,6 +10,7 @@ from ui.library import library
 from ui.training import persist, save_in_background, training
 from ui.teacher import teacher
 from ui.list_page import list_page
+from ui.games import blitz_game, match_game
 
 st.set_page_config(page_title="GlosFlow – öva och minns", page_icon="🌱", layout="wide", initial_sidebar_state="collapsed")
 
@@ -120,6 +121,10 @@ else:
         st.stop()
     if st.session_state.view == "training":
         training(db, vocab)
+    elif st.session_state.view == "match":
+        match_game(vocab)
+    elif st.session_state.view == "blitz":
+        blitz_game(vocab)
     else:
         list_page(vocab)
 

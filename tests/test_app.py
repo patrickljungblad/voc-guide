@@ -431,3 +431,55 @@ def test_word_list_can_be_printed_by_students(tmp_path, monkeypatch):
     from services.print_quiz import word_list_pdf
     vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
     assert word_list_pdf(vocab).startswith(b'%PDF') and word_list_pdf(vocab, with_tips=True).startswith(b'%PDF')
+
+
+def test_practice_menu_shows_all_ways_to_practise(tmp_path, monkeypatch):
+    at = app(tmp_path, monkeypatch)
+    click(at, 'Öppna listan')
+    labels = [b.label for b in at.button]
+    for label in ['Spela: Para ihop', 'Spela: Blixtrunda', 'Öva: Flerval', 'Öva: Skriv själv', 'Öva: Ordkort']:
+        assert label in labels
+    click(at, 'Öva: Skriv själv')
+    assert at.session_state.view == 'training' and at.session_state.session.mode == 'write'
+    assert any(t.label.startswith('Skriv på') for t in at.text_input) and not at.exception
+
+
+def test_match_game_pairs_words_and_finishes(tmp_path, monkeypatch):
+    at = app(tmp_path, monkeypatch)
+    click(at, 'Öppna listan')
+    click(at, 'Spela: Para ihop')
+    vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
+    # Ett felaktigt par räknas som miss.
+    state = at.session_state.match
+    left, right = state['left'], state['right']
+    wrong = next(r for r in right if r != left[0])
+    next(b for b in at.button if b.key == f'match_L_{left[0]}').click().run()
+    next(b for b in at.button if b.key == f'match_R_{wrong}').click().run()
+    assert at.session_state.match['misses'] == 1
+    for _ in range(len(vocab['words'])):
+        state = at.session_state.match
+        if state['finished_at']:
+            break
+        word_id = next(i for i in state['left'] if i not in state['matched'])
+        next(b for b in at.button if b.key == f'match_L_{word_id}').click().run()
+        next(b for b in at.button if b.key == f'match_R_{word_id}').click().run()
+    assert at.session_state.match['finished_at'] and len(at.session_state.match['done']) == len(vocab['words'])
+    assert any('Alla par hittade' in m.value for m in at.markdown)
+    assert at.session_state.progress == {} and not at.exception  # spelen flyttar inte orden mellan lådorna
+
+
+def test_blitz_round_counts_score_and_ends_after_time(tmp_path, monkeypatch):
+    at = app(tmp_path, monkeypatch)
+    click(at, 'Öppna listan')
+    click(at, 'Spela: Blixtrunda')
+    vocab = next(v for v in builtin_lists() if v['id'] == at.session_state.list_id)
+    word = next(w for w in vocab['words'] if w['id'] == at.session_state.blitz['word'])
+    index = at.session_state.blitz['options'].index(word['accepted_answers'][0])
+    next(b for b in at.button if b.key == f'blitz_0_{index}').click().run()
+    assert at.session_state.blitz['score'] == 1 and at.session_state.blitz['answered'] == 1
+    at.session_state.blitz['started'] -= 61
+    at.run()
+    assert at.session_state.blitz['over'] and any('Tiden är ute' in m.value for m in at.markdown)
+    assert at.session_state.blitz_records[vocab['id']] == 1
+    click(at, 'Spela igen')
+    assert not at.session_state.blitz['over'] and not at.exception
