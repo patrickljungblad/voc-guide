@@ -483,3 +483,33 @@ def test_blitz_round_counts_score_and_ends_after_time(tmp_path, monkeypatch):
     assert at.session_state.blitz_records[vocab['id']] == 1
     click(at, 'Spela igen')
     assert not at.session_state.blitz['over'] and not at.exception
+
+
+def test_verb_trainer_round_from_start_page(tmp_path, monkeypatch):
+    from core.verbs import conjugate
+    monkeypatch.setenv('DATABASE_PATH', str(tmp_path / 'verbs.sqlite3'))
+    monkeypatch.setenv('BACKEND', 'sqlite')
+    at = AppTest.from_file(APP, default_timeout=10).run()
+    next(s for s in at.selectbox if s.label == 'Välj kurs').set_value('Spanska nybörjare').run()
+    click(at, 'Öppna Verbtränaren')
+    for group in ('pres_ar', 'pres_er', 'pres_ir', 'pres_irregular'):
+        next(c for c in at.checkbox if c.key == 'verbs_group_' + group).uncheck()
+    next(c for c in at.checkbox if c.key == 'verbs_group_perf_irregular').check()
+    at.run()
+    click(at, 'Starta')
+    questions = at.session_state.verbs['questions']
+    assert len(questions) == 10 and {q['tense'] for q in questions} <= {'presens', 'perfekt'}
+    assert all(q['verb'] == 'tener' for q in questions if q['tense'] == 'presens')
+    for number, item in enumerate(questions):
+        answer = 'fel' if number == 0 else conjugate(item['verb'], item['person'], item['tense'])
+        next(t for t in at.text_input if t.label.startswith('Skriv ')).set_value(answer)
+        click(at, 'Kontrollera')
+        if number == 0:
+            assert any('Rätt form är' in e.value for e in at.error)
+        click(at, 'Se resultatet' if number == len(questions) - 1 else 'Nästa')
+    assert any('9 av 10 rätt' in m.value for m in at.markdown)
+    click(at, 'Öva på mina fel')
+    assert len(at.session_state.verbs['questions']) == 1 and not at.exception
+    click(at, 'Avsluta omgången')
+    click(at, 'Startsidan')
+    assert at.session_state.view == 'list' and not at.exception

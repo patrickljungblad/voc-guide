@@ -9,6 +9,7 @@ from data.vocabulary import newest_first
 from ui.navigation import open_list, practice_list
 from ui.style import box_rows, html
 from ui.visuals import meter, symbol
+from ui.verbs import verb_card_link
 
 ZONE = ZoneInfo("Europe/Stockholm")
 
@@ -128,6 +129,10 @@ def library(lists):
         continue_card(target, stats[target["id"]])
     with right:
         progress_panel(categories, category, selected, stats, focus)
+
+    # Verbtränaren finns för kurser med spanska.
+    if any(v["language"].lower().startswith(("spanska", "spanish", "español")) for v in selected):
+        verb_card_link()
 
     html('<div class="section-title">Alla listor</div>')
     for offset in range(0, len(selected), 3):
