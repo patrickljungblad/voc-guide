@@ -508,5 +508,6 @@ def test_verb_trainer_round_from_start_page(tmp_path, monkeypatch):
     assert any('9 av 10 rätt' in m.value for m in at.markdown)
     click(at, 'Öva på mina fel')
     assert len(at.session_state.verbs['questions']) == 1 and not at.exception
+    click(at, 'Avsluta omgången')
     click(at, 'Startsidan')
     assert at.session_state.view == 'list' and not at.exception

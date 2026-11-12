@@ -102,6 +102,8 @@ a {color:var(--brand);}
 .verb-card .mode-icon {background:#fff; color:var(--coral-ink); flex:0 0 42px;}
 .st-key-verb_setup {background:#fff; border-radius:24px; padding:22px; margin:12px 0;}
 .verb-question .pronoun {color:var(--coral-ink);}
+.st-key-verbs_header [data-testid="stHorizontalBlock"] {flex-wrap:nowrap!important; align-items:center;}
+.st-key-verbs_header [data-testid="stColumn"] {min-width:0!important;}
 .verb-table tr.hit td {background:var(--amber-soft); font-weight:800;}
 .verb-table td:first-child {color:var(--muted); width:46%;}
 

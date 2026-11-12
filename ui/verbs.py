@@ -71,12 +71,8 @@ def question(state):
     total = len(state["questions"])
     item = state["questions"][state["index"]]
     correct_so_far = sum(r["result"] == "correct" for r in state["results"])
-    with st.container(key="game_header"):
-        left, middle, right = st.columns([1.3, 5, 1.6], vertical_alignment="center")
-        with left:
-            if st.button("Avsluta", icon=":material/close:", key="verbs_quit"):
-                st.session_state.pop("verbs", None)
-                st.rerun()
+    with st.container(key="verbs_header"):
+        middle, right = st.columns([6, 1.4], vertical_alignment="center")
         with middle:
             steps(state["index"] + (1 if state["feedback"] else 0), total)
         with right:
@@ -163,7 +159,11 @@ def verb_trainer():
     state = st.session_state.get("verbs")
     playing = state and state["index"] < len(state["questions"])
     # Under en omgång räcker Avsluta; annars leder knappen tillbaka till startsidan.
-    if not playing and st.button("Startsidan", icon=":material/arrow_back:", key="verbs_home"):
+    if playing:
+        if st.button("Avsluta omgången", icon=":material/close:", key="verbs_quit"):
+            st.session_state.pop("verbs", None)
+            st.rerun()
+    elif st.button("Startsidan", icon=":material/arrow_back:", key="verbs_home"):
         back_home()
     if not state:
         setup()
