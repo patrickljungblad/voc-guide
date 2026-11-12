@@ -492,15 +492,17 @@ def test_verb_trainer_round_from_start_page(tmp_path, monkeypatch):
     at = AppTest.from_file(APP, default_timeout=10).run()
     next(s for s in at.selectbox if s.label == 'Välj kurs').set_value('Spanska nybörjare').run()
     click(at, 'Öppna Verbtränaren')
-    for group in ('ar', 'er_ir', 'stem'):
+    for group in ('pres_ar', 'pres_er', 'pres_ir', 'pres_irregular'):
         next(c for c in at.checkbox if c.key == 'verbs_group_' + group).uncheck()
+    next(c for c in at.checkbox if c.key == 'verbs_group_perf_irregular').check()
     at.run()
     click(at, 'Starta')
     questions = at.session_state.verbs['questions']
-    assert len(questions) == 10 and all(q['verb'] in ('ser', 'estar', 'tener', 'ir', 'hacer', 'salir', 'ver') for q in questions)
+    assert len(questions) == 10 and {q['tense'] for q in questions} <= {'presens', 'perfekt'}
+    assert all(q['verb'] == 'tener' for q in questions if q['tense'] == 'presens')
     for number, item in enumerate(questions):
-        answer = 'fel' if number == 0 else conjugate(item['verb'], item['person'])
-        next(t for t in at.text_input if t.label.startswith('Skriv formen')).set_value(answer)
+        answer = 'fel' if number == 0 else conjugate(item['verb'], item['person'], item['tense'])
+        next(t for t in at.text_input if t.label.startswith('Skriv ')).set_value(answer)
         click(at, 'Kontrollera')
         if number == 0:
             assert any('Rätt form är' in e.value for e in at.error)

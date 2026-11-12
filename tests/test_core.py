@@ -144,15 +144,21 @@ def test_newest_published_list_comes_first_even_after_teacher_edits():
     assert [v['id'] for v in newest_first([undated, newer] + lists)][0] == 'ny'
 
 
-def test_verb_trainer_conjugates_present_tense():
-    from core.verbs import GROUPS, conjugate, make_questions, table
+def test_verb_trainer_conjugates_present_and_perfect():
+    from core.verbs import GROUPS, conjugate, make_questions, participle, table
     assert table('hablar') == ['hablo', 'hablas', 'habla', 'hablamos', 'habláis', 'hablan']
     assert table('vivir')[3:5] == ['vivimos', 'vivís'] and table('leer')[4] == 'leéis'
     assert table('querer') == ['quiero', 'quieres', 'quiere', 'queremos', 'queréis', 'quieren']
-    assert table('jugar')[0] == 'juego' and table('dormir')[3] == 'dormimos' and table('poder')[5] == 'pueden'
     assert conjugate('tener', 0) == 'tengo' and conjugate('ir', 4) == 'vais' and conjugate('ser', 3) == 'somos'
-    questions = make_questions(['ar', 'irregular'], 30, with_vosotros=False)
+    assert table('hablar', 'perfekt') == ['he hablado', 'has hablado', 'ha hablado', 'hemos hablado', 'habéis hablado', 'han hablado']
+    assert conjugate('comer', 3, 'perfekt') == 'hemos comido' and conjugate('ir', 5, 'perfekt') == 'han ido'
+    assert [participle(v) for v in ('hacer', 'ver', 'escribir', 'decir', 'poner', 'volver', 'abrir', 'romper')] == \
+        ['hecho', 'visto', 'escrito', 'dicho', 'puesto', 'vuelto', 'abierto', 'roto']
+    questions = make_questions(['pres_ar', 'perf_irregular'], 30, with_vosotros=False)
     assert len(questions) == 30 and all(q['person'] != 4 for q in questions)
-    allowed = set(GROUPS['ar'][1]) | set(GROUPS['irregular'][1])
-    assert all(q['verb'] in allowed for q in questions)
-    assert len({(q['verb'], q['person']) for q in questions}) == 30
+    assert {q['tense'] for q in questions} <= {'presens', 'perfekt'}
+    for q in questions:
+        group = 'pres_ar' if q['tense'] == 'presens' else 'perf_irregular'
+        assert q['verb'] in GROUPS[group][2]
+    assert len({(q['verb'], q['person'], q['tense']) for q in questions}) == 30
+    assert GROUPS['pres_tener'][2] == ['tener']
