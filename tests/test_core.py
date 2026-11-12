@@ -142,3 +142,17 @@ def test_newest_published_list_comes_first_even_after_teacher_edits():
     undated = {**lists[0], 'id': 'gammal_egen'}
     del undated['published']
     assert [v['id'] for v in newest_first([undated, newer] + lists)][0] == 'ny'
+
+
+def test_verb_trainer_conjugates_present_tense():
+    from core.verbs import GROUPS, conjugate, make_questions, table
+    assert table('hablar') == ['hablo', 'hablas', 'habla', 'hablamos', 'habláis', 'hablan']
+    assert table('vivir')[3:5] == ['vivimos', 'vivís'] and table('leer')[4] == 'leéis'
+    assert table('querer') == ['quiero', 'quieres', 'quiere', 'queremos', 'queréis', 'quieren']
+    assert table('jugar')[0] == 'juego' and table('dormir')[3] == 'dormimos' and table('poder')[5] == 'pueden'
+    assert conjugate('tener', 0) == 'tengo' and conjugate('ir', 4) == 'vais' and conjugate('ser', 3) == 'somos'
+    questions = make_questions(['ar', 'irregular'], 30, with_vosotros=False)
+    assert len(questions) == 30 and all(q['person'] != 4 for q in questions)
+    allowed = set(GROUPS['ar'][1]) | set(GROUPS['irregular'][1])
+    assert all(q['verb'] in allowed for q in questions)
+    assert len({(q['verb'], q['person']) for q in questions}) == 30

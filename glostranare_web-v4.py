@@ -11,6 +11,7 @@ from ui.training import persist, save_in_background, training
 from ui.teacher import teacher
 from ui.list_page import list_page
 from ui.games import blitz_game, match_game
+from ui.verbs import verb_trainer
 
 st.set_page_config(page_title="GlosFlow – öva och minns", page_icon="🌱", layout="wide", initial_sidebar_state="collapsed")
 
@@ -109,7 +110,9 @@ with st.sidebar.expander("Träningsriktning"):
         st.session_state.session = None
         st.rerun()
 
-if st.session_state.list_id is None:
+if st.session_state.view == "verbs":
+    verb_trainer()
+elif st.session_state.list_id is None:
     library(lists)
 else:
     vocab = next((v for v in lists if v["id"] == st.session_state.list_id), None)

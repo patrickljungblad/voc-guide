@@ -96,6 +96,15 @@ a {color:var(--brand);}
 .blitz-last {margin:0 0 8px; font-weight:700; font-size:15px;}
 .blitz-last.ok {color:var(--brand);} .blitz-last.miss {color:var(--coral-ink);}
 
+/* Verbtränaren */
+.st-key-verb_card {background:var(--coral-soft); border-radius:24px; padding:18px 22px; margin:18px 0 0;}
+.verb-card {display:flex; gap:14px; align-items:flex-start;}
+.verb-card .mode-icon {background:#fff; color:var(--coral-ink); flex:0 0 42px;}
+.st-key-verb_setup {background:#fff; border-radius:24px; padding:22px; margin:12px 0;}
+.verb-question .pronoun {color:var(--coral-ink);}
+.verb-table tr.hit td {background:var(--amber-soft); font-weight:800;}
+.verb-table td:first-child {color:var(--muted); width:46%;}
+
 /* Paustips */
 .st-key-pause_hint {background:var(--amber-soft); border-radius:20px; padding:16px 20px; margin:10px 0;}
 .pause-title {font-family:var(--display); font-weight:800; font-size:19px; margin:0 0 4px; color:var(--ink);}
